@@ -6,10 +6,15 @@ const Navbar = (props) => {
     props.history.push('/login');
   };
   return (
-    <BootstrapNavbar bg="light" expand="lg">
-      <BootstrapNavbar.Brand href="/">Lagalt</BootstrapNavbar.Brand>
+    <BootstrapNavbar bg="dark" variant="dark" expand="lg">
+      <BootstrapNavbar.Brand className="light" href="/">
+        Lagalt
+      </BootstrapNavbar.Brand>
 
-      <Nav></Nav>
+      <Nav className="mr-auto">
+        <Nav.Link href="#placeholder">Placeholder</Nav.Link>
+        <Nav.Link href="#placeholder">Placeholder</Nav.Link>
+      </Nav>
       <Button onClick={onLoginClick} variant="secondary">
         Login
       </Button>
