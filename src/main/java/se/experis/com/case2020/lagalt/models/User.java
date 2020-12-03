@@ -15,14 +15,13 @@ public class User {
     private String name;
     private String email;
     private List <SkillType> skills = new ArrayList<>();
-    private List<String> memberOf = new ArrayList<>();
-    private List<String> following = new ArrayList<>();
     private Boolean hidden = false;
-
-    private List<String> seen = new ArrayList<>();
-    private List<String> visited= new ArrayList<>();
-    private List<String> appliedTo = new ArrayList<>();
-    private List<String> contributedTo = new ArrayList<>();
+    private List <String> memberOf;
+    private List <String> following;
+    private List <String> seen;
+    private List <String> visited;
+    private List <String> appliedTo;
+    private List <String> contributedTo;
 
     public User() { }
 }
