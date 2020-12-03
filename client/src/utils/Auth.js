@@ -17,28 +17,42 @@ if (firebase.apps.length === 0) {
   firebase.initializeApp(firebaseConfig);
 }
 
-
-const DevMode = {
-  ignoreAll: 0,
-  ignoreReCaptcha: 1,
-  off: 2
+export const DevMode = {
+  ignoreAll: '0', // circumvents reCaptcha, sending real texts, and verification code
+  verify: '1', // circumvents reCaptcha & sending real texts, but prompts for verification code
+  off: '2' // off. to avoid sending real texts, use testPhoneNr below
 }
 
 // Dev Settings
 const testPhoneNr = "+46700000000"
 const testVerificationCode = "150803"
-const devMode = DevMode.ignoreReCaptcha // circumvents recaptcha, sending real texts, and verification code
 
-const recaptchaContainer = 'authContainer' // id of html element where the recaptcha auth is placed
+const recaptchaContainer = 'authContainer' // id of html element where the reCaptcha auth is placed
 
 
-export const loginStatus = () => {
+export const dev = {
+  _value: DevMode.verify,
+
+  get mode() {
+    return this._value
+  },
+
+  set mode (value) {
+    if(Object.values(DevMode).includes(value)) {
+      this._value = value
+    }
+  }
+
+} 
+
+export const loggedInUser = () => {
   return new Observable(observer => {
     firebase.auth().onAuthStateChanged(user => {
-      
-      // console.log('new authState:', user)
-      
-      observer.next(Boolean(user))
+      if(user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
+        observer.next(user.displayName)
+      } else {
+        observer.next(null)
+      }
     })
   })
 }
@@ -67,22 +81,25 @@ export const login = provider => {
   }
 }
 
-const thirdPartyAuth = async (provider) => {
+const thirdPartyAuth = async (provider) => {  
   try {
     const credentials = await firebase.auth().signInWithPopup(provider)
 
-    console.log('initial verification successful')
+    console.log('Enrolling new user...')
     
     let phoneNumber
-    if(devMode === DevMode.ignoreAll) {
+    if(dev.mode !== DevMode.off) {
       phoneNumber = testPhoneNr
     } else {
       phoneNumber = prompt('Please enter your phone number. \n\nProclaimer: Google stores and uses phone numbers to improve spam and abuse prevention across all Google services. Standard rates may apply')
-      if(phoneNumber.trim().length === 0) {
-        return
+      if(!phoneNumber) {
+        return 'Login attempt aborted'
       }
     }
+    console.log('using phone nr', phoneNumber)
+    
 
+    // new account
     return smsVerification({
       phoneNumber,
       session: await firebase.auth().currentUser.multiFactor.getSession()
@@ -90,7 +107,10 @@ const thirdPartyAuth = async (provider) => {
 
   } catch (err) {
     if (err.code === 'auth/multi-factor-auth-required') {
+      
+      console.log('Signing in to existing account...')
 
+      // login to existing account
       return smsVerification({
         multiFactorHint: err.resolver.hints[0],
         session: err.resolver.session
@@ -105,34 +125,36 @@ const thirdPartyAuth = async (provider) => {
 }
 
 
-const smsVerification = async (phoneInfoOptions, resolver) => {
-  console.log(phoneInfoOptions)
-  
-  const recaptchaConfig = {
-    size: 'invisible',
-    callback: async (response) => {
-      // reCAPTCHA solved, allow signInWithPhoneNumber.
-      console.log('reCaptcha solved')
-    }
+const resetRecaptcha = () => {
+  const container = document.querySelector('#' + recaptchaContainer)
+  while(container.lastChild) {
+    container.lastChild.remove()
   }
+}
 
+const smsVerification = async (phoneInfoOptions, resolver) => {
+  resetRecaptcha()
+  
   try {
-    if(devMode !== DevMode.off) {
+    if(dev.mode !== DevMode.off) {
       firebase.auth().settings.appVerificationDisabledForTesting = true
+      console.log('circumventing reCaptcha...')
+    } else {
+      console.log('presenting reCaptcha...')
     }
-
-    let appVerifier = new firebase.auth.RecaptchaVerifier(recaptchaContainer, recaptchaConfig)
-
-    console.log('presenting reCaptcha')
-
+    
+    let appVerifier = new firebase.auth.RecaptchaVerifier(recaptchaContainer)
+    
     // presents recaptcha, then sends text
     let phoneAuthProvider = new firebase.auth.PhoneAuthProvider()
     const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier)
-    
+    resetRecaptcha()
+    console.log('reCaptcha solved')
+
     console.log('text sent, prompting for code')
     
     let verificationCode
-    if(devMode === DevMode.ignoreAll) {
+    if(dev.mode === DevMode.ignoreAll) {
       verificationCode = testVerificationCode
     } else {
       verificationCode = prompt('Please enter the verification that was sent to you')
@@ -147,11 +169,11 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
 
     if(!resolver) { // no resolver => is enrollment
       await firebase.auth().currentUser.multiFactor.enroll(multiFactorAssertion, 'User phone number');
-      return 'Enrollment done\nYou are now signed in as ' + firebase.auth().currentUser.displayName
+      return 'Enrollment done!'
 
     } else {
       const userCredentials = await resolver.resolveSignIn(multiFactorAssertion)    
-      return "You are now signed in as " + userCredentials.additionalUserInfo.profile.name
+      return "You are now signed in"
     }
   } catch (err) {
     console.log('sms verification error', err)
@@ -179,7 +201,8 @@ const createEmailUser = async () => {
 
 const sendEmailLink = async (provider) => {
   try {
-    await firebase.auth().sendSignInLinkToEmail('iambumpfel@gmail.com', { url: 'http://localhost:8080/emailLink', handleCodeInApp: true })
+    const url = 'http://localhost:8080/aValidEmailLink'
+    await firebase.auth().sendSignInLinkToEmail('iambumpfel@gmail.com', { url, handleCodeInApp: true })
     console.log('email sent')
   } catch (err) {
     console.error('login error')
