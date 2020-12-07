@@ -1,23 +1,15 @@
 package se.experis.com.case2020.lagalt.services;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
-
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteResult;
+import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.springframework.stereotype.Service;
 
-import se.experis.com.case2020.lagalt.models.UserProfile;
-import se.experis.com.case2020.lagalt.models.UserPublic;
+import se.experis.com.case2020.lagalt.models.user.UserProfile;
+import se.experis.com.case2020.lagalt.models.user.UserPublic;
 
 @Service
 public class UserService {
@@ -44,13 +36,14 @@ public class UserService {
         return "ID " + projectId + " Has been deleted from document: " + category;
     }
 
+
     public UserProfile getProfileUserDetails(String userId) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference documents = dbFirestore.collection("users").document(userId);
 
         ApiFuture<DocumentSnapshot> future = documents.get();
 
-        Map<String, List<String>> userInfo = new HashMap<>();
+        Map<String, Set<String>> userInfo = new HashMap<>();
         DocumentSnapshot document = future.get();
         UserProfile user = null;
 
@@ -62,14 +55,14 @@ public class UserService {
 
                 Iterable<DocumentReference> projectIds = collection.listDocuments();
                 projectIds.forEach(ids -> {
-                    userInfo.computeIfAbsent(collection.getId(), k -> new ArrayList<>()).add(ids.getId());
+                    userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(ids.getId());
                 });
             });
 
-            // user.setAppliedTo(userInfo.get("appliedTo"));
-            // user.setContributedTo(userInfo.get("contributedTo"));
-            // user.setFollowing(userInfo.get("following"));
-            // user.setMemberOf(userInfo.get("memberOf"));
+             user.setAppliedTo(userInfo.get("appliedTo"));
+             user.setContributedTo(userInfo.get("contributedTo"));
+             user.setFollowing(userInfo.get("following"));
+             user.setMemberOf(userInfo.get("memberOf"));
         }
         return (user);
     }

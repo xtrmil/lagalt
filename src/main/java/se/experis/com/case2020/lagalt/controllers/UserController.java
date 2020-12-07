@@ -1,21 +1,16 @@
 package se.experis.com.case2020.lagalt.controllers;
 
+import java.util.AbstractMap;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import se.experis.com.case2020.lagalt.models.UserProfile;
+import se.experis.com.case2020.lagalt.models.user.UserProfile;
+import se.experis.com.case2020.lagalt.models.user.UserPublic;
 import se.experis.com.case2020.lagalt.services.UserService;
 
 @RestController
@@ -25,12 +20,18 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    @GetMapping("/getUserDetails")
-    public UserProfile getUser(@RequestHeader String userId) throws InterruptedException, ExecutionException {
-        return userService.getProfileUserDetails(userId);
+    @GetMapping("/profile")
+    public UserProfile getProfileUser(@RequestBody ObjectNode objectNode) throws InterruptedException, ExecutionException {
+        return userService.getProfileUserDetails(objectNode.get("userId").asText());
     }
 
-    @PostMapping("/createUser")
+    @GetMapping("/users/{id}")
+    public UserPublic getPublicUser(@PathVariable("id") String userId) throws InterruptedException, ExecutionException {
+        return userService.getPublicUserDetails(userId);
+    }
+
+
+    @PostMapping("/users/new")
     public String postUser(@RequestBody UserProfile user) throws InterruptedException, ExecutionException {
         return userService.saveUserDetails(user);
     }
@@ -41,7 +42,7 @@ public class UserController {
     }
 
     @PutMapping("/addToUser")
-    public String addHistory(@RequestBody ObjectNode objectNode) throws ExecutionException, InterruptedException {
+    public String addToUser(@RequestBody ObjectNode objectNode) throws ExecutionException, InterruptedException {
         return userService.addToUser(objectNode.get("userId").asText(), objectNode.get("category").asText(),
                 objectNode.get("projectId").asText());
     }
