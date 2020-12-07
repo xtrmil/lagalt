@@ -53,8 +53,7 @@ public class UserService {
                     userInfo.computeIfAbsent(collection.getId(), k -> new ArrayList<>()).add(ids.getId());
             });
         });
-            user.setSeen(userInfo.get("seen"));
-            user.setVisited(userInfo.get("visited"));
+
             user.setAppliedTo(userInfo.get("appliedTo"));
             user.setContributedTo(userInfo.get("contributedTo"));
             user.setFollowing(userInfo.get("following"));
@@ -62,6 +61,7 @@ public class UserService {
         }
         return (user);
     }
+
 
 //    public User getUserDetails(String userId) throws ExecutionException, InterruptedException {
 //        Firestore dbFirestore = FirestoreClient.getFirestore();
