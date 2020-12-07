@@ -3,7 +3,7 @@ import './HomePage.css';
 
 const HomePage = (props) => {
   return (
-    <div className="row">
+    <div className="row project">
       <div className="ml-4">
         <img className="homepage-img" src="nedladdning.jpg"></img>
       </div>
