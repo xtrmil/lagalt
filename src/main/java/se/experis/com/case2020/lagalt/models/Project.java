@@ -24,8 +24,8 @@ public class Project {
     private Set<String> members;
     private Set<String> followers;
 
-    private Enum<ProjectStatus> status;
-    private Enum<Industry> industry;
+    private ProjectStatus status;
+    private Industry industry;
     private Set<String> links;
 
     private Set<String> activeApplications;
