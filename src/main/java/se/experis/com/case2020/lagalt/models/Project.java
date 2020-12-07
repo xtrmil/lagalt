@@ -1,11 +1,9 @@
 package se.experis.com.case2020.lagalt.models;
 
-
 import lombok.Data;
 import org.springframework.stereotype.Component;
 import se.experis.com.case2020.lagalt.models.enums.Industry;
 import se.experis.com.case2020.lagalt.models.enums.ProjectStatus;
-import se.experis.com.case2020.lagalt.models.enums.SkillType;
 
 import java.net.URL;
 import java.sql.Timestamp;
@@ -28,13 +26,9 @@ public class Project {
 
     private Enum<ProjectStatus> status;
     private Enum<Industry> industry;
-    private Enum<SkillType> tags;
     private Set<String> links;
-
 
     private Set<String> activeApplications;
     private Set<String> archivedApplications;
-
-
 
 }

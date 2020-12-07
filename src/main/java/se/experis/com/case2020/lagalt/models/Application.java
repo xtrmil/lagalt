@@ -12,6 +12,7 @@ public class Application {
     private String userId;
     private String projectId;
     private String motivation;
+    private String feedback;
 
     private Enum<ApplicationStatus> status;
 }
