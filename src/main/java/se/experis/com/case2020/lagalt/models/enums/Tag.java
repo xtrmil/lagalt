@@ -7,13 +7,12 @@ public enum Tag {
     // game
     ARTIST3D("3D Artist"), AI_DEVELOPER("AI developer"), CONCEPT_ARTIST("Concept artist"),
     GAMEPLAY_DEVELOPER("Gameplay developer"), LEVEL_DESIGNER("Level designer"), SOUND_ENGINEER("Sound engineer"),
+    GAME_TESTER("Game tester"), GAME_UX_DESIGNER("UX designer"),
 
     // web
     FULLSTACK_DEVELOPER("Fullstack developer"), FRONTEND_DEVELOPER("Frontend developer"),
-    BACKEND_DEVELOPER("Backend developer"), WEB_ARCHITECT("Web architect"),
-
-    // Game, Web
-    UX_DESIGNER("UX designer"), SCRIPTER("Scripter"), TESTER("Tester");
+    BACKEND_DEVELOPER("Backend developer"), WEB_ARCHITECT("Web architect"), WEB_UX_DESIGNER("Web UX Designer"),
+    UNIT_TESTER("Tester"), JAVA("Java"), JAVA_SCRIPT("JavaScript"), C_SHARP("C#"), CPP("C++"), DOT_NET(".NET");
 
     public final String DISPLAY_TAG;
 
