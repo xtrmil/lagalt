@@ -1,4 +1,4 @@
-package se.experis.com.case2020.lagalt.controller;
+package se.experis.com.case2020.lagalt.controllers;
 
 import java.util.HashMap;
 import java.util.Map;
