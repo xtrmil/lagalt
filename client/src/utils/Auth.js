@@ -31,24 +31,25 @@ const recaptchaContainer = 'authContainer' // id of html element where the reCap
 
 
 export const dev = {
-  _value: DevMode.verify,
+  _value: DevMode.ignoreAll,
 
   get mode() {
     return this._value
   },
 
-  set mode (value) {
-    if(Object.values(DevMode).includes(value)) {
+  set mode(value) {
+    if (Object.values(DevMode).includes(value)) {
       this._value = value
     }
   }
 
-} 
+}
 
+// not sure I'll use
 export const loggedInUser = () => {
   return new Observable(observer => {
     firebase.auth().onAuthStateChanged(user => {
-      if(user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
+      if (user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
         observer.next(user.displayName)
       } else {
         observer.next(null)
@@ -63,10 +64,6 @@ export const providers = {
   email: 2
 }
 
-export const logout = async () => {
-  await firebase.auth().signOut()
-  return 'You are now logged out'
-}
 
 export const login = provider => {
   switch (provider) {
@@ -81,23 +78,23 @@ export const login = provider => {
   }
 }
 
-const thirdPartyAuth = async (provider) => {  
+const thirdPartyAuth = async (provider) => {
   try {
     const credentials = await firebase.auth().signInWithPopup(provider)
 
     console.log('Enrolling new user...')
-    
+
     let phoneNumber
-    if(dev.mode !== DevMode.off) {
+    if (dev.mode !== DevMode.off) {
       phoneNumber = testPhoneNr
     } else {
       phoneNumber = prompt('Please enter your phone number. \n\nProclaimer: Google stores and uses phone numbers to improve spam and abuse prevention across all Google services. Standard rates may apply')
-      if(!phoneNumber) {
+      if (!phoneNumber) {
         return 'Login attempt aborted'
       }
     }
     console.log('using phone nr', phoneNumber)
-    
+
 
     // new account
     return smsVerification({
@@ -107,7 +104,7 @@ const thirdPartyAuth = async (provider) => {
 
   } catch (err) {
     if (err.code === 'auth/multi-factor-auth-required') {
-      
+
       console.log('Signing in to existing account...')
 
       // login to existing account
@@ -127,24 +124,24 @@ const thirdPartyAuth = async (provider) => {
 
 const resetRecaptcha = () => {
   const container = document.querySelector('#' + recaptchaContainer)
-  while(container.lastChild) {
+  while (container.lastChild) {
     container.lastChild.remove()
   }
 }
 
 const smsVerification = async (phoneInfoOptions, resolver) => {
   resetRecaptcha()
-  
+
   try {
-    if(dev.mode !== DevMode.off) {
+    if (dev.mode !== DevMode.off) {
       firebase.auth().settings.appVerificationDisabledForTesting = true
       console.log('circumventing reCaptcha...')
     } else {
       console.log('presenting reCaptcha...')
     }
-    
+
     let appVerifier = new firebase.auth.RecaptchaVerifier(recaptchaContainer)
-    
+
     // presents recaptcha, then sends text
     let phoneAuthProvider = new firebase.auth.PhoneAuthProvider()
     const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier)
@@ -152,34 +149,118 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
     console.log('reCaptcha solved')
 
     console.log('text sent, prompting for code')
-    
+
     let verificationCode
-    if(dev.mode === DevMode.ignoreAll) {
+    if (dev.mode === DevMode.ignoreAll) {
       verificationCode = testVerificationCode
     } else {
       verificationCode = prompt('Please enter the verification that was sent to you')
     }
 
-    // TODO Prompt user to type in verification code from sms
     const credentials = firebase.auth.PhoneAuthProvider.credential(verificationId, verificationCode)
     console.log('verification code sent')
 
     const multiFactorAssertion = firebase.auth.PhoneMultiFactorGenerator.assertion(credentials)
     console.log('assertion done')
 
-    if(!resolver) { // no resolver => is enrollment
+    if (!resolver) { // no resolver => is enrollment
       await firebase.auth().currentUser.multiFactor.enroll(multiFactorAssertion, 'User phone number');
-      return 'Enrollment done!'
+
+      authUser()
 
     } else {
-      const userCredentials = await resolver.resolveSignIn(multiFactorAssertion)    
-      return "You are now signed in"
+      const userCredentials = await resolver.resolveSignIn(multiFactorAssertion)
+      return authUser()
     }
   } catch (err) {
     console.log('sms verification error', err)
     return err.message
   }
 }
+
+
+// create user via backend
+const authUser = async () => {
+  if (!firebase.auth().currentUser) {
+    console.log('not logged in')
+    return
+  }
+
+  let response = {}
+  while (!response.ok) {
+    
+    // supply username if user wasn't found
+    let username
+    if(!(await getLoggedInUser())) {
+      username = prompt('Enter a username')
+    }
+
+    const userInfo = { token: await firebase.auth().currentUser.getIdToken(), username }
+
+    // TODO try..catch?
+    response = await fetch('http://localhost:8080/auth', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(userInfo)
+    })
+  }
+
+  const body = await response.text()
+  if(body) {
+    console.log(JSON.parse(body))
+  }
+  return "You are now signed in"
+}
+
+
+export const getLoggedInUser = async () => {
+  const firebaseUser = firebase.auth().currentUser
+
+  if (!firebaseUser) {
+    console.log('not logged in')
+    return null
+  }
+
+  const token = firebaseUser.getIdToken()
+  
+  const response = await fetch('http://localhost:8080/loggedInUser', {
+    headers: {
+      Authorization: await token
+    }
+  })
+
+  const user = await response.text()
+  return user
+}
+
+
+export const logout = async () => {
+  if (!firebase.auth().currentUser) {
+    return 'not logged in'
+  }
+
+  const response = await fetch('http://localhost:8080/logout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: await firebase.auth().currentUser.getIdToken()
+  })
+
+  console.log(response)
+  const body = await response.text()
+  if (body) {
+    console.log(JSON.parse(body))
+  }
+
+  firebase.auth().signOut()
+  return 'you are now logged out'
+}
+
+
+
 
 
 
@@ -197,7 +278,6 @@ const createEmailUser = async () => {
     console.error(err)
   }
 }
-
 
 const sendEmailLink = async (provider) => {
   try {
