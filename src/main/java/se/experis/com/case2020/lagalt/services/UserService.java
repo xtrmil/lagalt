@@ -7,12 +7,19 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.user.UserProfile;
 import se.experis.com.case2020.lagalt.models.user.UserPublic;
 import org.apache.commons.lang3.EnumUtils;
+import se.experis.com.case2020.lagalt.utils.Command;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 
 @Service
 public class UserService {
@@ -48,7 +55,12 @@ public class UserService {
     }
 
 
-    public UserProfile getProfileUserDetails(String userId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> getProfileUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
+
+
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference documents = dbFirestore.collection("users").document(userId);
         ApiFuture<DocumentSnapshot> future = documents.get();
@@ -74,17 +86,31 @@ public class UserService {
             user.setFollowing(userInfo.get("following"));
             user.setMemberOf(userInfo.get("memberOf"));
             user.setSkills(userInfo.get("skills"));
+
+            cr.message = "Profile user details for: " + user.getUserId();
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/profile/" + user.getUserId());
+        }else{
+            cr.message = "No Profile with Id " + userId + " Found";
+            resp = HttpStatus.NOT_FOUND;
         }
-        return (user);
+
+        cr.data = user;
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr,resp);
     }
 
-    public UserPublic getPublicUserDetails(String userId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, HttpServletResponse response,String userId) throws ExecutionException, InterruptedException {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
+
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference documentReference = dbFirestore.collection("users").document(userId);
         ApiFuture<DocumentSnapshot> future = documentReference.get();
         DocumentSnapshot document = future.get();
 
-        UserPublic user;
+        UserPublic user = null;
 
         if (document.exists()) {
             user = document.toObject(UserPublic.class);
@@ -95,30 +121,75 @@ public class UserService {
                 skillSet.add(skill.getId());
             });
             user.setSkills(skillSet);
-            return user;
+            cr.message = "Profile user details for: " + userId;
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/users/" + userId);
         } else {
-            return null;
+            cr.message = "No User with Id " + userId + " Found";
+            resp = HttpStatus.NOT_FOUND;
         }
+        cr.data = user;
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr,resp);
     }
 
-    public String updateUserDetails(UserProfile user) throws ExecutionException, InterruptedException {
-        if (user.getSkills() != null) {
-            user.getSkills().forEach(skill -> {
-                if (EnumUtils.isValidEnum(Tag.class, skill)) {
-                    addToUser(user.getUserId(), "skills", skill);
-                }
-            });
-            user.setSkills(null);
-        }
+    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, HttpServletResponse response, UserProfile user) throws ExecutionException, InterruptedException {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
 
-        Firestore dbFireStore = FirestoreClient.getFirestore();
-        ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId()).set(user);
-        return collectionApiFuture.get().getUpdateTime().toString();
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference documentReference = dbFirestore.collection("users").document(user.getUserId());
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+        DocumentSnapshot document = future.get();
+        if (document.exists()) {
+            if (user.getSkills() != null) {
+                user.getSkills().forEach(skill -> {
+                    if (EnumUtils.isValidEnum(Tag.class, skill)) {
+                        addToUser(user.getUserId(), "skills", skill);
+                    }
+                });
+                user.setSkills(null);
+            }
+
+            Firestore dbFireStore = FirestoreClient.getFirestore();
+            ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId()).set(user);
+            cr.data = collectionApiFuture.get().getUpdateTime().toString();
+            cr.message = "Userdata successfully updated for user: " + user.getUserId();
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/profile/" + user.getUserId());
+
+        }else{
+            resp = HttpStatus.NOT_FOUND;
+            cr.message = "No User with Id " + user.getUserId() + " Found";
+        }
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr,resp);
     }
 
-    public String deleteUser(String userId) {
-        Firestore dbFireStore = FirestoreClient.getFirestore();
-        ApiFuture<WriteResult> writeResult = dbFireStore.collection("users").document(userId).delete();
-        return "Document with ID " + userId + " Has been deleted";
+    public ResponseEntity<CommonResponse> deleteUser(HttpServletRequest request, HttpServletResponse response,String userId) throws ExecutionException, InterruptedException {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference documentReference = dbFirestore.collection("users").document(userId);
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+        DocumentSnapshot document = future.get();
+
+        if (document.exists()) {
+
+            Firestore dbFireStore = FirestoreClient.getFirestore();
+            ApiFuture<WriteResult> writeResult = dbFireStore.collection("users").document(userId).delete();
+
+
+            cr.message = "Document with ID " + userId + " Has been deleted";
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/deleteUser");
+        }else{
+            cr.message = "No user with " + userId + " found";
+            resp = HttpStatus.NOT_FOUND;
+        }
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr,resp);
     }
 }
