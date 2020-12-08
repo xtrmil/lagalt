@@ -45,12 +45,11 @@ export const dev = {
 
 }
 
-// not sure I'll use
 export const loggedInUser = () => {
-  return new Observable(observer => {
-    firebase.auth().onAuthStateChanged(user => {
+  return new Observable( observer => {
+    firebase.auth().onAuthStateChanged(async user => {
       if (user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
-        observer.next(user.displayName)
+        observer.next(await getLoggedInUser())
       } else {
         observer.next(null)
       }
@@ -58,6 +57,7 @@ export const loggedInUser = () => {
   })
 }
 
+// dev
 export const providers = {
   google: 0,
   gitHub: 1,
@@ -80,7 +80,7 @@ export const login = provider => {
 
 const thirdPartyAuth = async (provider) => {
   try {
-    const credentials = await firebase.auth().signInWithPopup(provider)
+    await firebase.auth().signInWithPopup(provider)
 
     console.log('Enrolling new user...')
 
@@ -165,11 +165,12 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
 
     if (!resolver) { // no resolver => is enrollment
       await firebase.auth().currentUser.multiFactor.enroll(multiFactorAssertion, 'User phone number');
-
-      authUser()
+      console.log('enrolled user')
+      
+      return authUser()
 
     } else {
-      const userCredentials = await resolver.resolveSignIn(multiFactorAssertion)
+      await resolver.resolveSignIn(multiFactorAssertion)
       return authUser()
     }
   } catch (err) {
@@ -187,15 +188,22 @@ const authUser = async () => {
   }
 
   let response = {}
+  // backend returns bad response if username is invalid
   while (!response.ok) {
-    
     // supply username if user wasn't found
     let username
-    if(!(await getLoggedInUser())) {
+    const status = await getLoggedInUser()
+    if(!status) {
       username = prompt('Enter a username')
+      console.log(username)
+      
+      if(username === null) { // user aborted
+        break;
+      }
     }
-
-    const userInfo = { token: await firebase.auth().currentUser.getIdToken(), username }
+    
+    const token = await firebase.auth().currentUser.getIdToken()
+    const userInfo = { token, username }
 
     // TODO try..catch?
     response = await fetch('http://localhost:8080/auth', {
@@ -207,32 +215,30 @@ const authUser = async () => {
     })
   }
 
-  const body = await response.text()
-  if(body) {
-    console.log(JSON.parse(body))
+  console.log('auth ' + (response.ok ? 'successful' : 'failed'))
+  
+  if(response.ok) {
+    return "You are now signed in"
+  } else {
+    return "Some error occured during login"
   }
-  return "You are now signed in"
 }
 
 
-export const getLoggedInUser = async () => {
+const getLoggedInUser = async () => {
   const firebaseUser = firebase.auth().currentUser
 
   if (!firebaseUser) {
-    console.log('not logged in')
     return null
   }
 
-  const token = firebaseUser.getIdToken()
-  
   const response = await fetch('http://localhost:8080/loggedInUser', {
     headers: {
-      Authorization: await token
+      Authorization: await firebaseUser.getIdToken()
     }
   })
 
-  const user = await response.text()
-  return user
+  return await response.text()
 }
 
 

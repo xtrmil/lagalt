@@ -44,7 +44,7 @@ public class AuthController {
 
     @CrossOrigin(origins = host)
     @PostMapping("/auth")
-    public ResponseEntity<String> auth(@RequestBody UserRequest userRequest) { // TODO ändra till @RequestHeader String Authorization, @RequestBody String username, 
+    public ResponseEntity<String> auth(@RequestBody UserRequest userRequest) { // TODO ändra till @RequestHeader String Authorization, @RequestBody String username
         try {
             var auth = FirebaseAuth.getInstance();
             var foundToken = auth.verifyIdToken(userRequest.token, true);
@@ -84,7 +84,7 @@ public class AuthController {
 
     @CrossOrigin(origins = host)
     @PostMapping("/logout")
-    public void logout(@RequestBody String token) {
+    public ResponseEntity<Void> logout(@RequestBody String token) {
         try {
             var auth = FirebaseAuth.getInstance();
             var foundToken = auth.verifyIdToken(token, true);
@@ -95,8 +95,10 @@ public class AuthController {
                     auth.revokeRefreshTokens(foundUser.getUid());
                 }               
             }
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             System.err.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -119,6 +121,6 @@ class UserRecord {
     public String username;
 
     public UserRecord(String username) {
-        this.username = username;
+        this.username = username.trim();
     }
 }

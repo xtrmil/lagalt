@@ -6,17 +6,11 @@ const MSG_TIMEOUT = 5000
 export default class AuthTestComponent extends React.Component {
 
   componentDidMount = () => {
-    Auth.loggedInUser().subscribe(user => {
-      this.updateLoginStatus()
+    Auth.loggedInUser().subscribe(async user => {
+      this.setState({ loggedInUser: await user })
     })
   }
   
-  
-  updateLoginStatus = async () => {   
-    const username = await Auth.getLoggedInUser()
-    this.setState({ loggedInUser: username })
-  }
-
   state = {
     msg: '',
     loggedInUser: null
@@ -76,6 +70,7 @@ export default class AuthTestComponent extends React.Component {
       }
 
       <br />
+      
       <div id="authContainer"></div>
     </div>
   )
