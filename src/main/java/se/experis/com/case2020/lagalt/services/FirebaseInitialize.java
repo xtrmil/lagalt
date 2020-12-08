@@ -21,9 +21,8 @@ public class FirebaseInitialize {
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setDatabaseUrl("https://experis-lagalt.firebaseio.com").build();
 
-
-            if(FirebaseApp.getInstance() == null) {
-                FirebaseApp.initializeApp(options);   
+            if(FirebaseApp.getApps().isEmpty()) {
+                FirebaseApp.initializeApp(options);
             }
         }catch (Exception e){
             e.printStackTrace();
