@@ -4,9 +4,9 @@ public enum ProjectStatus {
 
     FOUNDING("Founding"), INPROGRESS("In Progress"), STALLED("Stalled"), COMPLETED("Completed");
 
-    public final String LABEL;
+    public final String STATUS;
 
-    ProjectStatus(String label) {
-        this.LABEL = label;
+    ProjectStatus(String status) {
+        this.STATUS = status;
     }
 }

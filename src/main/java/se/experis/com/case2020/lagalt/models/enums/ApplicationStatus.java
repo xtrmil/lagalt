@@ -4,9 +4,9 @@ public enum ApplicationStatus {
 
     PENDING("Pending"), REJECTED("Rejected"), APPROVED("Approved");
 
-    public final String LABEL;
+    public final String STATUS;
 
-    ApplicationStatus(String label) {
-        this.LABEL = label;
+    ApplicationStatus(String status) {
+        this.STATUS = status;
     }
 }

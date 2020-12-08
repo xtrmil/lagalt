@@ -25,6 +25,7 @@ public class UserController {
         return userService.getProfileUserDetails(objectNode.get("userId").asText());
     }
 
+
     @GetMapping("/users/{id}")
     public UserPublic getPublicUser(@PathVariable("id") String userId) throws InterruptedException, ExecutionException {
         return userService.getPublicUserDetails(userId);
@@ -36,7 +37,7 @@ public class UserController {
         return userService.saveUserDetails(user);
     }
 
-    @PutMapping("/updateUser")
+    @PutMapping("/profile")
     public String putUser(@RequestBody UserProfile user) throws InterruptedException, ExecutionException {
         return userService.updateUserDetails(user);
     }

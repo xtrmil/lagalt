@@ -18,4 +18,5 @@ public enum Industry {
         this.INDUSTRY_NAME = industryName;
         this.TAGS = tags;
     }
+
 }
