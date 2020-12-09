@@ -48,7 +48,7 @@ export const dev = {
 }
 
 export const loggedInUser = () => {
-  return new Observable( observer => {
+  return new Observable(observer => {
     firebase.auth().onAuthStateChanged(async user => {
       if (user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
         observer.next(await getLoggedInUser())
@@ -150,10 +150,10 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
       console.log('presenting reCaptcha...')
     }
 
-    let appVerifier = new firebase.auth.RecaptchaVerifier(recaptchaContainer)
+    const appVerifier = new firebase.auth.RecaptchaVerifier(recaptchaContainer)
 
     // presents recaptcha, then sends text
-    let phoneAuthProvider = new firebase.auth.PhoneAuthProvider()
+    const phoneAuthProvider = new firebase.auth.PhoneAuthProvider()
     const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier)
     resetRecaptcha()
     console.log('reCaptcha solved')
@@ -192,7 +192,8 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
 
 // create user via backend
 const authUser = async () => {
-  if (!firebase.auth().currentUser) {
+  const token = await getToken()
+  if (!token) {
     console.log('not logged in')
     return
   }
@@ -212,13 +213,12 @@ const authUser = async () => {
       }
     }
     
-
     // TODO try..catch?
     response = await fetch(host + '/auth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: await firebase.auth().currentUser.getIdToken()
+        Authorization: token
       },
       body: JSON.stringify({ userId: username })
     })
@@ -229,21 +229,21 @@ const authUser = async () => {
   if(response.ok) {
     return "You are now signed in"
   } else {
-    return "Some error occured during login"
+    return "An error occured during login"
   }
 }
 
 
 const getLoggedInUser = async () => {
-  const firebaseUser = firebase.auth().currentUser
+  const token = await getToken()
 
-  if (!firebaseUser) {
+  if (!token) {
     return null
   }
 
   const response = await fetch(host + '/loggedInUser', {
     headers: {
-      Authorization: await firebaseUser.getIdToken()
+      Authorization: token
     }
   })
 
@@ -252,41 +252,42 @@ const getLoggedInUser = async () => {
 
 
 export const logout = async () => {
-  if (!firebase.auth().currentUser) {
-    return 'not logged in'
+  const token = await getToken()
+  if(!token) {
+    console.log('not logged in')
+    return
   }
 
   const response = await fetch(host + '/logout', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      Authorization: token
     },
-    body: await firebase.auth().currentUser.getIdToken()
   })
 
-  console.log(response)
   const body = await response.text()
   if (body) {
     console.log(JSON.parse(body))
   }
 
-  firebase.auth().signOut()
-  return 'you are now logged out'
+  firebase.auth().signOut() // triggers authstate listener
+  return 'You have been logged out'
 }
 
 
 
 
 export const testVerification = async (userId) => {
-  var currentUser =  firebase.auth().currentUser
-  if(!currentUser) {
+  const token = await getToken()
+  if(!token) {
     console.log('not logged in')
     return
   }
 
   const response = await fetch(host + '/test/' + userId, {
     headers: {
-      Authorization: await currentUser.getIdToken()
+      Authorization: token
     }
   })
 

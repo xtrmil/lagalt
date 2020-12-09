@@ -69,11 +69,6 @@ export default class AuthTestComponent extends React.Component {
         : <button onClick={this.handleSignout}>Sign out</button>
       }
 
-      <br />
-
-      <button onClick={() => Auth.testVerification('Bumpfel')}>Check if belongs to Bumpfel</button>
-      <button onClick={() => Auth.testVerification('SomeoneElse')}>Check if belongs to someone else</button>
-      
       <div id="authContainer"></div>
     </div>
   )

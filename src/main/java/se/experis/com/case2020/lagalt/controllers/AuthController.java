@@ -24,7 +24,7 @@ import se.experis.com.case2020.lagalt.services.UserService;
 @RequestMapping(value = "/api/v1/")
 public class AuthController {
 
-    private final String host = "http://localhost:3000"; // temp
+    private final String allowedHost = "http://localhost:3000"; // temp
     private final String usernameRules = "";
 
     @Autowired
@@ -33,14 +33,14 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    @CrossOrigin(origins = host)
+    @CrossOrigin(origins = allowedHost)
     @GetMapping("/testUserVerification/{userId}")
     public Boolean test(@PathVariable String userId, @RequestHeader String Authorization) {
         return authService.belongsToUser(userId, Authorization);
     }
 
 
-    @CrossOrigin(origins = host)
+    @CrossOrigin(origins = allowedHost)
     @GetMapping("/loggedInUser")
     public String loggedInUser(@RequestHeader String Authorization) {
         try {
@@ -61,7 +61,7 @@ public class AuthController {
         return null;
     }
 
-    @CrossOrigin(origins = host)
+    @CrossOrigin(origins = allowedHost)
     @PostMapping("/auth")
     public ResponseEntity<String> auth(@RequestHeader String Authorization, @RequestBody UserRecord userRecord) {
         try {
@@ -101,12 +101,12 @@ public class AuthController {
         }
     }
 
-    @CrossOrigin(origins = host)
+    @CrossOrigin(origins = allowedHost)
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody String token) {
+    public ResponseEntity<Void> logout(@RequestHeader String Authorization) {
         try {
             var auth = FirebaseAuth.getInstance();
-            var foundToken = auth.verifyIdToken(token, true);
+            var foundToken = auth.verifyIdToken(Authorization, true);
             
             if(foundToken != null) {
                 var foundUser = auth.getUser(foundToken.getUid());
