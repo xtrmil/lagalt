@@ -1,6 +1,9 @@
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import { Observable } from 'rxjs';
+import { EventEmitter } from 'events'
+
+const loginStatusEmitter = new EventEmitter()
 
 const host = 'http://localhost:8080/api/v1'
 
@@ -49,15 +52,42 @@ export const dev = {
 
 export const loggedInUser = () => {
   return new Observable(observer => {
+
     firebase.auth().onAuthStateChanged(async user => {
+      // needed when component mounts 
+      console.log('auth state changed')
+      
       if (user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
         observer.next(await getLoggedInUser())
       } else {
         observer.next(null)
       }
     })
+
+    loginStatusEmitter.on('change', async data => {
+      console.log('listener received data', data)
+      observer.next(data)
+    })
   })
 }
+
+
+const getLoggedInUser = async () => {
+  const token = await getToken()
+
+  if (!token) {
+    return null
+  }
+
+  const response = await fetch(host + '/loggedInUser', {
+    headers: {
+      Authorization: token
+    }
+  })
+
+  return await response.text()
+}
+
 
 // dev
 export const providers = {
@@ -198,7 +228,7 @@ const authUser = async () => {
     return
   }
 
-  let response = {}
+  // let response = {}
   // backend returns bad response if username is invalid
   // while (!response.ok) {
     // supply username if user wasn't found
@@ -214,7 +244,7 @@ const authUser = async () => {
     }
     
     // TODO try..catch?
-    response = await fetch(host + '/auth', {
+    const response = await fetch(host + '/auth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -227,27 +257,11 @@ const authUser = async () => {
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))
   
   if(response.ok) {
+    loginStatusEmitter.emit('change', await response.text())
     return "You are now signed in"
   } else {
     return "An error occured during login"
   }
-}
-
-
-const getLoggedInUser = async () => {
-  const token = await getToken()
-
-  if (!token) {
-    return null
-  }
-
-  const response = await fetch(host + '/loggedInUser', {
-    headers: {
-      Authorization: token
-    }
-  })
-
-  return await response.text()
 }
 
 
@@ -271,7 +285,7 @@ export const logout = async () => {
     console.log(JSON.parse(body))
   }
 
-  firebase.auth().signOut() // triggers authstate listener
+  loginStatusEmitter.emit('change', null)
   return 'You have been logged out'
 }
 

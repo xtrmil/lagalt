@@ -68,37 +68,38 @@ public class AuthController {
             var auth = FirebaseAuth.getInstance();
             var foundToken = auth.verifyIdToken(Authorization, true);
             
-            if(foundToken != null) {
-                var db = FirestoreClient.getFirestore();
-                var userRecordDocument = db.collection("userRecords").document(foundToken.getUid());
-                var existingUser = userRecordDocument.get().get();
-                if(!existingUser.exists()) {
-                    userRecord.userId = userRecord.userId.trim();
-                    var authUser = auth.getUser(foundToken.getUid());
-                    // new user
-                    if(!isValidUsername(userRecord.userId)) {
-                        return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
-                    }
+            var db = FirestoreClient.getFirestore();
+            var userRecordDocument = db.collection("userRecords").document(foundToken.getUid());
+            var existingUser = userRecordDocument.get().get();
+            String userId = null;
 
-                    userRecordDocument.set(userRecord);
-                    UserProfile userProfile = new UserProfile();
-                    userProfile.setEmail(authUser.getEmail());
-                    userProfile.setName(authUser.getDisplayName());
-                    userProfile.setUserId(userRecord.userId);
-                    userService.saveUserDetails(userProfile);
-                    System.out.println("/auth: New db user created");
-                } else {
-                    // existing user
-                    System.out.println("/auth: No user created. User already exists");
-                    System.out.println("/auth: " + existingUser.getData());
+            if(!existingUser.exists()) {
+                userId = userRecord.userId = userRecord.userId.trim();
+                var authUser = auth.getUser(foundToken.getUid());
+                // new user
+                if(!isValidUsername(userRecord.userId)) {
+                    return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
                 }
+
+                userRecordDocument.set(userRecord);
+                UserProfile userProfile = new UserProfile();
+                userProfile.setEmail(authUser.getEmail());
+                userProfile.setName(authUser.getDisplayName());
+                userProfile.setUserId(userRecord.userId);
+                userService.saveUserDetails(userProfile);
+                System.out.println("/auth: New db user created");
+            } else {
+                // existing user
+                userId = existingUser.get("userId").toString();
+                System.out.println("/auth: No user created. User already exists");
+                System.out.println("/auth: " + existingUser.getData());
             }
-            return new ResponseEntity<>("Authenticated ok", HttpStatus.OK);
+            return new ResponseEntity<>(userId, HttpStatus.OK);
 
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     @CrossOrigin(origins = allowedHost)
