@@ -2,7 +2,7 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import { Observable } from 'rxjs';
 
-const host = 'http://localhost:8080'
+const host = 'http://localhost:8080/api/v1'
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvGQf08nkANAW5Vb1BNq6P0FUS-a2GsNw",
@@ -64,6 +64,14 @@ export const providers = {
   google: 0,
   gitHub: 1,
   email: 2
+}
+
+export const getToken = async () => {
+  const user = firebase.auth().currentUser
+  if(user) {
+    return await user.getIdToken()
+  }
+  return null
 }
 
 
