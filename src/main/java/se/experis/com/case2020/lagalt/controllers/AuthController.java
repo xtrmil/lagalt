@@ -6,20 +6,34 @@ import java.util.Map;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.cloud.FirestoreClient;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+
+import se.experis.com.case2020.lagalt.services.AuthService;
 
 @RestController
 public class AuthController {
 
     private final String host = "http://localhost:3000"; // temp
     private final String usernameRules = "";
+
+    @Autowired
+    private AuthService authService;
+
+    @CrossOrigin(origins = host)
+    @GetMapping("/test/{userId}")
+    public Boolean test(@PathVariable String userId, @RequestHeader String Authorization) {
+        return authService.belongsToUser(userId, Authorization);
+    }
+
 
     @CrossOrigin(origins = host)
     @GetMapping("/loggedInUser")
@@ -30,8 +44,8 @@ public class AuthController {
             var db = FirestoreClient.getFirestore();
             var user = db.collection("userRecords").document(fbToken.getUid()).get().get();
             if(user.exists()) {
-                System.out.println("/loggedInUser: found user " + user.get("username"));
-               return (String) user.get("username");
+                System.out.println("/loggedInUser: found user " + user.get("userId"));
+               return (String) user.get("userId");
             } else {
                 System.out.println("/loggedInUser: user not found");
             }
@@ -44,29 +58,29 @@ public class AuthController {
 
     @CrossOrigin(origins = host)
     @PostMapping("/auth")
-    public ResponseEntity<String> auth(@RequestBody UserRequest userRequest) { // TODO ändra till @RequestHeader String Authorization, @RequestBody String username
+    public ResponseEntity<String> auth(@RequestHeader String Authorization, @RequestBody UserRecord userRecord) {
         try {
             var auth = FirebaseAuth.getInstance();
-            var foundToken = auth.verifyIdToken(userRequest.token, true);
+            var foundToken = auth.verifyIdToken(Authorization, true);
             
             if(foundToken != null) {
                 var db = FirestoreClient.getFirestore();
-                var userRecord = db.collection("userRecords").document(foundToken.getUid());
-                var existingUser = userRecord.get().get();
+                var userRecordDocument = db.collection("userRecords").document(foundToken.getUid());
+                var existingUser = userRecordDocument.get().get();
                 if(!existingUser.exists()) {
+                    userRecord.userId = userRecord.userId.trim();
                     var authUser = auth.getUser(foundToken.getUid());
                     // new user
-                    if(!isValidUsername(userRequest.username)) {
-                        System.out.println();
+                    if(!isValidUsername(userRecord.userId)) {
                         return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
                     }
 
-                    userRecord.set(new UserRecord(userRequest.username));
+                    userRecordDocument.set(userRecord);
                     Map<String, Object> testUser = new HashMap<>();
                     testUser.put("email", authUser.getEmail());
-                    testUser.put("userId", userRequest.username);
+                    testUser.put("userId", userRecord.userId);
                     testUser.put("name", authUser.getDisplayName());
-                    db.collection("users").document(userRequest.username).set(testUser);
+                    db.collection("users").document(userRecord.userId).set(testUser);
                     System.out.println("/auth: New db user created");
                 } else {
                     // existing user
@@ -93,7 +107,7 @@ public class AuthController {
                 var foundUser = auth.getUser(foundToken.getUid());
                 if(foundUser != null) {
                     auth.revokeRefreshTokens(foundUser.getUid());
-                }               
+                }
             }
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
@@ -107,20 +121,7 @@ public class AuthController {
     }
 }
 
-class UserRequest {
-    public String token;
-    public String username;
-
-    @Override
-    public String toString() {
-        return token;
-    }
-}
-
+// @Data
 class UserRecord {
-    public String username;
-
-    public UserRecord(String username) {
-        this.username = username.trim();
-    }
+    public String userId;
 }

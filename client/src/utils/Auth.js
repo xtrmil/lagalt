@@ -2,6 +2,8 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import { Observable } from 'rxjs';
 
+const host = 'http://localhost:8080'
+
 const firebaseConfig = {
   apiKey: "AIzaSyBvGQf08nkANAW5Vb1BNq6P0FUS-a2GsNw",
   authDomain: "experis-lagalt.firebaseapp.com",
@@ -189,31 +191,30 @@ const authUser = async () => {
 
   let response = {}
   // backend returns bad response if username is invalid
-  while (!response.ok) {
+  // while (!response.ok) {
     // supply username if user wasn't found
-    let username
+    let username = null
     const status = await getLoggedInUser()
     if(!status) {
       username = prompt('Enter a username')
       console.log(username)
       
       if(username === null) { // user aborted
-        break;
+        // break;
       }
     }
     
-    const token = await firebase.auth().currentUser.getIdToken()
-    const userInfo = { token, username }
 
     // TODO try..catch?
-    response = await fetch('http://localhost:8080/auth', {
+    response = await fetch(host + '/auth', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: await firebase.auth().currentUser.getIdToken()
       },
-      body: JSON.stringify(userInfo)
+      body: JSON.stringify({ userId: username })
     })
-  }
+  // }
 
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))
   
@@ -232,7 +233,7 @@ const getLoggedInUser = async () => {
     return null
   }
 
-  const response = await fetch('http://localhost:8080/loggedInUser', {
+  const response = await fetch(host + '/loggedInUser', {
     headers: {
       Authorization: await firebaseUser.getIdToken()
     }
@@ -247,7 +248,7 @@ export const logout = async () => {
     return 'not logged in'
   }
 
-  const response = await fetch('http://localhost:8080/logout', {
+  const response = await fetch(host + '/logout', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -268,6 +269,21 @@ export const logout = async () => {
 
 
 
+export const testVerification = async (userId) => {
+  var currentUser =  firebase.auth().currentUser
+  if(!currentUser) {
+    console.log('not logged in')
+    return
+  }
+
+  const response = await fetch(host + '/test/' + userId, {
+    headers: {
+      Authorization: await currentUser.getIdToken()
+    }
+  })
+
+  console.log(JSON.parse(await response.text()))
+} 
 
 
 
@@ -287,7 +303,7 @@ const createEmailUser = async () => {
 
 const sendEmailLink = async (provider) => {
   try {
-    const url = 'http://localhost:8080/aValidEmailLink'
+    const url = host + '/aValidEmailLink'
     await firebase.auth().sendSignInLinkToEmail('iambumpfel@gmail.com', { url, handleCodeInApp: true })
     console.log('email sent')
   } catch (err) {
