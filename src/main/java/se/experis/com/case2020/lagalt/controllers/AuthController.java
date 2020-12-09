@@ -1,5 +1,6 @@
 package se.experis.com.case2020.lagalt.controllers;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -34,13 +35,6 @@ public class AuthController {
     private UserService userService;
 
     @CrossOrigin(origins = allowedHost)
-    @GetMapping("/testUserVerification/{userId}")
-    public Boolean test(@PathVariable String userId, @RequestHeader String Authorization) {
-        return authService.belongsToUser(userId, Authorization);
-    }
-
-
-    @CrossOrigin(origins = allowedHost)
     @GetMapping("/loggedInUser")
     public String loggedInUser(@RequestHeader String Authorization) {
         try {
@@ -63,7 +57,7 @@ public class AuthController {
 
     @CrossOrigin(origins = allowedHost)
     @PostMapping("/auth")
-    public ResponseEntity<String> auth(@RequestHeader String Authorization, @RequestBody UserRecord userRecord) {
+    public ResponseEntity<String> auth(@RequestHeader String Authorization, @RequestBody ObjectNode body) {
         try {
             var auth = FirebaseAuth.getInstance();
             var foundToken = auth.verifyIdToken(Authorization, true);
@@ -74,18 +68,18 @@ public class AuthController {
             String userId = null;
 
             if(!existingUser.exists()) {
-                userId = userRecord.userId = userRecord.userId.trim();
+                userId = body.get("userId").asText().trim();
                 var authUser = auth.getUser(foundToken.getUid());
                 // new user
-                if(!isValidUsername(userRecord.userId)) {
+                if(!isValidUsername(userId)) {
                     return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
                 }
 
-                userRecordDocument.set(userRecord);
+                userRecordDocument.set(body);
                 UserProfile userProfile = new UserProfile();
                 userProfile.setEmail(authUser.getEmail());
                 userProfile.setName(authUser.getDisplayName());
-                userProfile.setUserId(userRecord.userId);
+                userProfile.setUserId(userId);
                 userService.saveUserDetails(userProfile);
                 System.out.println("/auth: New db user created");
             } else {
@@ -125,9 +119,4 @@ public class AuthController {
     private boolean isValidUsername(String username) {
         return username != null && !username.isBlank();
     }
-}
-
-// @Data
-class UserRecord {
-    public String userId;
 }
