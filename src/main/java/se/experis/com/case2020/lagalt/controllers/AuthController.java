@@ -1,13 +1,11 @@
 package se.experis.com.case2020.lagalt.controllers;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +13,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import se.experis.com.case2020.lagalt.models.user.UserProfile;
 import se.experis.com.case2020.lagalt.services.AuthService;
+import se.experis.com.case2020.lagalt.services.UserService;
 
 @RestController
+@RequestMapping(value = "/api/v1/")
 public class AuthController {
 
     private final String host = "http://localhost:3000"; // temp
@@ -28,8 +30,11 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private UserService userService;
+
     @CrossOrigin(origins = host)
-    @GetMapping("/test/{userId}")
+    @GetMapping("/testUserVerification/{userId}")
     public Boolean test(@PathVariable String userId, @RequestHeader String Authorization) {
         return authService.belongsToUser(userId, Authorization);
     }
@@ -76,11 +81,11 @@ public class AuthController {
                     }
 
                     userRecordDocument.set(userRecord);
-                    Map<String, Object> testUser = new HashMap<>();
-                    testUser.put("email", authUser.getEmail());
-                    testUser.put("userId", userRecord.userId);
-                    testUser.put("name", authUser.getDisplayName());
-                    db.collection("users").document(userRecord.userId).set(testUser);
+                    UserProfile userProfile = new UserProfile();
+                    userProfile.setEmail(authUser.getEmail());
+                    userProfile.setName(authUser.getDisplayName());
+                    userProfile.setUserId(userRecord.userId);
+                    userService.saveUserDetails(userProfile);
                     System.out.println("/auth: New db user created");
                 } else {
                     // existing user
