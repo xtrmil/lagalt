@@ -1,22 +1,19 @@
 package se.experis.com.case2020.lagalt.services;
 
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
+import org.apache.commons.lang3.EnumUtils;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.user.UserProfile;
 import se.experis.com.case2020.lagalt.models.user.UserPublic;
-import org.apache.commons.lang3.EnumUtils;
 import se.experis.com.case2020.lagalt.utils.Command;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -31,29 +28,55 @@ public class UserService {
         return collectionApiFuture.get().getUpdateTime().toString();
     }
 
-    public String addToUser(String userId, String category, String projectId) {
+    public ResponseEntity<CommonResponse> addToUser(HttpServletRequest request, HttpServletResponse response,String userId, String category, String projectId) {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
         Firestore dbFireStore = FirestoreClient.getFirestore();
         try {
             ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(userId)
                     .collection(category).document(projectId).set(new HashMap<String, Object>());
-
-            return collectionApiFuture.get().getUpdateTime().toString();
-        } catch (ExecutionException e) {
+            cr.message = "ID " + projectId + " Has been deleted from document: " + category;
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/addToUser/");
+            cr.data = collectionApiFuture.get().getUpdateTime().toString();
+            cr.message = "ID " + projectId + "Has been added to collection " + category;
+        } catch (ExecutionException | InterruptedException | NullPointerException e) {
             e.printStackTrace();
-            return e.toString();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            return e.toString();
+            resp = HttpStatus.NOT_FOUND;
+            cr.message = "ID " + projectId + "Not found in " + category;
         }
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr,resp);
     }
 
-    public String deleteFromUser(String userId, String category, String projectId) {
-        Firestore dbFireStore = FirestoreClient.getFirestore();
-        ApiFuture<WriteResult> writeResult = dbFireStore.collection("users").document(userId).collection(category)
-                .document(projectId).delete();
-        return "ID " + projectId + " Has been deleted from document: " + category;
-    }
+    public ResponseEntity<CommonResponse> deleteFromUser(HttpServletRequest request, HttpServletResponse response,String userId, String category, String projectId) throws ExecutionException, InterruptedException {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
 
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category)
+                .document(projectId);
+        ApiFuture<DocumentSnapshot> future = documents.get();
+        DocumentSnapshot document = future.get();
+
+        if (document.exists()) {
+            Firestore dbFireStore = FirestoreClient.getFirestore();
+            ApiFuture<WriteResult> writeResult = dbFireStore.collection("users").document(userId).collection(category)
+                    .document(projectId).delete();
+            cr.message = "ID " + projectId + " Has been deleted from collection: " + category;
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/deleteFromUser/");
+
+        }else{
+            resp = HttpStatus.NOT_FOUND;
+            cr.message = "ID " + projectId + " not found in " + category;
+        }
+
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr,resp);
+    }
 
     public ResponseEntity<CommonResponse> getProfileUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
@@ -146,7 +169,7 @@ public class UserService {
             if (user.getSkills() != null) {
                 user.getSkills().forEach(skill -> {
                     if (EnumUtils.isValidEnum(Tag.class, skill)) {
-                        addToUser(user.getUserId(), "skills", skill);
+                        addToUser(request, response, user.getUserId(), "skills", skill);
                     }
                 });
                 user.setSkills(null);

@@ -1,18 +1,14 @@
 package se.experis.com.case2020.lagalt.controllers;
 
-import java.util.AbstractMap;
+
 import java.util.concurrent.ExecutionException;
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.user.UserProfile;
-import se.experis.com.case2020.lagalt.models.user.UserPublic;
 import se.experis.com.case2020.lagalt.services.UserService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -48,14 +44,14 @@ public class UserController {
     }
 
     @PutMapping("/addToUser")
-    public String addToUser(@RequestBody ObjectNode objectNode) throws ExecutionException, InterruptedException {
-        return userService.addToUser(objectNode.get("userId").asText(), objectNode.get("category").asText(),
+    public ResponseEntity<CommonResponse> addToUser(HttpServletRequest request, HttpServletResponse response, @RequestBody ObjectNode objectNode){
+        return userService.addToUser(request, response, objectNode.get("userId").asText(), objectNode.get("category").asText(),
                 objectNode.get("projectId").asText());
     }
 
     @DeleteMapping("/deleteFromUser")
-    public String deleteFromUser(@RequestBody ObjectNode objectNode) throws ExecutionException, InterruptedException {
-        return userService.deleteFromUser(objectNode.get("userId").asText(), objectNode.get("category").asText(),
+    public ResponseEntity<CommonResponse> deleteFromUser(HttpServletRequest request, HttpServletResponse response, @RequestBody ObjectNode objectNode) throws ExecutionException, InterruptedException {
+        return userService.deleteFromUser(request ,response, objectNode.get("userId").asText(), objectNode.get("category").asText(),
                 objectNode.get("projectId").asText());
     }
 
