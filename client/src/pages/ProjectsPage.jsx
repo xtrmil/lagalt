@@ -13,8 +13,8 @@ const ProjectsPage = (props) => {
         Create new project
       </Button>{' '}
       <h1>Your projects</h1>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 projectsPageCard">
+        <div className="card-body projectsPageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -38,8 +38,8 @@ const ProjectsPage = (props) => {
           <a href="/project" className="stretched-link"></a>
         </div>
       </div>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 projectsPageCard">
+        <div className="card-body projectsPageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -63,8 +63,8 @@ const ProjectsPage = (props) => {
           <a href="/project" className="stretched-link"></a>
         </div>
       </div>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 projectsPageCard">
+        <div className="card-body projectsPageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -89,8 +89,8 @@ const ProjectsPage = (props) => {
         </div>
       </div>
       <h1>Joined projects</h1>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 projectsPageCard">
+        <div className="card-body projectsPageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -111,8 +111,8 @@ const ProjectsPage = (props) => {
           <a href="/project" className="stretched-link"></a>
         </div>
       </div>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 projectsPageCard">
+        <div className="card-body projectsPageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -133,8 +133,8 @@ const ProjectsPage = (props) => {
           <a href="/project" className="stretched-link"></a>
         </div>
       </div>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 projectsPageCard">
+        <div className="card-body projectsPageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>

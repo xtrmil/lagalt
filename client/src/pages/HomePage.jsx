@@ -9,8 +9,8 @@ const HomePage = (props) => {
   };
   return (
     <>
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 homePageCard">
+        <div className="card-body homePageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -32,8 +32,8 @@ const HomePage = (props) => {
         </div>
       </div>
 
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 homePageCard">
+        <div className="card-body homePageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -55,8 +55,8 @@ const HomePage = (props) => {
         </div>
       </div>
 
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 homePageCard">
+        <div className="card-body homePageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
@@ -81,8 +81,8 @@ const HomePage = (props) => {
         </div>
       </div>
 
-      <div className="card w-75">
-        <div className="card-body">
+      <div className="card w-75 homePageCard">
+        <div className="card-body homePageCardBody">
           <div className="row project">
             <div className="ml-2">
               <img className="homepage-img" src="nedladdning.jpg"></img>
