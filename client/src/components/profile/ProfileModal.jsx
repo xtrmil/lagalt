@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
-import { Modal, Button } from 'react-bootstrap';
-import Select from 'react-select';
-
+import React from 'react';
+import { Modal, Button, Form } from 'react-bootstrap';
+import { Formik } from 'formik';
+import TextInput from '../form/TextInput';
+import SelectInput from '../form/SelectInput';
+import { editProfileSchema } from '../../utils/form/FormUtils';
 const ProfileModal = (props) => {
   const { showModal, handleCloseModal, handleSaveChanges, user } = props;
-  const [newUser, setNewUser] = useState(user);
 
   const currentSkills = user.skills.map((skill) => ({
     value: skill,
     label: skill,
   }));
+
+  const initialValues = {
+    name: user.name,
+    description: user.description,
+    skills: currentSkills,
+    email: user.email,
+    hidden: user.hidden,
+  };
+
   const currentStatus = { value: user.hidden, label: user.hidden ? 'Hidden' : 'Public' };
+
   const options = [
     { value: 'DRUMMER', label: 'Drummer' },
     { value: 'WEB_DEV', label: 'WEB_DEV' },
@@ -23,86 +34,97 @@ const ProfileModal = (props) => {
     { value: true, label: 'Hidden' },
     { value: false, label: 'Public' },
   ];
+  const onFormSubmit = (values) => {
+    const updatedUser = {
+      ...user,
+      ...values,
+      hidden: values.hidden.label ? values.hidden.value : values.hidden,
+      skills: values.skills.map((skill) => skill.value),
+    };
+    console.log(updatedUser);
+    handleSaveChanges(updatedUser);
+  };
 
-  const onSaveChangesClick = () => {
-    handleSaveChanges(newUser);
-  };
-  const onFieldChange = (event) => {
-    setNewUser({ ...newUser, [event.target.name]: event.target.value });
-  };
   const onHideModal = () => {
     handleCloseModal();
-    setNewUser(user);
-  };
-
-  const onChangeSkills = (event) => {
-    let selected = [];
-    if (event) {
-      event.forEach((item) => {
-        selected.push(item['value']);
-      });
-    }
-    setNewUser({ ...newUser, skills: selected });
-  };
-  const onStatusChange = (event) => {
-    setNewUser({ ...newUser, hidden: event['value'] });
   };
 
   return (
     <Modal show={showModal} onHide={onHideModal}>
       <Modal.Header className="border-0" closeButton>
         <Modal.Body>
-          <div>
-            <h3 className="mb-2 text-center">Edit your profile</h3>
-            <div className="mb-1">Name</div>
-            <input
-              className="input-box mb-2"
-              name="name"
-              value={newUser.name}
-              onChange={onFieldChange}
-              type="text"
-            />
-            <div className="mb-1">Email</div>
-            <input
-              className="input-box mb-2"
-              name="email"
-              value={newUser.email}
-              onChange={onFieldChange}
-              type="text"
-            />
-            <div className="mb-2">
-              <div className="mb-1">Skills</div>
-              <Select
-                className="basic-multi-select mb-1"
-                isMulti
-                name="skills"
-                defaultValue={currentSkills}
-                options={options}
-                closeMenuOnSelect={false}
-                onChange={onChangeSkills}
-              ></Select>
-            </div>
-            <div className="mb-1">Description</div>
-            <textarea
-              className="description-text-area mb-2"
-              name="description"
-              value={newUser.description}
-              onChange={onFieldChange}
-              type="text"
-            />
-            <div className="mb-3">
-              <div className="mb-1">Profile Status</div>
-              <Select
-                name="profileStatus"
-                defaultValue={currentStatus}
-                options={profileStatusOptions}
-                onChange={onStatusChange}
-              ></Select>
-            </div>
-            <div>
-              <Button onClick={onSaveChangesClick}>Save Changes</Button>
-            </div>
-          </div>
+          <h3 className="mb-2 text-center">Edit your profile</h3>
+          <Formik
+            validationSchema={editProfileSchema}
+            onSubmit={(values) => onFormSubmit(values)}
+            initialValues={initialValues}
+          >
+            {({
+              handleSubmit,
+              handleChange,
+              handleBlur,
+              setFieldValue,
+              setFieldTouched,
+              values,
+              touched,
+              errors,
+            }) => (
+              <>
+                <Form onSubmit={handleSubmit}>
+                  <TextInput
+                    type="text"
+                    label="Name*"
+                    name="name"
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    handleChange={handleChange}
+                    handleBlur={handleBlur}
+                  ></TextInput>
+
+                  <SelectInput
+                    label="Select Skills*"
+                    name="skills"
+                    options={options}
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    defaultValue={currentSkills}
+                    setFieldTouched={setFieldTouched}
+                    setFieldValue={setFieldValue}
+                    isMulti={true}
+                  ></SelectInput>
+
+                  <SelectInput
+                    label="Status*"
+                    name="hidden"
+                    options={profileStatusOptions}
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    defaultValue={currentStatus}
+                    setFieldTouched={setFieldTouched}
+                    setFieldValue={setFieldValue}
+                    isMulti={false}
+                  ></SelectInput>
+
+                  <TextInput
+                    type="text"
+                    label="Description*"
+                    name="description"
+                    values={values}
+                    touched={touched}
+                    errors={errors}
+                    handleChange={handleChange}
+                    handleBlur={handleBlur}
+                    textarea="textarea"
+                  ></TextInput>
+
+                  <Button type="submit">Save Changes</Button>
+                </Form>
+              </>
+            )}
+          </Formik>
         </Modal.Body>
       </Modal.Header>
     </Modal>
