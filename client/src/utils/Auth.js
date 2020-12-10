@@ -163,6 +163,7 @@ const thirdPartyAuth = async (provider, username) => {
         session: await firebase.auth().currentUser.multiFactor.getSession()
       }, username)
     } else {
+      await firebase.auth().currentUser.delete()
       return 'There is no account tied to this email'
     }
     
@@ -270,7 +271,7 @@ const createUser = async (username) => {
     loginStatusEmitter.emit('change', await response.text())
     return "You are now signed in"
   } else {
-    firebase.auth().signOut()
+    await firebase.auth().currentUser.delete()
     if(response.status === 409) {
       return "That username is not available"
     } else {
