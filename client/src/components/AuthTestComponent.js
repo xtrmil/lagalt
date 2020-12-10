@@ -10,6 +10,8 @@ export default class AuthTestComponent extends React.Component {
       this.setState({ loggedInUser: await user })
     })
   }
+
+  username = React.createRef()
   
   state = {
     msg: '',
@@ -21,6 +23,12 @@ export default class AuthTestComponent extends React.Component {
     setTimeout(() => {
       this.setState({ msg: '' })
     }, MSG_TIMEOUT)
+  }
+
+  handleSignUp = async provider => {
+    this.setState({ msg: '' })
+    const msg = await Auth.signUp(provider, this.username.current.value)
+    this.setMsg(msg)
   }
 
   handleSignIn = async provider => {
@@ -55,7 +63,19 @@ export default class AuthTestComponent extends React.Component {
       {!this.state.loggedInUser
         ?
           <div>
-            <button id="googleLoginButton" onClick={() => this.handleSignIn(Auth.providers.google)}>Sign in with Google</button>
+            <fieldset>
+              <legend>Sign in</legend>
+              <button id="googleLoginButton" onClick={() => this.handleSignIn(Auth.providers.google)}>Sign in with Google</button>
+            </fieldset>
+
+              <br />
+              <br />
+            <fieldset>
+              <legend>Sign up</legend>
+              <input type="text" placeholder="User name" ref={this.username} autoFocus></input>
+              <br />
+              <button id="googleLoginButton" onClick={() => this.handleSignUp(Auth.providers.google)}>Sign up with Google</button>
+            </fieldset>
 
             <br />
 
