@@ -9,6 +9,7 @@ import ProfilePage from './pages/ProfilePage';
 import { Router, Route, Switch } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserHistory } from 'history';
+import CreateProjectPage from './pages/CreateProjectPage';
 
 const history = createBrowserHistory();
 
@@ -23,6 +24,7 @@ function App() {
         <Route exact path="/project" component={ProjectViewPage} />
         <Route exact path="/profile" component={ProfilePage} />
         <Route exact path="/projects" component={ProjectsPage} />
+        <Route exact path="/project/create" component={CreateProjectPage} />
       </Switch>
     </Router>
   );
