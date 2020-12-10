@@ -10,5 +10,5 @@ public class ApplicationAdminView {
 
     private String applicationId;
     private String motivation;
-    private UserPublic userPublic;
+    private UserPublic user;
 }
