@@ -17,9 +17,11 @@ public class AuthService {
 
     @Autowired
     private UserService userService;
-    
+
     /**
-     * Checks whether the user name (user id) is available or not. Used when signing up
+     * Checks whether the user name (user id) is available or not. Used when signing
+     * up
+     * 
      * @param userId
      * @return 200 if available, 409 if username exists, 500 if other error
      */
@@ -27,8 +29,8 @@ public class AuthService {
         try {
             Firestore db = FirestoreClient.getFirestore();
             var existingUser = db.collection("users").document(userId).get().get();
-            return existingUser.exists() ? HttpStatus.OK : HttpStatus.CONFLICT;
-        } catch(Exception e) {
+            return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
+        } catch (Exception e) {
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
     }
@@ -39,14 +41,15 @@ public class AuthService {
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("userRecords").document(fbToken.getUid()).get().get();
             return userId.equals(user.get("userId"));
-            
-        } catch(Exception e) {
+
+        } catch (Exception e) {
             return false;
         }
     }
-    
+
     /**
      * Checks whether a user is member of a particular project
+     * 
      * @param projectId ownerId-projectTitle
      * @param jwtToken
      * @return
@@ -54,9 +57,10 @@ public class AuthService {
     public boolean isProjectMember(String projectId, String jwtToken) {
         return isPartOfProjectCollection(projectId, jwtToken, "members");
     }
-    
+
     /**
      * Checks whether a user is admin of a particular project
+     * 
      * @param projectId ownerId-projectTitle
      * @param jwtToken
      * @return
@@ -67,14 +71,16 @@ public class AuthService {
 
     private boolean isPartOfProjectCollection(String projectId, String jwtToken, String collection) {
         String userId = getUserId(jwtToken);
-        
-        if(userId != null) {
+
+        if (userId != null) {
             try {
                 Firestore db = FirestoreClient.getFirestore();
-                var ref = db.collection("projects").document(projectId).collection("admins").document(userId).get().get();
+                var ref = db.collection("projects").document(projectId).collection("admins").document(userId).get()
+                        .get();
                 return ref.exists();
-            } catch(Exception e) { }
-        }        
+            } catch (Exception e) {
+            }
+        }
         return false;
     }
 
@@ -84,10 +90,11 @@ public class AuthService {
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("userRecords").document(fbToken.getUid()).get().get();
 
-            if(user.exists()) {
+            if (user.exists()) {
                 return user.get("userId").toString();
             }
-        } catch(Exception e) {}
+        } catch (Exception e) {
+        }
         return null;
     }
 
@@ -95,19 +102,19 @@ public class AuthService {
         try {
             var auth = FirebaseAuth.getInstance();
             var firebaseToken = auth.verifyIdToken(jwtToken, true);
-            
+
             var db = FirestoreClient.getFirestore();
             var usernameAvailability = getUserNameAvailability(userData.getUserId());
-            if(!usernameAvailability.is2xxSuccessful()) {
+            if (!usernameAvailability.is2xxSuccessful()) {
                 return usernameAvailability;
             }
 
             var userRecordRef = db.collection("userRecords").document(firebaseToken.getUid());
             var userRecord = userRecordRef.get().get();
-            
-            if(!userRecord.exists()) {
+
+            if (!userRecord.exists()) {
                 userRecordRef.set(userData);
-                
+
                 var authUser = auth.getUser(firebaseToken.getUid());
                 var userProfile = new UserProfile();
                 userProfile.setEmail(authUser.getEmail());
@@ -119,13 +126,12 @@ public class AuthService {
             }
             return HttpStatus.I_AM_A_TEAPOT; // TODO fel retur
 
-        } catch(IllegalArgumentException | FirebaseAuthException e) {
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
             return HttpStatus.UNAUTHORIZED;
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.err.println(e.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR;
         }
     }
-
 
 }
