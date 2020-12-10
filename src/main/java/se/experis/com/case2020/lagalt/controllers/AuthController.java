@@ -33,12 +33,11 @@ public class AuthController {
         return new ResponseEntity<>(authService.getUserId(Authorization), HttpStatus.OK);
     }
 
-
     @CrossOrigin(origins = allowedHost)
     @GetMapping("/isUsernameAvailable/{userId}")
     public ResponseEntity<Boolean> isUserIdAvailable(@PathVariable String userId) {
         HttpStatus status = authService.getUserNameAvailability(userId);
-        if(status == HttpStatus.INTERNAL_SERVER_ERROR) {
+        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             return new ResponseEntity<>(status);
         }
         return new ResponseEntity<>(status == HttpStatus.OK ? true : false, HttpStatus.OK);
@@ -54,14 +53,14 @@ public class AuthController {
     @CrossOrigin(origins = allowedHost)
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestHeader String Authorization, @RequestBody UserData userData) {
-        if(!isValidUsername(userData.getUserId())) {
+        if (!isValidUsername(userData.getUserId())) {
             return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
         }
         userData.setUserId(userData.getUserId().trim());
         HttpStatus httpStatus = authService.addUserRecord(userData, Authorization);
-        
+
         String signedInUser = null;
-        if(httpStatus.is2xxSuccessful()) {
+        if (httpStatus.is2xxSuccessful()) {
             signedInUser = userData.getUserId();
         }
 
@@ -74,10 +73,10 @@ public class AuthController {
         try {
             var auth = FirebaseAuth.getInstance();
             var foundToken = auth.verifyIdToken(Authorization, true);
-            
-            if(foundToken != null) {
+
+            if (foundToken != null) {
                 var foundUser = auth.getUser(foundToken.getUid());
-                if(foundUser != null) {
+                if (foundUser != null) {
                     auth.revokeRefreshTokens(foundUser.getUid());
                 }
             }
@@ -88,8 +87,9 @@ public class AuthController {
         }
     }
 
-    private boolean isValidUsername(String username) {
-        return username != null && !username.isBlank();
+    // public for unit test
+    public boolean isValidUsername(String username) {
+        String regex = "[_0-9a-zA-Z]{1,20}";
+        return username.matches(regex);
     }
 }
-
