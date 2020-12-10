@@ -5,6 +5,10 @@ const Navbar = (props) => {
   const onLoginClick = () => {
     props.history.push('/login');
   };
+  const onRegisterClick = () => {
+    props.history.push('/register');
+  };
+
   return (
     <BootstrapNavbar bg="dark" variant="dark" expand="lg">
       <BootstrapNavbar.Brand className="light" href="/">
@@ -15,8 +19,11 @@ const Navbar = (props) => {
         <Nav.Link href="#placeholder">Placeholder</Nav.Link>
         <Nav.Link href="#placeholder">Placeholder</Nav.Link>
       </Nav>
-      <Button onClick={onLoginClick} variant="secondary">
+      <Button onClick={onLoginClick} variant="dark">
         Login
+      </Button>
+      <Button onClick={onRegisterClick} variant="primary">
+        Sign up
       </Button>
     </BootstrapNavbar>
   );

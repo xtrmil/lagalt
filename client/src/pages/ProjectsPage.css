@@ -23,8 +23,18 @@
     margin-left: 425px;
 }
 
+.btn-createNewProject {
+    margin-left: 1104px;
+    margin-top: 20px;
+}
+
 h4, h6 {
     color: #184A73;
+}
+
+h1 {
+    color: #184A73;
+    margin-left: 158px;
 }
 
 
