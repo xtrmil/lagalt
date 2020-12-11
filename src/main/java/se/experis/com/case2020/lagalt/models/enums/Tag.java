@@ -23,9 +23,4 @@ public enum Tag {
         this.DISPLAY_TAG = displayTag;
         this.INDUSTRY = industry;
     }
-
-//    public Tag getTag(String tagName){
-//
-//        return Tag.valueOf(tagName);
-//    }
 }
