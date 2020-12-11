@@ -177,7 +177,6 @@ public class ProjectService {
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-
         DocumentReference documentReference = dbFirestore.collection("projects").document(projectId);
         ApiFuture<DocumentSnapshot> future = documentReference.get();
         DocumentSnapshot document = future.get();
@@ -197,7 +196,6 @@ public class ProjectService {
             project.setMembers(null);
 
             Firestore dbFireStore = FirestoreClient.getFirestore();
-
             ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("projects").document(projectId).set(project);
 
             cr.data = collectionApiFuture.get().getUpdateTime().toString();
@@ -258,21 +256,9 @@ public class ProjectService {
             } else {
 
                 entry.getValue().forEach(item -> {
-
-                    DocumentReference documentReference = dbFirestore.collection("users").document(item);
-                    ApiFuture<DocumentSnapshot> future = documentReference.get();
-
-                    try {
-                        DocumentSnapshot document = future.get();
-                        if (document.exists()) {     // checking if users exists in the database before adding them as admins/members
-
-                            ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
-                                    .collection(entry.getKey()).document(item).set(new HashMap<String, Object>());
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
+                    if (userExistInDb(dbFirestore, item)) {
+                        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
+                                .collection(entry.getKey()).document(item).set(new HashMap<String, Object>());
                     }
                 });
             }
@@ -287,4 +273,20 @@ public class ProjectService {
         }
         return null;
     }
+
+    public boolean userExistInDb(Firestore dbFirestore, String userName) {   // move to AuthService
+        DocumentReference documentReference = dbFirestore.collection("users").document(userName);
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+        try {
+            DocumentSnapshot document = future.get();
+            return document.exists();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
+
+
