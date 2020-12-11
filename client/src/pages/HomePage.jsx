@@ -23,9 +23,11 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <Button onClick={onProjectViewClick} variant="success">
-                Join
-              </Button>
+              <div className="stretched-button">
+                <Button onClick={onProjectViewClick} variant="success">
+                  Join
+                </Button>
+              </div>
             </div>
           </div>
           <a href="/project" className="stretched-link"></a>
@@ -46,9 +48,11 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <Button onClick={onProjectViewClick} variant="success">
-                Join
-              </Button>
+              <div className="stretched-button">
+                <Button onClick={onProjectViewClick} variant="success">
+                  Join
+                </Button>
+              </div>
             </div>
           </div>
           <a href="/project" className="stretched-link"></a>
@@ -69,12 +73,14 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <Button onClick={onProjectViewClick} variant="info">
-                Message board & chat
-              </Button>
-              <Button className="btn-admin" onClick={onProjectViewClick} variant="info">
-                Admin
-              </Button>{' '}
+              <div className="stretched-button">
+                <Button onClick={onProjectViewClick} variant="info">
+                  Message board & chat
+                </Button>
+                <Button className="ml-4" onClick={onProjectViewClick} variant="info">
+                  Admin
+                </Button>
+              </div>
             </div>
           </div>
           <a href="/project" className="stretched-link"></a>
@@ -95,9 +101,11 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <Button onClick={onProjectViewClick} variant="info">
-                Message board & chat
-              </Button>
+              <div className="stretched-button">
+                <Button onClick={onProjectViewClick} variant="info">
+                  Message board & chat
+                </Button>
+              </div>
             </div>
           </div>
           <a href="/project" className="stretched-link"></a>
