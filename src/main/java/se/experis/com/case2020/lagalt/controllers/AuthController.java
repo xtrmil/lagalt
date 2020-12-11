@@ -47,7 +47,11 @@ public class AuthController {
     @GetMapping("/signin")
     public ResponseEntity<String> signin(@RequestHeader String Authorization) {
         var userId = authService.getUserId(Authorization);
-        return new ResponseEntity<>(userId, userId == null ? HttpStatus.UNAUTHORIZED : HttpStatus.OK);
+        if (userId == null) {
+            return new ResponseEntity<>("User does not exist", HttpStatus.UNAUTHORIZED);
+        } else {
+            return new ResponseEntity<>(userId, HttpStatus.OK);
+        }
     }
 
     @CrossOrigin(origins = allowedHost)
@@ -57,14 +61,8 @@ public class AuthController {
             return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
         }
         userData.setUserId(userData.getUserId().trim());
-        HttpStatus httpStatus = authService.addUserRecord(userData, Authorization);
 
-        String signedInUser = null;
-        if (httpStatus.is2xxSuccessful()) {
-            signedInUser = userData.getUserId();
-        }
-
-        return new ResponseEntity<>(signedInUser, httpStatus);
+        return authService.addUserRecord(userData, Authorization);
     }
 
     @CrossOrigin(origins = allowedHost)

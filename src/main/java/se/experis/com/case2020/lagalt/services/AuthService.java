@@ -3,10 +3,12 @@ package se.experis.com.case2020.lagalt.services;
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.user.UserData;
@@ -94,25 +96,31 @@ public class AuthService {
                 return user.get("userId").toString();
             }
         } catch (Exception e) {
+            System.err.println(e.getMessage());
         }
         return null;
     }
 
-    public HttpStatus addUserRecord(UserData userData, String jwtToken) {
+    public ResponseEntity<String> addUserRecord(UserData userData, String jwtToken) {
         try {
             var auth = FirebaseAuth.getInstance();
             var firebaseToken = auth.verifyIdToken(jwtToken, true);
 
             var db = FirestoreClient.getFirestore();
-            var usernameAvailability = getUserNameAvailability(userData.getUserId());
-            if (!usernameAvailability.is2xxSuccessful()) {
-                return usernameAvailability;
-            }
 
             var userRecordRef = db.collection("userRecords").document(firebaseToken.getUid());
             var userRecord = userRecordRef.get().get();
 
-            if (!userRecord.exists()) {
+            if (userRecord.exists()) {
+                // auth user is alredy tied to a db user
+                return new ResponseEntity<>("There is already an account tied to this email. Try to log in instead",
+                        HttpStatus.FORBIDDEN);
+            } else {
+                var usernameAvailability = getUserNameAvailability(userData.getUserId());
+                if (!usernameAvailability.is2xxSuccessful()) {
+                    return new ResponseEntity<>("That username is not available", usernameAvailability);
+                }
+
                 userRecordRef.set(userData);
 
                 var authUser = auth.getUser(firebaseToken.getUid());
@@ -120,17 +128,18 @@ public class AuthService {
                 userProfile.setEmail(authUser.getEmail());
                 userProfile.setName(authUser.getDisplayName());
                 userProfile.setUserId(userData.getUserId().trim());
+
                 userService.saveUserDetails(userProfile);
 
-                return HttpStatus.CREATED;
+                return new ResponseEntity<>(userProfile.getUserId(), HttpStatus.CREATED);
             }
-            return HttpStatus.I_AM_A_TEAPOT; // TODO fel retur
 
         } catch (IllegalArgumentException | FirebaseAuthException e) {
-            return HttpStatus.UNAUTHORIZED;
+            // invalid token
+            return new ResponseEntity<>("Error: You are not authenticated", HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            return HttpStatus.INTERNAL_SERVER_ERROR;
+            return new ResponseEntity<>("An error occured on the server", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

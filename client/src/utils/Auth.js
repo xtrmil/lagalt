@@ -4,18 +4,19 @@ import { Observable } from 'rxjs';
 import { EventEmitter } from 'events'
 
 const loginStatusEmitter = new EventEmitter()
+const loginStatusEvent = 'change'
 
 const host = 'http://localhost:8080/api/v1'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBvGQf08nkANAW5Vb1BNq6P0FUS-a2GsNw",
-  authDomain: "experis-lagalt.firebaseapp.com",
-  databaseURL: "https://experis-lagalt.firebaseio.com",
-  projectId: "experis-lagalt",
-  storageBucket: "experis-lagalt.appspot.com",
-  messagingSenderId: "98680547683",
-  appId: "1:98680547683:web:9fc1bf29f760458553cb56",
-  measurementId: "G-XL0C77WZWN"
+  apiKey: 'AIzaSyBvGQf08nkANAW5Vb1BNq6P0FUS-a2GsNw',
+  authDomain: 'experis-lagalt.firebaseapp.com',
+  databaseURL: 'https://experis-lagalt.firebaseio.com',
+  projectId: 'experis-lagalt',
+  storageBucket: 'experis-lagalt.appspot.com',
+  messagingSenderId: '98680547683',
+  appId: '1:98680547683:web:9fc1bf29f760458553cb56',
+  measurementId: 'G-XL0C77WZWN'
 };
 
 if (firebase.apps.length === 0) {
@@ -29,8 +30,8 @@ export const DevMode = {
 }
 
 // Dev Settings
-const testPhoneNr = "+46700000000"
-const testVerificationCode = "150803"
+const testPhoneNr = '+46700000000'
+const testVerificationCode = '150803'
 
 const recaptchaContainer = 'authContainer' // id of html element where the reCaptcha auth is placed
 
@@ -50,30 +51,45 @@ export const dev = {
 
 }
 
-export const providers = {
+export const Providers = {
   google: 0,
 }
+
+export const AuthState = {
+  authed: 0,
+  chooseUsername: 1,
+  none: 2,
+}
+
+// global variables
+let gCurrentUser
+let gUsername
+// let gResolver
+// let gVerificationId
 
 export const loggedInUser = () => {
   return new Observable(observer => {
 
     firebase.auth().onAuthStateChanged(async user => {
-      console.log('auth state changed')
+      gCurrentUser = user
+      console.log('auth state changed', user)
 
       if (user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
-        observer.next(await getLoggedInUser())
-      } else {
-        observer.next(null)
+          console.log('AuthState: multi factor authed')
+          const username = await getLoggedInUser()
+          observer.next({ state: username ? AuthState.authed : AuthState.chooseUsername, username })
+        } else {
+          console.log('AuthState: no auth')
+        observer.next({ state: AuthState.none, username: null })
       }
     })
 
-    loginStatusEmitter.on('change', async data => {
+    loginStatusEmitter.on(loginStatusEvent, async data => {
       console.log('listener received data', data)
       observer.next(data)
     })
   })
 }
-
 
 const getLoggedInUser = async () => {
   const token = await getToken()
@@ -91,7 +107,7 @@ const getLoggedInUser = async () => {
 }
 
 export const getToken = async () => {
-  const user = firebase.auth().currentUser
+  const user = gCurrentUser
   if (user) {
     return await user.getIdToken()
   }
@@ -99,24 +115,24 @@ export const getToken = async () => {
 }
 
 export const signUp = (provider, username) => {
-  console.log(username)
-  
-  if(!username) {
+  if (!username) {
     return 'No username given'
   }
+  gUsername = username
   return login(provider, username)
 }
 
-export const login = (provider, username) => {
+export const login = (provider) => {
   switch (provider) {
-    case providers.google:
-      return thirdPartyAuth(new firebase.auth.GoogleAuthProvider(), username)
+    case Providers.google:
+      return thirdPartyAuth(new firebase.auth.GoogleAuthProvider())
     default:
       return 'Unsupported login provider'
   }
 }
 
 export const logout = async () => {
+  gUsername = null
   const token = await getToken()
   if (!token) {
     return
@@ -136,54 +152,56 @@ export const logout = async () => {
   return body
 }
 
-
 // non exports
 
-const thirdPartyAuth = async (provider, username) => {
+const thirdPartyAuth = async (provider) => {
   try {
     await firebase.auth().signInWithPopup(provider)
-
-    console.log('Enrolling new user...')
-
+    
     let phoneNumber
-    if (dev.mode !== DevMode.off) {
-      phoneNumber = testPhoneNr
-    } else {
-      phoneNumber = prompt('Please enter your phone number. \n\nProclaimer: Google stores and uses phone numbers to improve spam and abuse prevention across all Google services. Standard rates may apply')
+    if(gUsername) {
+      console.log('Enrolling new user...', gUsername)
+      if (dev.mode !== DevMode.off) {
+        phoneNumber = testPhoneNr
+      } else {
+        phoneNumber = prompt('')
+      }
+
       if (!phoneNumber) {
         return 'Login attempt aborted'
       }
-    }
-    console.log('using phone nr', phoneNumber)
-
-    if(username) {
-      // new account
-      return smsVerification({
-        phoneNumber,
-        session: await firebase.auth().currentUser.multiFactor.getSession()
-      }, username)
-    } else {
-      await firebase.auth().currentUser.delete()
-      return 'There is no account tied to this email'
-    }
+      console.log('using phone nr', phoneNumber)
     
+        if (gUsername) {
+          // new account
+          return smsVerification({
+            phoneNumber,
+            session: await gCurrentUser.multiFactor.getSession()
+          })
+        } else {
+          gCurrentUser.delete()
+          return 'There is no account tied to this email' // Do you wish to create an account instead?
+        }
+    } else {
+      // client tried to log in (and was verified through thirdPartyAuth) but no user was found in the db
+      firebase.auth().signOut()
+      return 'No user found'
+    }
+
   } catch (err) {
     if (err.code === 'auth/multi-factor-auth-required') {
-      
-      console.log('user', username)
-      
 
-      if(!username) {
+      console.log('auth user found')
+
+      if (!gUsername) {
         console.log('Signing in to existing account...')
-        
-        // login to existing account
-        return smsVerification({
-          multiFactorHint: err.resolver.hints[0],
-          session: err.resolver.session
-        }, null, err.resolver)
-      } else {
-        return 'There is already an account tied to this email, try to log in instead'
       }
+
+      // login to existing account
+      return smsVerification({
+        multiFactorHint: err.resolver.hints[0],
+        session: err.resolver.session
+      }, err.resolver)
 
     } else {
       console.error('login error 1')
@@ -201,9 +219,8 @@ const resetRecaptcha = () => {
   }
 }
 
-const smsVerification = async (phoneInfoOptions, username, resolver) => {
-  resetRecaptcha()
 
+const smsVerification = async (phoneInfoOptions, resolver) => {
   try {
     if (dev.mode !== DevMode.off) {
       firebase.auth().settings.appVerificationDisabledForTesting = true
@@ -217,16 +234,16 @@ const smsVerification = async (phoneInfoOptions, username, resolver) => {
     // presents recaptcha, then sends text
     const phoneAuthProvider = new firebase.auth.PhoneAuthProvider()
     const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier)
-    resetRecaptcha()
     console.log('reCaptcha solved')
-
+    resetRecaptcha()
+   
     console.log('text sent, prompting for code')
 
     let verificationCode
-    if (dev.mode === DevMode.ignoreAll) {
+    if(dev.mode === DevMode.ignoreAll) {
       verificationCode = testVerificationCode
     } else {
-      verificationCode = prompt('Please enter the verification that was sent to you')
+      verificationCode = prompt('Please enter the verification code that was sent to your phone')
     }
 
     const credentials = firebase.auth.PhoneAuthProvider.credential(verificationId, verificationCode)
@@ -235,23 +252,31 @@ const smsVerification = async (phoneInfoOptions, username, resolver) => {
     const multiFactorAssertion = firebase.auth.PhoneMultiFactorGenerator.assertion(credentials)
     console.log('assertion done')
 
+
     if (!resolver) { // no resolver => is enrollment
-      await firebase.auth().currentUser.multiFactor.enroll(multiFactorAssertion, 'User phone number');
+      await gCurrentUser.multiFactor.enroll(multiFactorAssertion, 'User phone number');
       console.log('enrolled user')
 
-      return createUser(username)
-      
+      return createUser(gUsername)
+
     } else {
       await resolver.resolveSignIn(multiFactorAssertion)
+      if (gUsername) {
+        // auth user was enrolled, but no db user was created yet
+        return createUser(gUsername)
+      }
       return authUser()
     }
+ 
   } catch (err) {
     console.log('sms verification error', err)
     return err.message
   }
 }
 
-const createUser = async (username) => {
+export const createUser = async (username) => {
+  gUsername = null
+  console.log(`createUser(${username})`)
   const token = await getToken()
   if (!token) {
     return `Error: Can't create user. You are not authenticated`
@@ -267,24 +292,27 @@ const createUser = async (username) => {
   })
 
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))
+  
+  const serverMsg = await response.text()
   if (response.ok) {
-    loginStatusEmitter.emit('change', await response.text())
-    return "You are now signed in"
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.authed, username: serverMsg })
+    return 'You are now signed in as ' + serverMsg
+  } else if(response.status === 409) {
+    // user exists with the given credentials
+    console.log('no action')
   } else {
-    await firebase.auth().currentUser.delete()
-    if(response.status === 409) {
-      return "That username is not available"
-    } else {
-      return "An error occured during login"
-    }
+    await firebase.auth().signOut()
   }
+  console.log('returning server msg', serverMsg)
+  return serverMsg;
 }
 
 const authUser = async () => {
+  gUsername = null
   const token = await getToken()
   if (!token) {
     console.log('not logged in')
-    return
+    return 'You are not authenticated'
   }
 
   const response = await fetch(host + '/signin', {
@@ -295,11 +323,16 @@ const authUser = async () => {
   })
 
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))
+
+  const serverMsg = await response.text()
   if (response.ok) {
-    loginStatusEmitter.emit('change', await response.text())
-    return "You are now signed in"
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.authed, username: serverMsg })
+    return 'You are now signed in as ' + serverMsg
   } else {
-    return "An error occured during login"
+    firebase.auth().signOut()
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.none })
+    console.log('server error on login', serverMsg)
+    return serverMsg
   }
 }
 
