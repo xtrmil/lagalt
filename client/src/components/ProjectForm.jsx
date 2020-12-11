@@ -23,7 +23,7 @@ const ProjectForm = () => {
   const onFormSubmit = (values) => {
     const project = {
       ...values,
-      industry: values.industry.value,
+      industry: values.industry,
       skills: values.skills.map((skill) => skill.value),
     };
     console.log(project);
@@ -76,7 +76,7 @@ const ProjectForm = () => {
               errors={errors}
               setFieldTouched={setFieldTouched}
               setFieldValue={setFieldValue}
-              isMulti={false}
+              isMulti={true}
             ></SelectInput>
             <TextInput
               type="text"

@@ -32,8 +32,7 @@ const SelectInput = (props) => {
           setFieldTouched(name);
         }}
         onChange={(opt) => {
-          console.log(opt);
-          setFieldValue(name, opt);
+          isMulti ? setFieldValue(name, opt) : setFieldValue(name, opt.value);
         }}
         styles={selectBorderColor(errors, touched, values, name)}
       ></Select>

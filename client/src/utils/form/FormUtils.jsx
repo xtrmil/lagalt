@@ -83,13 +83,10 @@ export const createProjectSchema = yup.object({
     )
     .nullable()
     .required('At least one skill is required'),
-  industry: yup
-    .array()
-    .of(
-      yup.object().shape({
-        label: yup.string().required(),
-        value: yup.string().required(),
-      }),
-    )
-    .required('Select an industry'),
+  industry: yup.string().required('Select an industry'),
+});
+
+export const joinProjectSchema = yup.object({
+  motivation: yup.string().required('Motivation is required'),
+  acceptTerms: yup.bool().oneOf([true], 'Accept Terms is required'),
 });
