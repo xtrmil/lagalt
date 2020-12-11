@@ -2,7 +2,6 @@ package se.experis.com.case2020.lagalt.models.project;
 
 import lombok.Data;
 import org.springframework.stereotype.Component;
-import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,6 +16,6 @@ public class ProjectSearch {
     private String industry;
     private Set<String> tags;
     private Map<String,String> images;
-    private Timestamp createdAt;
+    private String createdAt;
     private int memberCount;
 }

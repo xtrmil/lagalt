@@ -2,6 +2,7 @@ package se.experis.com.case2020.lagalt.services;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
@@ -13,8 +14,10 @@ import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.user.UserPrivate;
 import se.experis.com.case2020.lagalt.models.user.UserPublic;
 import se.experis.com.case2020.lagalt.utils.Command;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpStatus;
 
 @Service
@@ -117,7 +120,8 @@ public class UserService {
         DocumentSnapshot document = future.get();
         if (document.exists()) {
             if (user.getSkills() != null) {
-                deleteCollection(dbFirestore.collection("users").document(user.getUserId()).collection("skills"),10);
+
+                deleteCollection(dbFirestore.collection("users").document(user.getUserId()).collection("skills"), 10);
                 user.getSkills().forEach(skill -> {
                     if (EnumUtils.isValidEnum(Tag.class, skill)) {
                         addToUser(user.getUserId(), "skills", skill);

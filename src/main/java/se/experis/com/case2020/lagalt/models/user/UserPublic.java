@@ -5,8 +5,6 @@ import lombok.Data;
 import java.net.URL;
 import java.util.Set;
 
-
-
 @Component
 @Data
 public class UserPublic {

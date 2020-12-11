@@ -27,9 +27,8 @@ public class EnumController {
     @Autowired
     UserService userService;
 
-
     @GetMapping("/industries")
-    public ResponseEntity<CommonResponse> getIndustries(HttpServletRequest request, HttpServletResponse response){
+    public ResponseEntity<CommonResponse> getIndustries(HttpServletRequest request, HttpServletResponse response) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
@@ -38,11 +37,11 @@ public class EnumController {
                 .collect(Collectors.toMap(i -> i.name(), i -> i.INDUSTRY_NAME));
         cr.message = "Successfully retrieved available Industries";
         cmd.setResult(resp);
-        return new ResponseEntity<>(cr,resp);
+        return new ResponseEntity<>(cr, resp);
     }
 
     @GetMapping("/tags")
-    public ResponseEntity<CommonResponse> getTags(HttpServletRequest request, HttpServletResponse response){
+    public ResponseEntity<CommonResponse> getTags(HttpServletRequest request, HttpServletResponse response) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
@@ -51,26 +50,26 @@ public class EnumController {
                 .collect(Collectors.toMap(i -> i.name(), i -> i.DISPLAY_TAG));
         cr.message = "Successfully retrieved available Tags";
         cmd.setResult(resp);
-        return new ResponseEntity<>(cr,resp);
+        return new ResponseEntity<>(cr, resp);
     }
 
     @GetMapping("/tags/{industry}")
-    public ResponseEntity<CommonResponse> getTagsInIndustry(HttpServletRequest request, HttpServletResponse response, @PathVariable("industry") String industryName){
+    public ResponseEntity<CommonResponse> getTagsInIndustry(HttpServletRequest request, HttpServletResponse response, @PathVariable("industry") String industryName) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
-        response.addHeader("Location", "/available/tags/"+ industryName);
+        response.addHeader("Location", "/available/tags/" + industryName);
 
         cr.data = Stream.of(Tag.values())
                 .filter(tag -> tag.INDUSTRY.equals(industryName))
                 .collect(Collectors.toMap(i -> i.name(), i -> i.DISPLAY_TAG));
         cr.message = "Successfully retrieved available Tags from industry: " + industryName;
         cmd.setResult(resp);
-        return new ResponseEntity<>(cr,resp);
+        return new ResponseEntity<>(cr, resp);
     }
 
     @GetMapping("/projectStatuses")
-    public ResponseEntity<CommonResponse> getProjectStatuses(HttpServletRequest request, HttpServletResponse response){
+    public ResponseEntity<CommonResponse> getProjectStatuses(HttpServletRequest request, HttpServletResponse response) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
@@ -79,20 +78,20 @@ public class EnumController {
                 .collect(Collectors.toMap(i -> i.name(), i -> i.STATUS));
         cr.message = "Successfully retrieved available ProjectStatuses";
         cmd.setResult(resp);
-        return new ResponseEntity<>(cr,resp);
+        return new ResponseEntity<>(cr, resp);
     }
 
     @GetMapping("/applicationStatuses")
-    public ResponseEntity<CommonResponse> getApplicationStatuses(HttpServletRequest request, HttpServletResponse response){
+    public ResponseEntity<CommonResponse> getApplicationStatuses(HttpServletRequest request, HttpServletResponse response) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
         response.addHeader("Location", "/available/applicationStatuses/");
 
         cr.data = Stream.of(ApplicationStatus.values())
-                    .collect(Collectors.toMap(i -> i.name(), i -> i.STATUS));
+                .collect(Collectors.toMap(i -> i.name(), i -> i.STATUS));
         cr.message = "Successfully retrieved available ApplicationStatuses";
         cmd.setResult(resp);
-        return new ResponseEntity<>(cr,resp);
+        return new ResponseEntity<>(cr, resp);
     }
 }

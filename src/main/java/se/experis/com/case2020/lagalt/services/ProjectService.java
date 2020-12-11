@@ -2,7 +2,6 @@ package se.experis.com.case2020.lagalt.services;
 
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
-import com.google.cloud.storage.Acl;
 import com.google.firebase.cloud.FirestoreClient;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.http.HttpStatus;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Service;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Industry;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
-import se.experis.com.case2020.lagalt.models.project.ProjectCreate;
 import se.experis.com.case2020.lagalt.models.project.ProjectMember;
 import se.experis.com.case2020.lagalt.models.project.ProjectNonMember;
 import se.experis.com.case2020.lagalt.models.project.ProjectSearch;
@@ -19,14 +17,11 @@ import se.experis.com.case2020.lagalt.utils.Command;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @Service
 public class ProjectService {
-
 
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, String projectId) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
@@ -34,33 +29,39 @@ public class ProjectService {
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("projects").document(projectId);
-        ApiFuture<DocumentSnapshot> future = documentReference.get();
-        DocumentSnapshot document = future.get();
+        DocumentReference projectReference = dbFirestore.collection("projects").document(projectId);
+        ApiFuture<DocumentSnapshot> future = projectReference.get();
+        DocumentSnapshot projectSnapshot = future.get();
 
         ProjectSearch project = null;
+        ProjectNonMember createdAtProject = null;
 
-        if (document.exists()) {
+        if (projectSnapshot.exists()) {
 
-            CollectionReference membersReference = dbFirestore.collection("projects").document(projectId).collection("members");
-            Iterable<DocumentReference> members = membersReference.listDocuments();
+            project = projectSnapshot.toObject(ProjectSearch.class);
+            createdAtProject = projectSnapshot.toObject(ProjectNonMember.class);
+            CollectionReference membersReference = projectReference.collection("members");
+            if (membersReference != null) {
+                ProjectSearch tempProject = project;
+                Iterable<DocumentReference> members = membersReference.listDocuments();
 
-            project = document.toObject(ProjectSearch.class);
-            ProjectSearch tempProject = project;
-            Set<String> tagSet = new HashSet<>();
-            members.forEach(collection -> {
-                tempProject.setMemberCount(tempProject.getMemberCount() + 1);
-            });
-            project = tempProject;
+                members.forEach(collection -> {
+                    tempProject.setMemberCount(tempProject.getMemberCount() + 1);
+                });
+                project = tempProject;
+            }
+            CollectionReference tagCollectionReference = projectReference.collection("tags");
+            if (tagCollectionReference != null) {
+                Iterable<DocumentReference> tags = tagCollectionReference.listDocuments();
+                Set<String> tagSet = new HashSet<>();
+                tags.forEach(tag -> {
+                    tagSet.add(tag.getId());
+                });
+                project.setTags(tagSet);
+            }
 
-            CollectionReference tagCollectionReference = dbFirestore.collection("projects").document(projectId).collection("tags");
-            Iterable<DocumentReference> tags = tagCollectionReference.listDocuments();
-
-            tags.forEach(tag -> {
-                tagSet.add(tag.getId());
-            });
-            project.setTags(tagSet);
             project.setProjectId(projectId);
+            project.setCreatedAt(createdAtProject.getCreatedAtForDb().toDate().toString());
 
             cr.message = "Search result for project with Id: " + projectId;
             resp = HttpStatus.OK;
@@ -124,14 +125,14 @@ public class ProjectService {
                     }
                 });
 
-                project = (ProjectMember) addDataToProject(project, projectInfo, projectId);
+                project = (ProjectMember) addDataToResponseProject(project, projectInfo, projectId);
                 project.setMessageBoards(projectInfo.get("messageBoards"));
                 project.setLinks(linksMap);
 
                 cr.data = project;
             } else {
                 ProjectNonMember project = projectDocument.toObject(ProjectNonMember.class);
-                project = addDataToProject(project, projectInfo, projectId);
+                project = addDataToResponseProject(project, projectInfo, projectId);
 
                 cr.data = project;
             }
@@ -148,43 +149,56 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, ProjectCreate project){
+    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, ProjectNonMember project) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
 
         project.setIndustry(addIndustry(project.getIndustry()));
-        addTagsToCollection(project);
+
+        addDataToCollection(project.getProjectId(), new HashMap<>() {{
+            put("tags", project.getTags());
+        }});
+
         project.setTags(null);
 
         Firestore dbFireStore = FirestoreClient.getFirestore();
         ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("projects").document(project.getProjectId()).set(project);
 
-
-
         response.addHeader("Location", "/projects/" + project.getProjectId());
-        cr.message = "Project with id " + project.getProjectId() + " Created at " + project.getCreatedAt().toDate();
+        cr.message = "Project with id " + project.getProjectId() + " Created at " + project.getCreatedAtForDb().toDate();
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, ProjectMember project) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, ProjectMember project, String projectId) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("projects").document(project.getProjectId());
+
+        DocumentReference documentReference = dbFirestore.collection("projects").document(projectId);
         ApiFuture<DocumentSnapshot> future = documentReference.get();
         DocumentSnapshot document = future.get();
+
         if (document.exists()) {
 
-            addTagsToCollection(project);
-            project.setTags(null);
             project.setIndustry(addIndustry(project.getIndustry()));
 
+            addDataToCollection(projectId, new HashMap<>() {{
+                put("tags", project.getTags());
+                put("admins", project.getAdmins());
+                put("members", project.getMembers());
+            }});
+
+            project.setTags(null);
+            project.setAdmins(null);
+            project.setMembers(null);
+
             Firestore dbFireStore = FirestoreClient.getFirestore();
-            ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("projects").document(project.getProjectId()).set(project);
+
+            ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("projects").document(projectId).set(project);
 
             cr.data = collectionApiFuture.get().getUpdateTime().toString();
             cr.message = "Project data successfully updated for project: " + project.getProjectId();
@@ -199,11 +213,12 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ProjectNonMember addDataToProject(ProjectNonMember project, Map<String, Set<String>> projectInfo, String projectId) {
+    public ProjectNonMember addDataToResponseProject(ProjectNonMember project, Map<String, Set<String>> projectInfo, String projectId) {
         project.setMembers(projectInfo.get("members"));
         project.setAdmins(projectInfo.get("admins"));
         project.setTags(projectInfo.get("tags"));
         project.setProjectId(projectId);
+        project.setCreatedAt(project.getCreatedAtForDb().toDate().toString());
         return project;
     }
 
@@ -224,18 +239,44 @@ public class ProjectService {
         }
     }
 
-    public void addTagsToCollection(ProjectNonMember project) {
+    public void addDataToCollection(String projectId, Map<String, Set<String>> data) {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        data.entrySet().forEach(entry -> {
 
-        if (project.getTags() != null) {
-            Firestore dbFirestore = FirestoreClient.getFirestore();
-            deleteCollection(dbFirestore.collection("projects").document(project.getProjectId()).collection("tags"), 10);
-            project.getTags().forEach(tag -> {
-                if (EnumUtils.isValidEnum(Tag.class, tag)) {
-                    ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(project.getProjectId())
-                            .collection("tags").document(tag).set(new HashMap<String, Object>());
-                }
-            });
-        }
+            if (dbFirestore.collection("projects").document(projectId).collection(entry.getKey()) != null) {
+                deleteCollection(dbFirestore.collection("projects").document(projectId).collection(entry.getKey()), 10);
+            }
+
+            if (entry.getKey().equals("tags")) {
+
+                entry.getValue().forEach(tag -> {
+                    if (EnumUtils.isValidEnum(Tag.class, tag)) {
+                        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
+                                .collection(entry.getKey()).document(tag).set(new HashMap<String, Object>());
+                    }
+                });
+            } else {
+
+                entry.getValue().forEach(item -> {
+
+                    DocumentReference documentReference = dbFirestore.collection("users").document(item);
+                    ApiFuture<DocumentSnapshot> future = documentReference.get();
+
+                    try {
+                        DocumentSnapshot document = future.get();
+                        if (document.exists()) {     // checking if users exists in the database before adding them as admins/members
+
+                            ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
+                                    .collection(entry.getKey()).document(item).set(new HashMap<String, Object>());
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
     }
 
     public String addIndustry(String industry) {
