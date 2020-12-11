@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import se.experis.com.case2020.lagalt.models.user.UserProfile;
+import se.experis.com.case2020.lagalt.models.user.UserPrivate;
 import se.experis.com.case2020.lagalt.services.AuthService;
 import se.experis.com.case2020.lagalt.services.UserService;
 
@@ -76,11 +76,11 @@ public class AuthController {
                 }
 
                 userRecordDocument.set(body);
-                UserProfile userProfile = new UserProfile();
-                userProfile.setEmail(authUser.getEmail());
-                userProfile.setName(authUser.getDisplayName());
-                userProfile.setUserId(userId);
-                userService.saveUserDetails(userProfile);
+                UserPrivate userPrivate = new UserPrivate();
+                userPrivate.setEmail(authUser.getEmail());
+                userPrivate.setName(authUser.getDisplayName());
+                userPrivate.setUserId(userId);
+                userService.saveUserDetails(userPrivate);
                 System.out.println("/auth: New db user created");
             } else {
                 // existing user

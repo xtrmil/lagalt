@@ -15,29 +15,29 @@ import java.util.concurrent.ExecutionException;
 
 
 @RestController
-@RequestMapping(value = "/api/v1/", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/projects", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ProjectController {
 
     @Autowired
     ProjectService projectService;
 
-    @GetMapping("/projects")
+    @GetMapping("/")
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam String search) throws ExecutionException, InterruptedException {
         return projectService.getProjectSearch(request, response, search);
     }
 
-    @GetMapping("/projects/{projectId}")
+    @GetMapping("/{projectId}")
     public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestHeader String userId)
             throws ExecutionException, InterruptedException {
         return projectService.getProjectDetails(request, response, projectId, userId);
     }
 
-    @PostMapping("/projects/new")
+    @PostMapping("/new")
     public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMember project) {
         return projectService.createNewProject(request, response, project);
     }
 
-    @PutMapping("/projects/{projectId}")
+    @PutMapping("/{projectId}")
     public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestBody ProjectMember project) throws ExecutionException, InterruptedException {
         return projectService.updateProjectDetails(request, response, project, projectId);
     }
