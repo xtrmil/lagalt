@@ -35,6 +35,21 @@ export const inputBorderColor = (errors, touched, values, name) => {
     : {};
 };
 
+export const editProjectSchema = yup.object({
+  name: yup.string().required('Name is a required field'),
+  skills: yup
+    .array()
+    .of(
+      yup.object().shape({
+        label: yup.string().required(),
+        value: yup.string().required(),
+      }),
+    )
+    .nullable()
+    .required('Select at least one skill'),
+  description: yup.string().required('Description is a required field'),
+});
+
 export const editProfileSchema = yup.object({
   name: yup.string().required('Name is a required field'),
   skills: yup
@@ -46,8 +61,13 @@ export const editProfileSchema = yup.object({
       }),
     )
     .nullable()
-    .required('Select atleast one skill'),
+    .required('Select at least one skill'),
   description: yup.string().required('Description is a required field'),
+});
+
+export const updateProjectSchema = yup.object({
+  updateText: yup.string().required('Error'),
+  progress: yup.string().required('Select progress'),
 });
 
 export const createProjectSchema = yup.object({

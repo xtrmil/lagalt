@@ -3,9 +3,9 @@ import { Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import SelectInput from './form/SelectInput';
 import TextInput from './form/TextInput';
-import { createProjectSchema } from '../utils/form/FormUtils';
+import { updateProjectSchema } from '../utils/form/FormUtils';
 const AdminForm = () => {
-  const initialValues = { progress: '' };
+  const initialValues = { updateText: '', progress: '' };
 
   const progressOptions = [
     { value: 'FOUNDING', label: 'Founding' },
@@ -15,15 +15,11 @@ const AdminForm = () => {
   ];
 
   const onFormSubmit = (values) => {
-    const project = {
-      ...values,
-      industry: values.progress.value,
-    };
-    console.log(project);
+    console.log(values);
   };
   return (
     <Formik
-      validationSchema={createProjectSchema}
+      validationSchema={updateProjectSchema}
       onSubmit={(values) => onFormSubmit(values)}
       initialValues={initialValues}
     >
@@ -42,7 +38,7 @@ const AdminForm = () => {
             <TextInput
               type="text"
               label="Project updates (public)*"
-              name="project_updates_(public)"
+              name="updateText"
               values={values}
               touched={touched}
               errors={errors}
@@ -62,9 +58,8 @@ const AdminForm = () => {
               isMulti={false}
             ></SelectInput>
             <Button className="btn-save" type="submit" variant="success">
-              {' '}
               Save
-            </Button>{' '}
+            </Button>
           </Form>
         </>
       )}

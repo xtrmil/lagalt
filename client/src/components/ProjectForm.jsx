@@ -3,7 +3,6 @@ import { Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from './form/TextInput';
 import SelectInput from './form/SelectInput';
-import { createProjectSchema } from '../utils/form/FormUtils';
 const ProjectForm = () => {
   const initialValues = { title: '', description: '', skills: null, industry: '' };
 

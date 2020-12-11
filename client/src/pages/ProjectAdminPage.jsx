@@ -11,7 +11,7 @@ const ProjectAdminPage = (props) => {
     <>
       <Button className="btn-createNewProject" onClick={onProjectViewClick} variant="info">
         Create new project
-      </Button>{' '}
+      </Button>
       <div className="projectAdminHeading">
         <h1>Incoming applications</h1>
       </div>
@@ -36,13 +36,13 @@ const ProjectAdminPage = (props) => {
             <td>
               <Button className="btn-approve" onClick={onProjectViewClick} variant="success">
                 Approve
-              </Button>{' '}
+              </Button>
               <Button className="btn-decline" onClick={onProjectViewClick} variant="danger">
                 Decline
-              </Button>{' '}
+              </Button>
               <Button className="btn-details" onClick={onProjectViewClick} variant="secondary">
                 Details
-              </Button>{' '}
+              </Button>
             </td>
           </tr>
           <tr>
@@ -51,13 +51,13 @@ const ProjectAdminPage = (props) => {
             <td>
               <Button className="btn-approve" onClick={onProjectViewClick} variant="success">
                 Approve
-              </Button>{' '}
+              </Button>
               <Button className="btn-decline" onClick={onProjectViewClick} variant="danger">
                 Decline
-              </Button>{' '}
+              </Button>
               <Button className="btn-details" onClick={onProjectViewClick} variant="secondary">
                 Details
-              </Button>{' '}
+              </Button>
             </td>
           </tr>
           <tr>
@@ -66,13 +66,13 @@ const ProjectAdminPage = (props) => {
             <td>
               <Button className="btn-approve" onClick={onProjectViewClick} variant="success">
                 Approve
-              </Button>{' '}
+              </Button>
               <Button className="btn-decline" onClick={onProjectViewClick} variant="danger">
                 Decline
-              </Button>{' '}
+              </Button>
               <Button className="btn-details" onClick={onProjectViewClick} variant="secondary">
                 Details
-              </Button>{' '}
+              </Button>
             </td>
           </tr>
         </tbody>
