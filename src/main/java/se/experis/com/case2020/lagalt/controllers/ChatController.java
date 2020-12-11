@@ -18,10 +18,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-@RequestMapping(value = "/api/v1/projects/", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/projects", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ChatController {
 
-    @DeleteMapping("{projectId}/chat/{chatId}")
+    @DeleteMapping("/{projectId}/chat/{chatId}")
     ResponseEntity<CommonResponse> deleteChat(HttpServletRequest request, HttpServletResponse response,@PathVariable("projectId") String projectId ,@PathVariable("chatId") String chatId) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
