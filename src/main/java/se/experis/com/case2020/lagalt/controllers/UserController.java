@@ -30,11 +30,6 @@ public class UserController {
         return userService.getUserDetails(request, response, userId);
     }
 
-    @PostMapping("/users/new")
-    public String postUser(@RequestBody UserPrivate user) throws InterruptedException, ExecutionException {
-        return userService.saveUserDetails(user);
-    }
-
     @PutMapping("/profile")
     public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserPrivate user) throws InterruptedException, ExecutionException {
         return userService.updateUserDetails(request, response, user);
