@@ -76,7 +76,7 @@ export default class AuthTestComponent extends React.Component {
       case Auth.AuthState.chooseUsername:
         content = (
           <form onSubmit={this.handlePickUsername}>
-            User registration: Enter username
+            Continue user registration
             <br />
             <input type="text" ref={this.username} placeholder="Enter a user name" />
             <br />

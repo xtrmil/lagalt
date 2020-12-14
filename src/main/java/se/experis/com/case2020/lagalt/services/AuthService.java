@@ -113,7 +113,7 @@ public class AuthService {
 
             if (userRecord.exists()) {
                 // auth user is alredy tied to a db user
-                return new ResponseEntity<>("There is already an account tied to this email. Try to log in instead",
+                return new ResponseEntity<>("There is already an account tied to this email",
                         HttpStatus.FORBIDDEN);
             } else {
                 var usernameAvailability = getUserNameAvailability(userData.getUserId());
