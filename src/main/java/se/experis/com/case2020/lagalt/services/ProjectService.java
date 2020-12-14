@@ -156,7 +156,7 @@ public class ProjectService {
 
         project.setIndustry(addIndustry(project.getIndustry()));
 
-        addDataToCollection(project.getProjectId(), new HashMap<>() {{
+        addToProjectDb(project.getProjectId(), new HashMap<>() {{
             put("tags", project.getTags());
         }});
 
@@ -185,7 +185,7 @@ public class ProjectService {
 
             project.setIndustry(addIndustry(project.getIndustry()));
 
-            addDataToCollection(projectId, new HashMap<>() {{
+            addToProjectDb(projectId, new HashMap<>() {{
                 put("tags", project.getTags());
                 put("admins", project.getAdmins());
                 put("members", project.getMembers());
@@ -220,29 +220,14 @@ public class ProjectService {
         return project;
     }
 
-    void deleteCollection(CollectionReference collection, int batchSize) {
-        try {
-            ApiFuture<QuerySnapshot> future = collection.limit(batchSize).get();
-            int deleted = 0;
-            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-            for (QueryDocumentSnapshot document : documents) {
-                document.getReference().delete();
-                ++deleted;
-            }
-            if (deleted >= batchSize) {
-                deleteCollection(collection, batchSize);
-            }
-        } catch (Exception e) {
-            System.err.println("Error deleting collection : " + e.getMessage());
-        }
-    }
-
-    public void addDataToCollection(String projectId, Map<String, Set<String>> data) {
+    public void addToProjectDb(String projectId, Map<String, Set<String>> data) {
+        DataBaseService dataBaseService = new DataBaseService();
+        AuthService authService = new AuthService();
         Firestore dbFirestore = FirestoreClient.getFirestore();
         data.entrySet().forEach(entry -> {
 
             if (dbFirestore.collection("projects").document(projectId).collection(entry.getKey()) != null) {
-                deleteCollection(dbFirestore.collection("projects").document(projectId).collection(entry.getKey()), 10);
+                dataBaseService.deleteCollection(dbFirestore.collection("projects").document(projectId).collection(entry.getKey()), 10);
             }
 
             if (entry.getKey().equals("tags")) {
@@ -256,7 +241,7 @@ public class ProjectService {
             } else {
 
                 entry.getValue().forEach(item -> {
-                    if (userExistInDb(dbFirestore, item)) {
+                    if (authService.userExistsInDb(dbFirestore, item)) {
                         ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
                                 .collection(entry.getKey()).document(item).set(new HashMap<String, Object>());
                     }
@@ -274,19 +259,6 @@ public class ProjectService {
         return null;
     }
 
-    public boolean userExistInDb(Firestore dbFirestore, String userName) {   // move to AuthService
-        DocumentReference documentReference = dbFirestore.collection("users").document(userName);
-        ApiFuture<DocumentSnapshot> future = documentReference.get();
-        try {
-            DocumentSnapshot document = future.get();
-            return document.exists();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 }
 
 

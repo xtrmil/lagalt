@@ -9,4 +9,8 @@ public class MockAuthService extends AuthService {
     public boolean belongsToUser(String userId, String jwtToken) {
         return true;
     }
+
+    public String loggedInUser(String Authorization){
+        return Authorization;
+    }
 }

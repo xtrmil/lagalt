@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 @RequestMapping(value = "/api/v1/available", produces = MediaType.APPLICATION_JSON_VALUE)
 public class EnumController {
 
-    @Autowired
-    UserService userService;
+//    @Autowired
+//    UserService userService;
 
     @GetMapping("/industries")
     public ResponseEntity<CommonResponse> getIndustries(HttpServletRequest request, HttpServletResponse response) {
