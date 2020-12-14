@@ -3,7 +3,6 @@ package se.experis.com.case2020.lagalt.services;
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.user.UserData;
-import se.experis.com.case2020.lagalt.models.user.UserProfile;
+import se.experis.com.case2020.lagalt.models.user.UserPrivate;
 
 @Service
 public class AuthService {
@@ -124,7 +123,7 @@ public class AuthService {
                 userRecordRef.set(userData);
 
                 var authUser = auth.getUser(firebaseToken.getUid());
-                var userProfile = new UserProfile();
+                var userProfile = new UserPrivate();
                 userProfile.setEmail(authUser.getEmail());
                 userProfile.setName(authUser.getDisplayName());
                 userProfile.setUserId(userData.getUserId().trim());
