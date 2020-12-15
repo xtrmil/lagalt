@@ -83,7 +83,8 @@ public class AuthService {
             try {
                 Firestore db = FirestoreClient.getFirestore();
                 var ref = db.collection("projects").document(projectId).collection("admins").document(userId).get().get();
-                return ref.exists();
+                var ownerId = db.collection("projects").document(projectId).get().get().get("ownerId");
+                return ref.exists() && ownerId == userId;
             } catch (Exception e) {
                 e.printStackTrace();
             }
