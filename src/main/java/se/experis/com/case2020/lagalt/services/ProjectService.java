@@ -87,11 +87,9 @@ public class ProjectService {
         DocumentReference userReference = projectReference.collection("members").document(userId);
         CollectionReference links = projectReference.collection("links");
 
-        ApiFuture<DocumentSnapshot> userFuture = userReference.get();
-        ApiFuture<DocumentSnapshot> projectFuture = projectReference.get();
+        DocumentSnapshot projectDocument = projectReference.get().get();
+        DocumentSnapshot userDocument = userReference.get().get();
 
-        DocumentSnapshot userDocument = userFuture.get();
-        DocumentSnapshot projectDocument = projectFuture.get();
 
 
         if (projectDocument.exists()) {
@@ -100,8 +98,8 @@ public class ProjectService {
             Iterable<CollectionReference> projectCollections = projectReference.listCollections();
             projectCollections.forEach(collection -> {
 
-                Iterable<DocumentReference> projectIds = collection.listDocuments();
-                projectIds.forEach(id -> {
+                Iterable<DocumentReference> projectData = collection.listDocuments();
+                projectData.forEach(id -> {
                     if (!id.get().equals("chat") && !id.get().equals("links")) {
                         projectInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(id.getId());
                     }
@@ -118,6 +116,8 @@ public class ProjectService {
                     try {
                         DocumentSnapshot linkSnapShot = linkFuture.get();
                         linksMap.put(linkSnapShot.getData().get("name").toString(), linkSnapShot.getData().get("url").toString());
+                        System.out.println(linkSnapShot.getData().get("name").toString());
+                        System.out.println(linkSnapShot.getData().get("url").toString());
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     } catch (ExecutionException e) {
@@ -126,8 +126,10 @@ public class ProjectService {
                 });
 
                 project = (ProjectMember) addDataToResponseProject(project, projectInfo, projectId);
-                project.setMessageBoards(projectInfo.get("messageBoards"));
                 project.setLinks(linksMap);
+                project.setMessageBoards(projectInfo.get("messageBoards"));
+
+
 
                 cr.data = project;
             } else {
@@ -137,7 +139,7 @@ public class ProjectService {
                 cr.data = project;
             }
             resp = HttpStatus.OK;
-            cr.message = "Project details for " + projectId + " found.";
+            cr.message = "Project details for " + projectId;
 
         } else {
             resp = HttpStatus.NOT_FOUND;
@@ -221,8 +223,7 @@ public class ProjectService {
     }
 
     public void addToProjectDb(String projectId, Map<String, Set<String>> data) {
-        DataBaseService dataBaseService = new DataBaseService();
-        AuthService authService = new AuthService();
+        DatabaseService dataBaseService = new DatabaseService();
         Firestore dbFirestore = FirestoreClient.getFirestore();
         data.entrySet().forEach(entry -> {
 
@@ -241,9 +242,15 @@ public class ProjectService {
             } else {
 
                 entry.getValue().forEach(item -> {
-                    if (authService.userExistsInDb(dbFirestore, item)) {
-                        ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
-                                .collection(entry.getKey()).document(item).set(new HashMap<String, Object>());
+                    try {
+                        if (dbFirestore.collection("userRecords").document(item).get().get().exists()) {
+                            ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("projects").document(projectId)
+                                    .collection(entry.getKey()).document(item).set(new HashMap<String, Object>());
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
                     }
                 });
             }

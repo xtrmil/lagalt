@@ -9,12 +9,10 @@ import org.apache.commons.lang3.EnumUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.application.ApplicationAdminView;
 import se.experis.com.case2020.lagalt.models.application.ApplicationProfileView;
 import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
-import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.user.UserPublic;
 import se.experis.com.case2020.lagalt.utils.Command;
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +33,8 @@ public class ApplicationService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
         Set<ApplicationAdminView> applicationSet = new HashSet<>();
-        if(authService.loggedInUser(Authorization) != null) {
+
+        if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)) {
             Firestore dbFireStore = FirestoreClient.getFirestore();
             CollectionReference ApplicationsCollection =  dbFireStore.collection("projects").document(projectId).collection("applications");
 
@@ -77,8 +76,8 @@ public class ApplicationService {
         HttpStatus resp = HttpStatus.OK;
 
         Firestore dbFireStore = FirestoreClient.getFirestore();
-        if(authService.loggedInUser(Authorization) != null){
-            DocumentReference userReference = dbFireStore.collection("users").document(authService.loggedInUser(Authorization));
+        if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)){
+            DocumentReference userReference = dbFireStore.collection("users").document(authService.getUserId(Authorization));
             DocumentReference projectReference = dbFireStore.collection("projects").document(projectId);
 
             ApplicationProfileView applicationProfileView = new ApplicationProfileView();
@@ -115,7 +114,7 @@ public class ApplicationService {
         DocumentSnapshot document = future.get();
 
         if(document.exists()){
-            if(authService.loggedInUser(Authorization) != null){
+            if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)){
                 ApplicationProfileView updatedApplication = new ApplicationProfileView();
                 if(EnumUtils.isValidEnum(ApplicationStatus.class, status.toString())) {
                     System.out.println("Valid enum");
