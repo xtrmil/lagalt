@@ -25,12 +25,12 @@ public class ApplicationController {
     }
 
     @PostMapping("/{projectId}/application")
-    ResponseEntity<CommonResponse> createApplication(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestHeader String Authorization, @RequestBody ObjectNode motivation) throws ExecutionException, InterruptedException {
+    ResponseEntity<CommonResponse> createApplication(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestHeader String Authorization, @RequestBody ObjectNode motivation){
         return applicationService.createApplication(request, response, projectId, Authorization, motivation);
     }
 
     @PutMapping("/{projectId}/application")
-    ResponseEntity<CommonResponse> updateApplication(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestBody ApplicationAdminView application, @RequestHeader String Authorization) {
+    ResponseEntity<CommonResponse> updateApplication(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestBody ObjectNode application, @RequestHeader String Authorization) throws ExecutionException, InterruptedException {
         return applicationService.updateApplication(request, response, projectId, application, Authorization);
     }
 }
