@@ -1,0 +1,40 @@
+.homePageCard {
+    margin: 0 auto;
+    float: none;
+    margin-bottom: 10px;
+    height: 175px;
+}
+
+.homePageCardBody {
+    margin-left: 10px;
+    margin-top: -35px;
+    }
+
+.homepage-img {
+    width: 20px;
+    height: 30px;
+}
+
+.project {
+    margin-top: 35px;
+}
+
+.btn-admin {
+    margin-left: 425px;
+}
+
+.stretched-button {
+    z-index:4;
+    position:relative;
+}
+
+.homePageHeading {
+    margin-top: 30px;
+}
+
+h4, h6 {
+    color: #184A73;
+}
+
+
+

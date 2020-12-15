@@ -1,24 +1,34 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import Navbar from './utils/Navbar';
+import HomePage from './pages/HomePage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import ProjectViewPage from './pages/ProjectViewPage';
+import ProjectsPage from './pages/ProjectsPage';
+import ProjectAdminPage from './pages/ProjectAdminPage';
+import ProfilePage from './pages/ProfilePage';
+import { Router, Route, Switch } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { createBrowserHistory } from 'history';
+import CreateProjectPage from './pages/CreateProjectPage';
+
+const history = createBrowserHistory();
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router history={history}>
+      <Navbar history={history} />
+      <Switch>
+        <Route exact path="/" component={HomePage} />
+        <Route exact path="/login" component={LoginPage} />
+        <Route exact path="/register" component={RegisterPage} />
+        <Route exact path="/project" component={ProjectViewPage} />
+        <Route exact path="/admin" component={ProjectAdminPage} />
+        <Route exact path="/profile" component={ProfilePage} />
+        <Route exact path="/projects" component={ProjectsPage} />
+        <Route exact path="/project/create" component={CreateProjectPage} />
+      </Switch>
+    </Router>
   );
 }
 

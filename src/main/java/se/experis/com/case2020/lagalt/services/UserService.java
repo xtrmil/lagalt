@@ -23,24 +23,16 @@ import org.springframework.http.HttpStatus;
 @Service
 public class UserService {
 
-    public String saveUserDetails(UserPrivate user) throws ExecutionException, InterruptedException {
-        Firestore dbFireStore = FirestoreClient.getFirestore();
-        ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId())
-                .set(user);
-        return collectionApiFuture.get().getUpdateTime().toString();
-    }
-
-
-    public ResponseEntity<CommonResponse> getPrivateUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> getPrivateUserDetails(HttpServletRequest request, HttpServletResponse response, String username) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
-
         Firestore dbFirestore = FirestoreClient.getFirestore();
+        var userId = dbFirestore.collection("userRecords").document(username).get().get().get("uid").toString();
+
         DocumentReference documents = dbFirestore.collection("users").document(userId);
-        ApiFuture<DocumentSnapshot> future = documents.get();
-        DocumentSnapshot document = future.get();
+        DocumentSnapshot document = documents.get().get();
 
         Map<String, Set<String>> userInfo = new HashMap<>();
         UserPrivate user = null;
@@ -76,26 +68,26 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
-    Command cmd = new Command(request);
-    CommonResponse cr = new CommonResponse();
-    HttpStatus resp;
+    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
+        Command cmd = new Command(request);
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
 
         UserPublic user = getUserPublic(userId);
 
-    if (user != null) {
+        if (user != null) {
 
-        cr.message = "Profile user details for: " + userId;
-        resp = HttpStatus.OK;
-        response.addHeader("Location", "/users/" + userId);
-    } else {
-        cr.message = "No User with Id " + userId + " Found";
-        resp = HttpStatus.NOT_FOUND;
+            cr.message = "Profile user details for: " + userId;
+            resp = HttpStatus.OK;
+            response.addHeader("Location", "/users/" + userId);
+        } else {
+            cr.message = "No User with Id " + userId + " Found";
+            resp = HttpStatus.NOT_FOUND;
+        }
+        cr.data = user;
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr, resp);
     }
-    cr.data = user;
-    cmd.setResult(resp);
-    return new ResponseEntity<>(cr, resp);
-}
 
     public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, HttpServletResponse response, UserPrivate user) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
@@ -121,13 +113,13 @@ public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest re
             Firestore dbFireStore = FirestoreClient.getFirestore();
             ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId()).set(user);
             cr.data = collectionApiFuture.get().getUpdateTime().toString();
-            cr.message = "Userdata successfully updated for user: " + user.getUserId();
+            cr.message = "User data successfully updated";
             resp = HttpStatus.OK;
-            response.addHeader("Location", "/profile/" + user.getUserId());
+            response.addHeader("Location", "/profile/" + user.getUsername());
 
         } else {
             resp = HttpStatus.NOT_FOUND;
-            cr.message = "No User with Id " + user.getUserId() + " Found";
+            cr.message = "User not found";
         }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
