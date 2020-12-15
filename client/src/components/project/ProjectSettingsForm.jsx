@@ -1,11 +1,24 @@
 import React from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
-import TextInput from './form/TextInput';
-import SelectInput from './form/SelectInput';
-import { createProjectSchema } from '../utils/form/FormUtils';
-const ProjectForm = () => {
-  const initialValues = { title: '', description: '', skills: null, industry: '' };
+import TextInput from '../form/TextInput';
+import SelectInput from '../form/SelectInput';
+import { createProjectSchema } from '../../utils/form/FormUtils';
+
+const ProjectSettingsForm = (props) => {
+  const { project, setProject } = props;
+  console.log(project);
+  const currentSkills = project.skills.map((skill) => ({
+    value: skill,
+    label: skill,
+  }));
+  const initialValues = {
+    title: project.title,
+    industry: project.industry,
+    skills: currentSkills,
+    description: project.description,
+  };
+  const currentIndustry = { value: project.industry, label: project.industry };
 
   const options = [
     { value: 'DRUMMER', label: 'Drummer' },
@@ -22,12 +35,17 @@ const ProjectForm = () => {
     { value: 'WEBDEVELOPMENT', label: 'Web Development' },
   ];
   const onFormSubmit = (values) => {
-    const project = {
-      ...values,
-      industry: values.industry,
-      skills: values.skills.map((skill) => skill.value),
+    const { title, industry, skills, description } = values;
+    console.log(skills);
+    const newProject = {
+      ...project,
+      title,
+      industry,
+      skills: skills.map((skill) => skill.value),
+      description,
     };
-    console.log(project);
+    console.log(newProject);
+    setProject(newProject);
   };
   return (
     <Formik
@@ -64,6 +82,7 @@ const ProjectForm = () => {
               values={values}
               touched={touched}
               errors={errors}
+              defaultValue={currentIndustry}
               setFieldTouched={setFieldTouched}
               setFieldValue={setFieldValue}
               isMulti={false}
@@ -75,6 +94,7 @@ const ProjectForm = () => {
               values={values}
               touched={touched}
               errors={errors}
+              defaultValue={currentSkills}
               setFieldTouched={setFieldTouched}
               setFieldValue={setFieldValue}
               isMulti={true}
@@ -90,8 +110,11 @@ const ProjectForm = () => {
               handleBlur={handleBlur}
               textarea="textarea"
             ></TextInput>
-
-            <Button type="submit"> Submit!</Button>
+            <div className="text-center">
+              <Button type="submit" variant="success">
+                Save Changes
+              </Button>
+            </div>
           </Form>
         </>
       )}
@@ -99,4 +122,4 @@ const ProjectForm = () => {
   );
 };
 
-export default ProjectForm;
+export default ProjectSettingsForm;

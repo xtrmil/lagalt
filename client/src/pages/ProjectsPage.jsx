@@ -1,15 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './ProjectsPage.css';
 import { Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import ProjectSettingsModal from '../components/project/ProjectSettingsModal';
 
 const ProjectsPage = (props) => {
-  const [showModal, setShowModal] = useState(false);
-
-  const onEditClick = () => {
-    setShowModal(!showModal);
-  };
   const onProjectViewClick = () => {
     props.history.push('/project');
   };
@@ -19,10 +13,6 @@ const ProjectsPage = (props) => {
 
   return (
     <>
-      <ProjectSettingsModal
-        showModal={showModal}
-        handleCloseModal={onEditClick}
-      ></ProjectSettingsModal>
       <Button className="btn-createNewProject" onClick={onProjectViewClick} variant="info">
         Create new project
       </Button>

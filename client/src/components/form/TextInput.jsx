@@ -10,6 +10,7 @@ const TextInput = (props) => {
       <Form.Control
         type={type}
         name={name}
+        value={values[name]}
         onChange={handleChange}
         onBlur={handleBlur}
         style={inputBorderColor(errors, touched, values, name)}

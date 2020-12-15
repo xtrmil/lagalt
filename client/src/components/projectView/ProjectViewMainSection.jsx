@@ -3,10 +3,8 @@ import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
 
 const ProjectViewMainSection = (props) => {
-  const { isAdmin, loggedIn, memberOf, onJoinClick } = props;
-  const placeholdertext =
-    'Lorem ipsum dolor sit amet consectetur adipisicing elit. Totam ea hic eaque cumque asperiores nisi eligendi explicabo voluptatibus aliquid omnis, a atque magnam iure facilis laudantium! Quidem illo doloribus itaque maxime recusandae explicabo nulla quaerat nemo est blanditiis veritatis omnis neque vero praesentium laudantium officia consectetur non atque repudiandae, quia dolor debitis! Nisi, aut. Ducimus voluptatem cumque necessitatibus sapiente accusantium minus laborum alias quibusdam dolor, dolorum sequi deserunt explicabo iure ad sunt nesciunt repudiandae officiis, ipsa similique, exercitationem doloribus! Aspernatur recusandae quos similique eos rem dicta esse repellat, inventore laboriosam! At impedit voluptas delectus. Soluta tempore ab accusamus impedit sit?';
-  const skills = ['WEB_DEV', 'SECURITY', 'REACT', 'ANGULAR'];
+  const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick } = props;
+  const { skills } = project;
 
   const skillsList = skills.map((skill, index) => {
     return (
@@ -41,11 +39,11 @@ const ProjectViewMainSection = (props) => {
       <Col sm={8} className="pl-0">
         <Row className="no-gutters">
           <Col sm={8}>
-            <h2>Project Name!</h2>
+            <h2>{project.title}</h2>
             <h4>
-              <i>Industry: Music</i>
+              <i>Industry: {project.industry}</i>
             </h4>
-            <h5>Status: In progress</h5>
+            <h5>Status: {project.status}</h5>
           </Col>
           <Col sm={4}>
             <div className="mr-4 text-right">
@@ -54,16 +52,26 @@ const ProjectViewMainSection = (props) => {
                   Join
                 </Button>
               )}
-              {loggedIn && isAdmin && <Button className="mb-2">Settings</Button>}
+              {loggedIn && isAdmin && (
+                <Button className="mb-2" onClick={onSettingsClick}>
+                  Settings
+                </Button>
+              )}
               {loggedIn && memberOf && <Button>Message Board & Chat</Button>}
             </div>
           </Col>
         </Row>
         <Row className="mt-3 no-gutters">
-          <h6>Project Description</h6>
-          <div>{placeholdertext}</div>
+          <Col sm={12}>
+            <h6>Project Description</h6>
+          </Col>
+          <Col sm={12}>
+            <div>{project.description}</div>
+          </Col>
         </Row>
-        {loggedIn && memberOf && <ProjectResourcesComponent placeholdertext={placeholdertext} />}
+        {loggedIn && memberOf && (
+          <ProjectResourcesComponent placeholdertext={project.description} />
+        )}
       </Col>
     </Row>
   );
