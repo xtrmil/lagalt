@@ -1,5 +1,6 @@
 package se.experis.com.case2020.lagalt.controllers;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.firebase.auth.FirebaseAuth;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import se.experis.com.case2020.lagalt.models.user.UserData;
 import se.experis.com.case2020.lagalt.services.AuthService;
 
 @RestController
@@ -22,7 +22,7 @@ import se.experis.com.case2020.lagalt.services.AuthService;
 public class AuthController {
 
     private final String allowedHost = "http://localhost:3000"; // temp
-    private final String usernameRules = "";
+    private final String usernameRules = "A username must have between 3 and 20 characters and contain letters (a-z) and numbers. Underline is also permitted";
 
     @Autowired
     private AuthService authService;
@@ -30,13 +30,13 @@ public class AuthController {
     @CrossOrigin(origins = allowedHost)
     @GetMapping("/loggedInUser")
     public ResponseEntity<String> loggedInUser(@RequestHeader String Authorization) {
-        return new ResponseEntity<>(authService.getUserId(Authorization), HttpStatus.OK);
+        return new ResponseEntity<>(authService.getUsername(Authorization), HttpStatus.OK);
     }
 
     @CrossOrigin(origins = allowedHost)
-    @GetMapping("/isUsernameAvailable/{userId}")
-    public ResponseEntity<Boolean> isUserIdAvailable(@PathVariable String userId) {
-        HttpStatus status = authService.getUserNameAvailability(userId);
+    @GetMapping("/isUsernameAvailable/{username}")
+    public ResponseEntity<Boolean> isUserIdAvailable(@PathVariable String username) {
+        HttpStatus status = authService.getUserNameAvailability(username);
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
             return new ResponseEntity<>(status);
         }
@@ -46,23 +46,23 @@ public class AuthController {
     @CrossOrigin(origins = allowedHost)
     @GetMapping("/signin")
     public ResponseEntity<String> signin(@RequestHeader String Authorization) {
-        var userId = authService.getUserId(Authorization);
-        if (userId == null) {
+        var username = authService.getUsername(Authorization);
+        if (username == null) {
             return new ResponseEntity<>("User does not exist", HttpStatus.UNAUTHORIZED);
         } else {
-            return new ResponseEntity<>(userId, HttpStatus.OK);
+            return new ResponseEntity<>(username, HttpStatus.OK);
         }
     }
 
     @CrossOrigin(origins = allowedHost)
     @PostMapping("/signup")
-    public ResponseEntity<String> signup(@RequestHeader String Authorization, @RequestBody UserData userData) {
-        if (!isValidUsername(userData.getUserId())) {
+    public ResponseEntity<String> signup(@RequestHeader String Authorization, @RequestBody ObjectNode user) {
+        String username = user.get("username").asText();
+        if (!isValidUsername(username)) {
             return new ResponseEntity<>("Invalid user name. " + usernameRules, HttpStatus.BAD_REQUEST);
         }
-        userData.setUserId(userData.getUserId().trim());
-
-        return authService.addUserRecord(userData, Authorization);
+        
+        return authService.addUserRecord(username.trim(), Authorization);
     }
 
     @CrossOrigin(origins = allowedHost)
@@ -87,7 +87,7 @@ public class AuthController {
 
     // public for unit test
     public boolean isValidUsername(String username) {
-        String regex = "[_0-9a-zA-Z]{1,20}";
+        String regex = "[_0-9a-zA-Z]{3,20}";
         return username.matches(regex);
     }
 }
