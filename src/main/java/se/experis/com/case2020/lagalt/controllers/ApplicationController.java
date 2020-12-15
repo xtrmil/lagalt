@@ -6,7 +6,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.application.ApplicationAdminView;
 import se.experis.com.case2020.lagalt.services.ApplicationService;
 
 import javax.servlet.http.HttpServletRequest;

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class DataBaseService {
+public class DatabaseService {
 
     void deleteCollection(CollectionReference collection, int batchSize) {
         try {
