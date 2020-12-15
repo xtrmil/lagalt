@@ -8,9 +8,9 @@ import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
 @Data
 public class ApplicationProfileView {
 
-    private String applicationId;
+    private String userId;
     private String projectId;
     private String motivation;
     private String feedback;
-    private Enum<ApplicationStatus> status;
+    private Enum<ApplicationStatus> status = ApplicationStatus.PENDING;
 }
