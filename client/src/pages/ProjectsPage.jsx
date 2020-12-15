@@ -13,6 +13,10 @@ const ProjectsPage = (props) => {
   const onProjectViewClick = () => {
     props.history.push('/project');
   };
+  const onProjectAdminPageClick = () => {
+    props.history.push('/admin');
+  };
+
   return (
     <>
       <ProjectSettingsModal
@@ -68,7 +72,7 @@ const ProjectsPage = (props) => {
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>
-                <Button className="ml-4" onClick={onProjectViewClick} variant="info">
+                <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
                   Admin
                 </Button>
               </div>

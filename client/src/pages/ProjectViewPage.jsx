@@ -5,9 +5,9 @@ import ProjectViewComponent from '../components/projectView/ProjectViewComponent
 
 const ProjectViewPage = (props) => {
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const isAdmin = true;
+  const isAdmin = false;
   const loggedIn = true;
-  const memberOf = true;
+  const memberOf = false;
 
   const onJoinClick = () => {
     setShowJoinModal(true);

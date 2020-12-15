@@ -7,8 +7,14 @@ const HomePage = (props) => {
   const onProjectViewClick = () => {
     props.history.push('/project');
   };
+
+  const onProjectAdminPageClick = () => {
+    props.history.push('/admin');
+  };
+
   return (
     <>
+      <h1 className="homePageHeading">Projects</h1>
       <div className="card w-75 homePageCard">
         <div className="card-body homePageCardBody">
           <div className="row project">
@@ -77,7 +83,7 @@ const HomePage = (props) => {
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>
-                <Button className="ml-4" onClick={onProjectViewClick} variant="info">
+                <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
                   Admin
                 </Button>
               </div>

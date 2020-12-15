@@ -22,6 +22,10 @@
     color: #184A73;
 }
 
+.btn-decline {
+    margin-left: 20px;
+}
+
 .btn-details {
     margin-left: 50px;
 }

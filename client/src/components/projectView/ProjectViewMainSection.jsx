@@ -51,7 +51,7 @@ const ProjectViewMainSection = (props) => {
             <div className="mr-4 text-right">
               {loggedIn && !memberOf && (
                 <Button variant="success" onClick={onJoinClick}>
-                  Join!
+                  Join
                 </Button>
               )}
               {loggedIn && isAdmin && <Button className="mb-2">Settings</Button>}
