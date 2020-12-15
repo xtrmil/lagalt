@@ -302,7 +302,7 @@ export const createUser = async (username) => {
       'Content-Type': 'application/json',
       Authorization: token,
     },
-    body: JSON.stringify({ userId: username })
+    body: JSON.stringify({ username: username })
   })
 
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))

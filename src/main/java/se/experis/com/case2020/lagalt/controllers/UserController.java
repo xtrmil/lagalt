@@ -22,12 +22,12 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
-        return userService.getExtendedUserDetails(request, response, Authorization);
+        return userService.getPublicUserDetails(request, response, Authorization);
     }
 
-    @GetMapping("/users/{id}")
-    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, HttpServletResponse response, @PathVariable("id") String userId) throws InterruptedException, ExecutionException {
-        return userService.getUserDetails(request, response, userId);
+    @GetMapping("/users/{username}")
+    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, HttpServletResponse response, @PathVariable("username") String username) throws InterruptedException, ExecutionException {
+        return userService.getPrivateUserDetails(request, response, username);
     }
 
     @PutMapping("/profile")

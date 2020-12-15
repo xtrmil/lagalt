@@ -23,24 +23,16 @@ import org.springframework.http.HttpStatus;
 @Service
 public class UserService {
 
-    public String saveUserDetails(UserPrivate user) throws ExecutionException, InterruptedException {
-        Firestore dbFireStore = FirestoreClient.getFirestore();
-        ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId())
-                .set(user);
-        return collectionApiFuture.get().getUpdateTime().toString();
-    }
-
-
-    public ResponseEntity<CommonResponse> getExtendedUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> getPrivateUserDetails(HttpServletRequest request, HttpServletResponse response, String username) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
-
         Firestore dbFirestore = FirestoreClient.getFirestore();
+        var userId = dbFirestore.collection("userRecords").document(username).get().get().get("uid").toString();
+
         DocumentReference documents = dbFirestore.collection("users").document(userId);
-        ApiFuture<DocumentSnapshot> future = documents.get();
-        DocumentSnapshot document = future.get();
+        DocumentSnapshot document = documents.get().get();
 
         Map<String, Set<String>> userInfo = new HashMap<>();
         UserPrivate user = null;
@@ -76,27 +68,15 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, HttpServletResponse response, String userId) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("users").document(userId);
-        ApiFuture<DocumentSnapshot> future = documentReference.get();
-        DocumentSnapshot document = future.get();
+        UserPublic user = getUserPublic(userId);
 
-        UserPublic user = null;
+        if (user != null) {
 
-        if (document.exists()) {
-            user = document.toObject(UserPublic.class);
-            CollectionReference collectionReference = dbFirestore.collection("users").document(userId).collection("skills");
-            Set<String> skillSet = new HashSet<>();
-            Iterable<DocumentReference> skills = collectionReference.listDocuments();
-            skills.forEach(skill -> {
-                skillSet.add(skill.getId());
-            });
-            user.setSkills(skillSet);
             cr.message = "Profile user details for: " + userId;
             resp = HttpStatus.OK;
             response.addHeader("Location", "/users/" + userId);
@@ -120,11 +100,11 @@ public class UserService {
         DocumentSnapshot document = future.get();
         if (document.exists()) {
             if (user.getSkills() != null) {
-
-                deleteCollection(dbFirestore.collection("users").document(user.getUserId()).collection("skills"), 10);
+                DataBaseService dataBaseService = new DataBaseService();
+                dataBaseService.deleteCollection(dbFirestore.collection("users").document(user.getUserId()).collection("skills"), 10);
                 user.getSkills().forEach(skill -> {
                     if (EnumUtils.isValidEnum(Tag.class, skill)) {
-                        addToUser(user.getUserId(), "skills", skill);
+                        addToUserDb(user.getUserId(), "skills", skill);
                     }
                 });
                 user.setSkills(null);
@@ -133,26 +113,26 @@ public class UserService {
             Firestore dbFireStore = FirestoreClient.getFirestore();
             ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId()).set(user);
             cr.data = collectionApiFuture.get().getUpdateTime().toString();
-            cr.message = "Userdata successfully updated for user: " + user.getUserId();
+            cr.message = "User data successfully updated";
             resp = HttpStatus.OK;
-            response.addHeader("Location", "/profile/" + user.getUserId());
+            response.addHeader("Location", "/profile/" + user.getUsername());
 
         } else {
             resp = HttpStatus.NOT_FOUND;
-            cr.message = "No User with Id " + user.getUserId() + " Found";
+            cr.message = "User not found";
         }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
 
-    public void addToUser(String userId, String category, String documentId) {
+    public void addToUserDb(String userId, String category, String documentId) {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
         ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("users").document(userId)
                 .collection(category).document(documentId).set(new HashMap<String, Object>());
     }
 
-    public void deleteFromUser(String userId, String category, String documentId) throws ExecutionException, InterruptedException {
+    public void deleteFromUserDb(String userId, String category, String documentId) throws ExecutionException, InterruptedException {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category)
@@ -167,21 +147,24 @@ public class UserService {
         }
     }
 
-    void deleteCollection(CollectionReference collection, int batchSize) {
-        try {
-            ApiFuture<QuerySnapshot> future = collection.limit(batchSize).get();
-            int deleted = 0;
-            List<QueryDocumentSnapshot> documents = future.get().getDocuments();
-            for (QueryDocumentSnapshot document : documents) {
-                document.getReference().delete();
-                ++deleted;
-            }
-            if (deleted >= batchSize) {
-                deleteCollection(collection, batchSize);
-            }
-        } catch (Exception e) {
-            System.err.println("Error deleting collection : " + e.getMessage());
-        }
-    }
+    public UserPublic getUserPublic(String userId) throws ExecutionException, InterruptedException {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference documentReference = dbFirestore.collection("users").document(userId);
+        ApiFuture<DocumentSnapshot> future = documentReference.get();
+        DocumentSnapshot document = future.get();
 
+        UserPublic user = null;
+
+        if (document.exists()) {
+            user = document.toObject(UserPublic.class);
+            CollectionReference collectionReference = dbFirestore.collection("users").document(userId).collection("skills");
+            Set<String> skillSet = new HashSet<>();
+            Iterable<DocumentReference> skills = collectionReference.listDocuments();
+            skills.forEach(skill -> {
+                skillSet.add(skill.getId());
+            });
+            user.setSkills(skillSet);
+        }
+        return user;
+    }
 }
