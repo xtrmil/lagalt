@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 public class DatabaseService {
 
-    void deleteCollection(CollectionReference collection, int batchSize) {
+    void emptyCollection(CollectionReference collection, int batchSize) {
         try {
             ApiFuture<QuerySnapshot> future = collection.limit(batchSize).get();
             int deleted = 0;
@@ -21,7 +21,7 @@ public class DatabaseService {
                 ++deleted;
             }
             if (deleted >= batchSize) {
-                deleteCollection(collection, batchSize);
+                emptyCollection(collection, batchSize);
             }
         } catch (Exception e) {
             System.err.println("Error deleting collection : " + e.getMessage());

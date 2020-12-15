@@ -24,33 +24,33 @@ import org.springframework.http.HttpStatus;
 public class UserService {
 
     MockAuthService authService = new MockAuthService();
+
     public ResponseEntity<CommonResponse> getPrivateUserDetails(HttpServletRequest request, HttpServletResponse response, String Authorization) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)) {
+        DocumentReference documents = dbFirestore.collection("users").document(authService.getUserId(Authorization));
+        DocumentSnapshot document = documents.get().get();
 
-            DocumentReference documents = dbFirestore.collection("users").document(authService.getUserId(Authorization));
-            DocumentSnapshot document = documents.get().get();
+        Map<String, Set<String>> userInfo = new HashMap<>();
+        UserPrivate user = null;
 
-            Map<String, Set<String>> userInfo = new HashMap<>();
-            UserPrivate user = null;
-
-            if (document.exists()) {
+        if (document.exists()) {
+            if (authService.belongsToUser(authService.getUserId(Authorization), Authorization)) {
                 user = document.toObject(UserPrivate.class);
 
                 Iterable<CollectionReference> categories = documents.listCollections();
                 categories.forEach(collection -> {
 
-                    Iterable<DocumentReference> projectIds = collection.listDocuments();
-                    projectIds.forEach(id -> {
+                    Iterable<DocumentReference> documentIds = collection.listDocuments();
+                    documentIds.forEach(id -> {
                         userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(id.getId());
                     });
                 });
                 Set<String> applications = new HashSet<>();
-                userInfo.get("appliedTo").forEach( application -> {
+                userInfo.get("appliedTo").forEach(application -> {
                     try {
                         applications.add(dbFirestore.collection("applications").document(application).get().get().get("projectId").toString());
                     } catch (InterruptedException e) {
@@ -70,13 +70,12 @@ public class UserService {
                 resp = HttpStatus.OK;
                 response.addHeader("Location", "/profile/" + user.getUserId());
             } else {
-                cr.message = "No Profile with Id " + user.getUserId() + " Found";
-                resp = HttpStatus.NOT_FOUND;
+                resp = HttpStatus.UNAUTHORIZED;
+                cr.message = "You are not authorized to see private details for this user";
             }
-        }else{
-            resp = HttpStatus.UNAUTHORIZED;
-            cr.message = "You are not authorized to get details for this user";
-
+        } else {
+            cr.message = "No Profile with Id " + user.getUserId() + " Found";
+            resp = HttpStatus.NOT_FOUND;
         }
 
         cmd.setResult(resp);
@@ -104,33 +103,39 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, HttpServletResponse response, UserPrivate user) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, HttpServletResponse response, UserPrivate user, String Authorization) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documentReference = dbFirestore.collection("users").document(user.getUserId());
+        DocumentReference documentReference = dbFirestore.collection("users").document(authService.getUserId(Authorization));
         DocumentSnapshot document = documentReference.get().get();
+
         if (document.exists()) {
-            if (user.getSkills() != null) {
-                DatabaseService dataBaseService = new DatabaseService();
-                dataBaseService.deleteCollection(dbFirestore.collection("users").document(user.getUserId()).collection("skills"), 10);
-                user.getSkills().forEach(skill -> {
-                    if (EnumUtils.isValidEnum(Tag.class, skill)) {
-                        addToUserDb(user.getUserId(), "skills", skill);
-                    }
-                });
-                user.setSkills(null);
+            if (authService.belongsToUser(authService.getUserId(Authorization), Authorization)) {
+                if (user.getSkills() != null) {
+                    DatabaseService databaseService = new DatabaseService();
+                    databaseService.emptyCollection(documentReference.collection("skills"), 10);
+                    user.getSkills().forEach(skill -> {
+                        if (EnumUtils.isValidEnum(Tag.class, skill)) {
+                            addToUserDb(user.getUserId(), "skills", skill);
+                        }
+                    });
+                    user.setSkills(null);
+                }
+
+                Firestore dbFireStore = FirestoreClient.getFirestore();
+                ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId()).set(user);
+
+                cr.data = collectionApiFuture.get().getUpdateTime().toString();
+                cr.message = "User data successfully updated";
+                resp = HttpStatus.OK;
+                response.addHeader("Location", "/profile/" + user.getUsername());
+            } else {
+                resp = HttpStatus.UNAUTHORIZED;
+                cr.message = "You are not authorized to edit user " + user.getUserId();
             }
-
-            Firestore dbFireStore = FirestoreClient.getFirestore();
-            ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("users").document(user.getUserId()).set(user);
-            cr.data = collectionApiFuture.get().getUpdateTime().toString();
-            cr.message = "User data successfully updated";
-            resp = HttpStatus.OK;
-            response.addHeader("Location", "/profile/" + user.getUsername());
-
         } else {
             resp = HttpStatus.NOT_FOUND;
             cr.message = "User not found";
@@ -149,10 +154,8 @@ public class UserService {
     public void deleteFromUserDb(String userId, String category, String documentId) throws ExecutionException, InterruptedException {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category)
-                .document(documentId);
-        ApiFuture<DocumentSnapshot> future = documents.get();
-        DocumentSnapshot document = future.get();
+        DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category).document(documentId);
+        DocumentSnapshot document = documents.get().get();
 
         if (document.exists()) {
             Firestore dbFireStore = FirestoreClient.getFirestore();
