@@ -21,13 +21,13 @@ public class UserController {
     UserService userService;
 
     @GetMapping("/profile")
-    public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
-        return userService.getPublicUserDetails(request, response, Authorization);
+    public ResponseEntity<CommonResponse> getPrivateUser(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+        return userService.getPrivateUserDetails(request, response, Authorization);
     }
 
     @GetMapping("/users/{username}")
     public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, HttpServletResponse response, @PathVariable("username") String username) throws InterruptedException, ExecutionException {
-        return userService.getPrivateUserDetails(request, response, username);
+        return userService.getPublicUserDetails(request, response, username);
     }
 
     @PutMapping("/profile")
