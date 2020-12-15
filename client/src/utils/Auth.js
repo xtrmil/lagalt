@@ -146,11 +146,11 @@ export const logout = async () => {
     },
   })
 
-  const body = await response.text()
+  const serverMsg = JSON.parse(await response.text()).message
 
   firebase.auth().signOut()
   loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.none })
-  return body
+  return serverMsg
 }
 
 // non exports
@@ -307,16 +307,17 @@ export const createUser = async (username) => {
 
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))
 
-  const serverMsg = await response.text()
+  const responseBody = JSON.parse(await response.text())
+
   if (response.ok) {
-    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.authed, username: serverMsg })
-    return 'You are now signed in as ' + serverMsg
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.authed, username: responseBody.data })
+    return 'You are now signed in as ' + responseBody.data
   } else if (response.status === 409) {
     // user exists with the given credentials
     console.log('no action')
     loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.chooseUsername })
   } else if(response.status === 403) {
-    const answer = window.confirm(serverMsg + '. Do you want to log in instead?')
+    const answer = window.confirm(responseBody.message + '. Do you want to log in instead?')
     if(answer) {
       return authUser()
     }
@@ -325,8 +326,8 @@ export const createUser = async (username) => {
   } else {
     await firebase.auth().signOut()
   }
-  console.log('returning server msg', serverMsg)
-  return serverMsg;
+  console.log('returning server msg', responseBody.mesage)
+  return responseBody.message;
 }
 
 const authUser = async () => {
@@ -346,15 +347,16 @@ const authUser = async () => {
 
   console.log('auth ' + (response.ok ? 'successful' : 'failed'))
 
-  const serverMsg = await response.text()
+  const responseObject = JSON.parse(await response.text())
+
   if (response.ok) {
-    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.authed, username: serverMsg })
-    return 'You are now signed in as ' + serverMsg
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.authed, username: responseObject.data })
+    return 'You are now signed in as ' + responseObject.data
   } else {
     firebase.auth().signOut()
     loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.none })
-    console.log('server error on login', serverMsg)
-    return serverMsg
+    console.log('server error on login', responseObject.message)
+    return responseObject.message
   }
 }
 
