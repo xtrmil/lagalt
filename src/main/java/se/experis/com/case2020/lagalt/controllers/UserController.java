@@ -31,7 +31,7 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserPrivate user) throws InterruptedException, ExecutionException {
-        return userService.updateUserDetails(request, response, user);
+    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserPrivate user, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+        return userService.updateUserDetails(request, response, user, Authorization);
     }
 }

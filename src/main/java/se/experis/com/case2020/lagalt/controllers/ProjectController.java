@@ -38,7 +38,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{projectId}")
-    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestBody ProjectMember project) throws ExecutionException, InterruptedException {
-        return projectService.updateProjectDetails(request, response, project, projectId);
+    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization, @PathVariable("projectId") String projectId, @RequestBody ProjectMember project) throws ExecutionException, InterruptedException {
+        return projectService.updateProjectDetails(request, response, project, projectId, Authorization);
     }
 }
