@@ -31,19 +31,20 @@ public class UserService {
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documents = dbFirestore.collection("users").document(authService.getUserId(Authorization));
-        DocumentSnapshot document = documents.get().get();
-
-        Map<String, Set<String>> userInfo = new HashMap<>();
-        UserPrivate user = null;
-
-        if (document.exists()) {
-            if (authService.belongsToUser(authService.getUserId(Authorization), Authorization)) {
+        String userId = authService.getUserId(Authorization);
+        if(userId != null) {
+            DocumentReference docRef = dbFirestore.collection("users").document(userId);
+            DocumentSnapshot document = docRef.get().get();
+            
+            Map<String, Set<String>> userInfo = new HashMap<>();
+            UserPrivate user = null;
+            
+            if (document.exists()) {
                 user = document.toObject(UserPrivate.class);
-
-                Iterable<CollectionReference> categories = documents.listCollections();
+                
+                Iterable<CollectionReference> categories = docRef.listCollections();
                 categories.forEach(collection -> {
-
+                    
                     Iterable<DocumentReference> documentIds = collection.listDocuments();
                     documentIds.forEach(id -> {
                         userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(id.getId());
@@ -64,24 +65,24 @@ public class UserService {
                 user.setFollowing(userInfo.get("following"));
                 user.setMemberOf(userInfo.get("memberOf"));
                 user.setSkills(userInfo.get("skills"));
-
+                
                 cr.message = "Profile user details for: " + user.getUserId();
                 cr.data = user;
                 resp = HttpStatus.OK;
                 response.addHeader("Location", "/profile/" + user.getUserId());
             } else {
-                resp = HttpStatus.UNAUTHORIZED;
-                cr.message = "You are not authorized to see private details for this user";
+                cr.message = "User not found";
+                resp = HttpStatus.NOT_FOUND;
             }
-        } else {
-            cr.message = "No Profile with Id " + user.getUserId() + " Found";
-            resp = HttpStatus.NOT_FOUND;
-        }
 
+        } else {
+            resp = HttpStatus.UNAUTHORIZED;
+            cr.message = "You are not authorized to see private details for this user";
+        }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
-
+    
     public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, HttpServletResponse response, String username) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();

@@ -9,6 +9,7 @@ import java.util.Set;
 @Data
 public class UserPublic {
 
+    private String username;
     private String name;
     private String email;
     private String description;
