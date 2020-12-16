@@ -23,11 +23,6 @@
     margin-left: 425px;
 }
 
-.stretched-button {
-    z-index:4;
-    position:relative;
-}
-
 .homePageHeading {
     margin-top: 30px;
 }
@@ -39,6 +34,12 @@
 }
 
 .stretched-button-mb {
+    z-index:4;
+    position:relative;
+    width: 187px;
+}
+
+.stretched-button-admin {
     z-index:4;
     position:relative;
     width: 187px;
