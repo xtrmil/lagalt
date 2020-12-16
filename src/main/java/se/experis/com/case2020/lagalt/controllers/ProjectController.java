@@ -5,8 +5,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.project.ProjectMember;
-import se.experis.com.case2020.lagalt.models.project.ProjectNonMember;
+import se.experis.com.case2020.lagalt.models.project.ProjectMemberView;
+import se.experis.com.case2020.lagalt.models.project.ProjectNonMemberView;
 import se.experis.com.case2020.lagalt.services.ProjectService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,24 +27,30 @@ public class ProjectController {
         return projectService.testQuery();
     }
 
-    @GetMapping("/")
-    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam String search) throws ExecutionException, InterruptedException {
-        return projectService.getProjectSearch(request, response, search);
+    @GetMapping("")
+    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search)
+    throws ExecutionException, InterruptedException {
+        if(search == null ) {
+            return projectService.getProjectsSearch(request, search);
+        }
+        return projectService.getProjects(request, response);
     }
 
-    @GetMapping("/{projectId}")
-    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestHeader String Authorization)
-            throws ExecutionException, InterruptedException {
-        return projectService.getProjectDetails(request, response, projectId, Authorization);
+    @GetMapping("/{owner}/{projectName}")
+    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, @PathVariable String owner, 
+    @PathVariable String projectName, @RequestHeader String Authorization) {
+        return projectService.getProjectDetails(request, owner, projectName, Authorization);
     }
 
     @PostMapping("/new")
-    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMember project, @RequestHeader String Authorization) {
+    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMemberView project, 
+    @RequestHeader String Authorization) {
         return projectService.createNewProject(request, project, Authorization);
     }
 
     @PutMapping("/{projectId}")
-    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization, @PathVariable("projectId") String projectId, @RequestBody ProjectMember project) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization,
+    @PathVariable("projectId") String projectId, @RequestBody ProjectMemberView project) throws ExecutionException, InterruptedException {
         return projectService.updateProjectDetails(request, project, Authorization);
     }
 }

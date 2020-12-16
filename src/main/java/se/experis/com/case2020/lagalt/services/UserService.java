@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 import org.apache.commons.lang3.EnumUtils;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
-import se.experis.com.case2020.lagalt.models.user.UserPrivate;
-import se.experis.com.case2020.lagalt.models.user.UserPublic;
+import se.experis.com.case2020.lagalt.models.user.UserPrivateView;
+import se.experis.com.case2020.lagalt.models.user.UserPublicView;
 import se.experis.com.case2020.lagalt.utils.Command;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,10 +36,10 @@ public class UserService {
             DocumentSnapshot document = docRef.get().get();
             
             Map<String, Set<String>> userInfo = new HashMap<>();
-            UserPrivate user = null;
+            UserPrivateView user = null;
             
             if (document.exists()) {
-                user = document.toObject(UserPrivate.class);
+                user = document.toObject(UserPrivateView.class);
                 
                 Iterable<CollectionReference> categories = docRef.listCollections();
                 categories.forEach(collection -> {
@@ -87,7 +87,7 @@ public class UserService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
-        UserPublic user = getUserPublic(username);
+        UserPublicView user = getUserPublic(username);
 
         if (user != null) {
 
@@ -103,7 +103,7 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, HttpServletResponse response, UserPrivate user, String Authorization) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, HttpServletResponse response, UserPrivateView user, String Authorization) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -164,15 +164,15 @@ public class UserService {
         }
     }
 
-    public UserPublic getUserPublic(String userId) throws ExecutionException, InterruptedException {
+    public UserPublicView getUserPublic(String userId) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference documentReference = dbFirestore.collection("users").document(userId);
         DocumentSnapshot document = documentReference.get().get();
 
-        UserPublic user = null;
+        UserPublicView user = null;
 
         if (document.exists()) {
-            user = document.toObject(UserPublic.class);
+            user = document.toObject(UserPublicView.class);
             CollectionReference collectionReference = dbFirestore.collection("users").document(userId).collection("skills");
             Set<String> skillSet = new HashSet<>();
             Iterable<DocumentReference> skills = collectionReference.listDocuments();

@@ -7,7 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.user.UserPrivate;
+import se.experis.com.case2020.lagalt.models.user.UserPrivateView;
 import se.experis.com.case2020.lagalt.services.UserService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,7 +31,7 @@ public class UserController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserPrivate user, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserPrivateView user, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
         return userService.updateUserDetails(request, response, user, Authorization);
     }
 }

@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Component
 @Data
-public class UserPrivate extends UserPublic {
+public class UserPrivateView extends UserPublicView {
 
     @JsonIgnore
     private String userId;

@@ -2,21 +2,24 @@ package se.experis.com.case2020.lagalt.services;
 
 import java.util.HashMap;
 
-import com.google.api.Http;
 import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.cloud.FirestoreClient;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.user.UserPrivate;
+import se.experis.com.case2020.lagalt.models.user.UserPrivateView;
 
 @Service
 public class AuthService {
+
+    @Autowired
+    private ProjectService projectService;
 
     /**
      * Checks whether the user name (user id) is available or not. Used when signing
@@ -61,8 +64,8 @@ public class AuthService {
      * @param jwtToken
      * @return
      */
-    public boolean isProjectMember(String projectId, String jwtToken) {
-        return isPartOfProjectCollection(projectId, jwtToken, "members");
+    public boolean isProjectMember(String owner, String projectName, String jwtToken) {
+        return isPartOfProjectStaff(owner, projectName, jwtToken, "members");
     }
 
     /**
@@ -72,18 +75,19 @@ public class AuthService {
      * @param jwtToken
      * @return
      */
-    public boolean isProjectAdmin(String projectId, String jwtToken) {
-        return isPartOfProjectCollection(projectId, jwtToken, "admins");
+    public boolean isProjectAdmin(String owner, String projectName, String jwtToken) {
+        return isPartOfProjectStaff(owner, projectName, jwtToken, "admins");
     }
 
-    private boolean isPartOfProjectCollection(String projectId, String jwtToken, String collection) {
+    private boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken, String collection) {
         String userId = getUserId(jwtToken);
 
         if (userId != null) {
             try {
                 Firestore db = FirestoreClient.getFirestore();
-                var ref = db.collection("projects").document(projectId).collection("admins").document(userId).get().get();
-                var ownerId = db.collection("projects").document(projectId).get().get().get("ownerId");
+                String projectId = projectService.getProjectId(owner, projectName);
+                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get().get();
+                var ownerId = db.collection("projects").document(projectId).get().get().get("ownerId").toString();
                 return ref.exists() && ownerId == userId;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -155,7 +159,7 @@ public class AuthService {
                 var auth = FirebaseAuth.getInstance();
 
                 var authUser = auth.getUser(userId);
-                var userProfile = new UserPrivate();
+                var userProfile = new UserPrivateView();
                 userProfile.setUserId(userId);
                 userProfile.setUsername(username);
                 userProfile.setEmail(authUser.getEmail());

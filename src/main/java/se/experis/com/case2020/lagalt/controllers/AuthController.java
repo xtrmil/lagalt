@@ -37,7 +37,7 @@ public class AuthController {
     @CrossOrigin(origins = allowedHost)
     @GetMapping("/loggedInUser")
     public ResponseEntity<String> loggedInUser(@RequestHeader String Authorization) {      
-        return new ResponseEntity<>(authService.getUsername(Authorization), HttpStatus.OK);
+        return new ResponseEntity<>(authService.getAuthedUsername(Authorization), HttpStatus.OK);
     }
 
     @CrossOrigin(origins = allowedHost)
@@ -55,7 +55,7 @@ public class AuthController {
     public ResponseEntity<CommonResponse> signin(@RequestHeader String Authorization, HttpServletRequest request) {
         if(!authLimiter.isRequestBlocked(request)) {
             var cr = new CommonResponse();
-            var username = authService.getUsername(Authorization);
+            var username = authService.getAuthedUsername(Authorization);
             if (username == null) {
                 authLimiter.addFailedAttempt(request);
                 cr.message = "User does not exist";

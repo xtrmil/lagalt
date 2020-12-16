@@ -11,7 +11,7 @@ import lombok.Data;
 
 @Component
 @Data
-public class ProjectNonMember {
+public class ProjectNonMemberView {
 
     private String title;
     private String description;

@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Component
 @Data
-public class UserPublic {
+public class UserPublicView {
 
     private String username;
     private String name;

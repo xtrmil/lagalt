@@ -13,7 +13,7 @@ import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.application.ApplicationAdminView;
 import se.experis.com.case2020.lagalt.models.application.ApplicationProfileView;
 import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
-import se.experis.com.case2020.lagalt.models.user.UserPublic;
+import se.experis.com.case2020.lagalt.models.user.UserPublicView;
 import se.experis.com.case2020.lagalt.utils.Command;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -46,7 +46,7 @@ public class ApplicationService {
                     DocumentReference ApplicationsUser = dbFireStore.collection("applications").document(application.getId());
                     ApiFuture<DocumentSnapshot> userFuture = ApplicationsUser.get();
                     DocumentSnapshot userDocument = userFuture.get();
-                    UserPublic user = userService.getUserPublic(userDocument.getData().get("userId").toString());
+                    UserPublicView user = userService.getUserPublic(userDocument.getData().get("userId").toString());
 
                     applicationAdminView.setUser(user);
                     applicationSet.add(applicationAdminView);

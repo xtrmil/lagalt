@@ -11,12 +11,12 @@ public class MockAuthService extends AuthService {
     }
 
     @Override
-    public boolean isProjectAdmin(String projectId, String invalidToken) {
+    public boolean isProjectAdmin(String owner, String projectName, String invalidToken) {
         return true;
     }
 
     @Override
-    public boolean isProjectMember(String projectId, String invalidToken) {
+    public boolean isProjectMember(String owner, String projectName, String invalidToken) {
         return true;
     }
 
