@@ -24,7 +24,6 @@ import org.springframework.http.HttpStatus;
 public class UserService {
 
     MockAuthService authService = new MockAuthService();
-
     public ResponseEntity<CommonResponse> getPrivateUserDetails(HttpServletRequest request, HttpServletResponse response, String Authorization) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();

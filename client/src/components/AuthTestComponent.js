@@ -11,6 +11,9 @@ export default class AuthTestComponent extends React.Component {
   };
 
   username = React.createRef();
+  email = React.createRef();
+  password = React.createRef();
+
   verificationCode = React.createRef();
   phoneNumber = React.createRef();
   timeout;
