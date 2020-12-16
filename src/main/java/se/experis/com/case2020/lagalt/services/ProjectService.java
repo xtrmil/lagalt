@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 
 @Service
 public class ProjectService {
-
+    MockAuthService authService = new MockAuthService();
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, String projectId) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
@@ -82,15 +82,12 @@ public class ProjectService {
         HttpStatus resp;
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
-
         DocumentReference projectReference = dbFirestore.collection("projects").document(projectId);
         DocumentReference userReference = projectReference.collection("members").document(userId);
         CollectionReference links = projectReference.collection("links");
 
         DocumentSnapshot projectDocument = projectReference.get().get();
         DocumentSnapshot userDocument = userReference.get().get();
-
-
 
         if (projectDocument.exists()) {
 
@@ -128,14 +125,11 @@ public class ProjectService {
                 project = (ProjectMember) addDataToResponseProject(project, projectInfo, projectId);
                 project.setLinks(linksMap);
                 project.setMessageBoards(projectInfo.get("messageBoards"));
-
-
-
                 cr.data = project;
             } else {
+
                 ProjectNonMember project = projectDocument.toObject(ProjectNonMember.class);
                 project = addDataToResponseProject(project, projectInfo, projectId);
-
                 cr.data = project;
             }
             resp = HttpStatus.OK;
@@ -173,7 +167,7 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, ProjectMember project, String projectId) throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, ProjectMember project, String projectId , String Authorization) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -183,29 +177,34 @@ public class ProjectService {
         ApiFuture<DocumentSnapshot> future = documentReference.get();
         DocumentSnapshot document = future.get();
 
-        if (document.exists()) {
+        if(document.exists()) {
+            if (authService.isProjectAdmin(projectId,Authorization)) {
 
-            project.setIndustry(addIndustry(project.getIndustry()));
+                project.setIndustry(addIndustry(project.getIndustry()));
 
-            addToProjectDb(projectId, new HashMap<>() {{
-                put("tags", project.getTags());
-                put("admins", project.getAdmins());
-                put("members", project.getMembers());
-            }});
+                addToProjectDb(projectId, new HashMap<>() {{
+                    put("tags", project.getTags());
+                    put("admins", project.getAdmins());
+                    put("members", project.getMembers());
+                }});
 
-            project.setTags(null);
-            project.setAdmins(null);
-            project.setMembers(null);
+                project.setTags(null);
+                project.setAdmins(null);
+                project.setMembers(null);
 
-            Firestore dbFireStore = FirestoreClient.getFirestore();
-            ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("projects").document(projectId).set(project);
+                Firestore dbFireStore = FirestoreClient.getFirestore();
+                ApiFuture<WriteResult> collectionApiFuture = dbFireStore.collection("projects").document(projectId).set(project);
 
-            cr.data = collectionApiFuture.get().getUpdateTime().toString();
-            cr.message = "Project data successfully updated for project: " + project.getProjectId();
-            resp = HttpStatus.OK;
-            response.addHeader("Location", "/projects/" + project.getProjectId());
+                cr.data = collectionApiFuture.get().getUpdateTime().toString();
+                cr.message = "Project data successfully updated for project: " + project.getProjectId();
+                resp = HttpStatus.OK;
+                response.addHeader("Location", "/projects/" + project.getProjectId());
 
-        } else {
+            } else {
+                resp = HttpStatus.UNAUTHORIZED;
+                cr.message = "You are not authorized to edit project with id: " + projectId;
+            }
+        }else{
             resp = HttpStatus.NOT_FOUND;
             cr.message = "No Project with Id " + project.getProjectId() + " Found";
         }
@@ -223,12 +222,12 @@ public class ProjectService {
     }
 
     public void addToProjectDb(String projectId, Map<String, Set<String>> data) {
-        DatabaseService dataBaseService = new DatabaseService();
+        DatabaseService databaseService = new DatabaseService();
         Firestore dbFirestore = FirestoreClient.getFirestore();
         data.entrySet().forEach(entry -> {
 
             if (dbFirestore.collection("projects").document(projectId).collection(entry.getKey()) != null) {
-                dataBaseService.deleteCollection(dbFirestore.collection("projects").document(projectId).collection(entry.getKey()), 10);
+                databaseService.emptyCollection(dbFirestore.collection("projects").document(projectId).collection(entry.getKey()), 10);
             }
 
             if (entry.getKey().equals("tags")) {
