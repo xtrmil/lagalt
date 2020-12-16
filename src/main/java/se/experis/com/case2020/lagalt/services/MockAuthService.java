@@ -6,17 +6,27 @@ import org.springframework.stereotype.Service;
 public class MockAuthService extends AuthService {
 
     @Override
-    public boolean belongsToUser(String userId, String jwtToken) {
+    public boolean belongsToUser(String userId, String invalidToken) {
         return true;
     }
 
     @Override
-    public boolean isProjectAdmin(String projectId, String jwtToken) {
+    public boolean isProjectAdmin(String projectId, String invalidToken) {
         return true;
     }
 
     @Override
-    public boolean isProjectMember(String projectId, String jwtToken) {
+    public boolean isProjectMember(String projectId, String invalidToken) {
         return true;
+    }
+
+    @Override
+    public String getUserId(String invalidToken) {
+        return "E0DE04K9y6WP5VeKYQRbYBNtMPi2";
+    }
+
+    @Override
+    public String getUsername(String userId) {
+        return "Bumpfel";
     }
 }

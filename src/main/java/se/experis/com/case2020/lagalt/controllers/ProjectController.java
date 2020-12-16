@@ -21,24 +21,30 @@ public class ProjectController {
     @Autowired
     ProjectService projectService;
 
+
+    @GetMapping("/test")
+    public String smt() {
+        return projectService.testQuery();
+    }
+
     @GetMapping("/")
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam String search) throws ExecutionException, InterruptedException {
         return projectService.getProjectSearch(request, response, search);
     }
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestHeader String userId)
+    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, HttpServletResponse response, @PathVariable("projectId") String projectId, @RequestHeader String Authorization)
             throws ExecutionException, InterruptedException {
-        return projectService.getProjectDetails(request, response, projectId, userId);
+        return projectService.getProjectDetails(request, response, projectId, Authorization);
     }
 
     @PostMapping("/new")
-    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMember project) {
-        return projectService.createNewProject(request, response, project);
+    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMember project, @RequestHeader String Authorization) {
+        return projectService.createNewProject(request, project, Authorization);
     }
 
     @PutMapping("/{projectId}")
     public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization, @PathVariable("projectId") String projectId, @RequestBody ProjectMember project) throws ExecutionException, InterruptedException {
-        return projectService.updateProjectDetails(request, response, project, projectId, Authorization);
+        return projectService.updateProjectDetails(request, project, Authorization);
     }
 }

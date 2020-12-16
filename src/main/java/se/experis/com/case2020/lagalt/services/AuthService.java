@@ -104,7 +104,7 @@ public class AuthService {
         return null;
     }
 
-    public String getUsername(String jwtToken) {
+    public String getAuthedUsername(String jwtToken) {
         try {
             Firestore db = FirestoreClient.getFirestore();
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
@@ -118,6 +118,11 @@ public class AuthService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public String getUsername(String uid) {
+        // TODO implement
         return null;
     }
 

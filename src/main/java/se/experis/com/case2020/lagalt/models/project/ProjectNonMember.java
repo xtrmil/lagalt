@@ -1,19 +1,21 @@
 package se.experis.com.case2020.lagalt.models.project;
 
-import lombok.Data;
-import org.springframework.stereotype.Component;
-import com.google.cloud.Timestamp;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.cloud.Timestamp;
+
+import org.springframework.stereotype.Component;
+
+import lombok.Data;
 
 @Component
 @Data
 public class ProjectNonMember {
 
-    private String projectId;
     private String title;
     private String description;
-    private String ownerId;
+    private String owner;
     private String industry;
     private Map<String,String> images;
     private String createdAt;
