@@ -44,7 +44,7 @@ const JoinProjectForm = () => {
           ></CheckboxInput>
 
           <Button type="submit" variant="success">
-            Apply now!
+            Apply now
           </Button>
         </Form>
       )}

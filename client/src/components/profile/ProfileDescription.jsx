@@ -4,7 +4,7 @@ const ProfileDescription = (props) => {
   const { description } = props.user;
   return (
     <div className="justify-content-center">
-      <h4 className="mt-2 text-center">About me</h4>
+      <h4>About me</h4>
       <div>
         {description} Lorem ipsum dolor sit amet consectetur adipisicing elit. Id officiis laborum
         aut temporibus illum ad voluptates, tempore sed totam assumenda exercitationem error

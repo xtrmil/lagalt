@@ -31,11 +31,11 @@ const ProjectsPage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-admin">
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>
-                <Button className="ml-4" onClick={onProjectViewClick} variant="info">
+                <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
                   Admin
                 </Button>
               </div>
@@ -58,7 +58,7 @@ const ProjectsPage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-admin">
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>
@@ -87,7 +87,7 @@ const ProjectsPage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-mb">
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>
@@ -110,7 +110,7 @@ const ProjectsPage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-mb">
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>

@@ -29,7 +29,7 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-join">
                 <Button onClick={onProjectViewClick} variant="success">
                   Join
                 </Button>
@@ -54,7 +54,7 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-join">
                 <Button onClick={onProjectViewClick} variant="success">
                   Join
                 </Button>
@@ -79,7 +79,7 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-admin">
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>
@@ -107,7 +107,7 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
+              <div className="stretched-button-mb">
                 <Button onClick={onProjectViewClick} variant="info">
                   Message board & chat
                 </Button>

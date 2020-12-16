@@ -28,9 +28,16 @@
     margin-top: 20px;
 }
 
-.stretched-button {
+.stretched-button-mb {
     z-index:4;
     position:relative;
+    width: 187px;
+}
+
+.stretched-button-admin {
+    z-index:4;
+    position:relative;
+    width: 283px;
 }
 
 h4, h6 {
