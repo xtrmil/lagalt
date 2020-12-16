@@ -22,11 +22,11 @@ function App() {
         <Route exact path="/" component={HomePage} />
         <Route exact path="/login" component={LoginPage} />
         <Route exact path="/register" component={RegisterPage} />
-        <Route exact path="/project" component={ProjectViewPage} />
+        <Route exact path="/project/create" component={CreateProjectPage} />
+        <Route exact path="/project/:projectId" component={ProjectViewPage} />
         <Route exact path="/admin" component={ProjectAdminPage} />
         <Route exact path="/profile" component={ProfilePage} />
         <Route exact path="/projects" component={ProjectsPage} />
-        <Route exact path="/project/create" component={CreateProjectPage} />
       </Switch>
     </Router>
   );

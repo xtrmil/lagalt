@@ -1,12 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
 
 const ProjectViewMainSection = (props) => {
   const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick } = props;
-  const { skills } = project;
+  const { tags } = project;
 
-  const skillsList = skills.map((skill, index) => {
+  useEffect(() => {
+    console.log(project);
+  }, [project]);
+
+  const membersList =
+    project.members != null ? (
+      project.members.map((member, index) => {
+        return <div key={index}>{member}</div>;
+      })
+    ) : (
+      <div>No members</div>
+    );
+
+  const skillsList = tags.map((tag, index) => {
     return (
       <Col
         sm={5}
@@ -15,7 +28,7 @@ const ProjectViewMainSection = (props) => {
         }
         key={index}
       >
-        {skill}
+        {tag}
       </Col>
     );
   });
@@ -28,13 +41,7 @@ const ProjectViewMainSection = (props) => {
           <div className="text-center">{skillsList}</div>
         </div>
         <h3 className="mb-2 text-center">Members</h3>
-        <div className="text-center">
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-        </div>
+        <div className="text-center">{membersList}</div>
       </Col>
       <Col sm={8} className="pl-0">
         <Row className="no-gutters">
