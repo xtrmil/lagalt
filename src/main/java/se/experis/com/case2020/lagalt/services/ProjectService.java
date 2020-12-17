@@ -121,6 +121,8 @@ public class ProjectService {
         try {
             Firestore dbFirestore = FirestoreClient.getFirestore();
             var projects = dbFirestore.collection("projects").listDocuments();
+            var count = dbFirestore.collection("projects").get().get().getDocuments();
+            System.out.println(count);
             var formattedProjects = getFormattedProjects(projects);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
@@ -136,22 +138,30 @@ public class ProjectService {
                    
         projects.forEach(p -> {
             try {
-                var project =  p.get().get();
+                var projectDocument =  p.get().get();
                 
-                ProjectSummarizedView jsonProject = project.toObject(ProjectSummarizedView.class);
+                ProjectSummarizedView summarizedProject = projectDocument.toObject(ProjectSummarizedView.class);
                 var memberCount = p.collection("members").get().get().getDocuments().size();
-                jsonProject.setMemberCount(memberCount);
-                allProjects.add(jsonProject);
+                summarizedProject.setMemberCount(memberCount);
+                allProjects.add(summarizedProject);
                 
+                summarizedProject.setOwner(authService.getUsername(summarizedProject.getOwner()));
+
+                String industryKey = projectDocument.get("industryKey").toString();
+                summarizedProject.setIndustry(new HashMap<>(){{ 
+                    put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
+                }});
+
                 var tags = p.collection("tags").get().get().getDocuments();
-                Set<String> tagSet = new HashSet<>();
+                Map<String, String> tagsMap = new HashMap<>();
                 tags.forEach(tag -> {
-                    tagSet.add(tag.getId());
+                    tagsMap.put(tag.getId(), Tag.valueOf(tag.getId().toString()).DISPLAY_TAG);
                 });
-                jsonProject.setTags(tagSet);
+
+                summarizedProject.setTags(tagsMap);
                 
-                Timestamp createdAtForDb = (Timestamp) project.get("createdAtForDb");
-                jsonProject.setCreatedAt(createdAtForDb.toString());
+                Timestamp createdAtForDb = (Timestamp) projectDocument.get("createdAtForDb");
+                summarizedProject.setCreatedAt(createdAtForDb.toString());
 
             } catch(Exception e) {
                 e.printStackTrace();

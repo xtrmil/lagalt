@@ -24,7 +24,7 @@ public class ProjectController {
     @GetMapping("")
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search)
     throws ExecutionException, InterruptedException {
-        if(search == null ) {
+        if(search != null ) {
             return projectService.getProjectsSearch(request, search);
         }
         return projectService.getProjects(request, response);
