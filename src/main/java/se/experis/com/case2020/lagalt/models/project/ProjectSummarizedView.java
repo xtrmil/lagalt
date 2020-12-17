@@ -1,20 +1,24 @@
 package se.experis.com.case2020.lagalt.models.project;
 
-import lombok.Data;
-import org.springframework.stereotype.Component;
 import java.util.Map;
-import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import org.springframework.stereotype.Component;
+
+import lombok.Data;
 
 @Component
 @Data
 public class ProjectSummarizedView {
 
+    @JsonProperty(access = Access.WRITE_ONLY)
     private String projectId;
     private String title;
     private String description;
-    private String ownerId;
-    private String industry;
-    private Set<String> tags;
+    private String owner;
+    private Map<String, String> industry;
+    private Map<String, String> tags;
     private Map<String,String> images;
     private String createdAt;
     private int memberCount;
