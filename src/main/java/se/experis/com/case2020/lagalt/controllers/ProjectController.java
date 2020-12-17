@@ -21,12 +21,6 @@ public class ProjectController {
     @Autowired
     ProjectService projectService;
 
-
-    @GetMapping("/test")
-    public String smt() {
-        return projectService.testQuery();
-    }
-
     @GetMapping("")
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search)
     throws ExecutionException, InterruptedException {
@@ -48,9 +42,9 @@ public class ProjectController {
         return projectService.createNewProject(request, project, Authorization);
     }
 
-    @PutMapping("/{projectId}")
+    @PutMapping("/{owner}/{projectName}")
     public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization,
-    @PathVariable("projectId") String projectId, @RequestBody ProjectMemberView project) throws ExecutionException, InterruptedException {
-        return projectService.updateProjectDetails(request, project, Authorization);
+    @PathVariable String owner, @PathVariable String projectName, @RequestBody ProjectMemberView project) {
+        return projectService.updateProjectDetails(request, owner, projectName, project, Authorization);
     }
 }

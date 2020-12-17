@@ -21,12 +21,17 @@ public class MockAuthService extends AuthService {
     }
 
     @Override
-    public String getUserId(String invalidToken) {
+    public String getUserIdFromToken(String invalidToken) {
         return "E0DE04K9y6WP5VeKYQRbYBNtMPi2";
     }
 
     @Override
     public String getUsername(String userId) {
+        return "Bumpfel";
+    }
+
+    @Override
+    public String getUsernameFromToken(String invalidToken) {
         return "Bumpfel";
     }
 }

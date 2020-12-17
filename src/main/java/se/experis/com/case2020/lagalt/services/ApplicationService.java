@@ -34,7 +34,7 @@ public class ApplicationService {
         HttpStatus resp = HttpStatus.OK;
         Set<ApplicationAdminView> applicationSet = new HashSet<>();
 
-        if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)) {
+        if(authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
             Firestore dbFireStore = FirestoreClient.getFirestore();
             CollectionReference ApplicationsCollection =  dbFireStore.collection("projects").document(projectId).collection("applications");
 
@@ -76,8 +76,8 @@ public class ApplicationService {
         HttpStatus resp = HttpStatus.OK;
 
         Firestore dbFireStore = FirestoreClient.getFirestore();
-        if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)){
-            DocumentReference userReference = dbFireStore.collection("users").document(authService.getUserId(Authorization));
+        if(authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)){
+            DocumentReference userReference = dbFireStore.collection("users").document(authService.getUserIdFromToken(Authorization));
             DocumentReference projectReference = dbFireStore.collection("projects").document(projectId);
 
             ApplicationProfileView applicationProfileView = new ApplicationProfileView();
@@ -114,7 +114,7 @@ public class ApplicationService {
         DocumentSnapshot document = future.get();
 
         if(document.exists()){
-            if(authService.belongsToUser(authService.getUserId(Authorization), Authorization)){
+            if(authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)){
                 ApplicationProfileView updatedApplication = new ApplicationProfileView();
                 if(EnumUtils.isValidEnum(ApplicationStatus.class, status.toString())) {
                     System.out.println("Valid enum");

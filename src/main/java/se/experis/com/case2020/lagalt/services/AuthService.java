@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.user.UserPrivateView;
+import se.experis.com.case2020.lagalt.models.user.UserProfileView;
 
 @Service
 public class AuthService {
@@ -80,12 +80,12 @@ public class AuthService {
     }
 
     private boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken, String collection) {
-        String userId = getUserId(jwtToken);
+        String userId = getUserIdFromToken(jwtToken);
 
         if (userId != null) {
             try {
                 Firestore db = FirestoreClient.getFirestore();
-                String projectId = projectService.getProjectId(owner, projectName);
+                String projectId = projectService.getProjectNameId(owner, projectName);
                 var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get().get();
                 var ownerId = db.collection("projects").document(projectId).get().get().get("ownerId").toString();
                 return ref.exists() && ownerId == userId;
@@ -96,7 +96,7 @@ public class AuthService {
         return false;
     }
 
-    public String getUserId(String jwtToken) {
+    public String getUserIdFromToken(String jwtToken) {
         try {
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             return fbToken.getUid();
@@ -108,7 +108,20 @@ public class AuthService {
         return null;
     }
 
-    public String getAuthedUsername(String jwtToken) {
+    public String getUserId(String username) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
+            if(userRecord.exists()) {
+                return userRecord.get("uid").toString();
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public String getUsernameFromToken(String jwtToken) {
         try {
             Firestore db = FirestoreClient.getFirestore();
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
@@ -134,7 +147,7 @@ public class AuthService {
         var cr = new CommonResponse();
 
         try {
-            var userId = getUserId(jwtToken);
+            var userId = getUserIdFromToken(jwtToken);
             if(userId == null) {
                 throw new IllegalArgumentException();
             }
@@ -159,9 +172,8 @@ public class AuthService {
                 var auth = FirebaseAuth.getInstance();
 
                 var authUser = auth.getUser(userId);
-                var userProfile = new UserPrivateView();
-                userProfile.setUserId(userId);
-                userProfile.setUsername(username);
+                var userProfile = new UserProfileView();
+                userProfile.setUser(userId);
                 userProfile.setEmail(authUser.getEmail());
                 userProfile.setName(authUser.getDisplayName());
                 
