@@ -4,6 +4,7 @@ import { Formik } from 'formik';
 import TextInput from '../components/form/TextInput';
 import { Button, Form } from 'react-bootstrap';
 import { registerSchema } from '../utils/form/FormUtils';
+import { Link } from 'react-router-dom';
 
 const RegisterPage = (props) => {
   const initialValues = { name: '', email: '', password: '' };
@@ -11,6 +12,9 @@ const RegisterPage = (props) => {
   return (
     <>
       <h1 className="registerHeading">Register</h1>
+      <h4 className="loginInvite">
+        <Link to="/login">Already have a Lagalt account? Log in here</Link>
+      </h4>
 
       <Formik
         validationSchema={registerSchema}
@@ -63,7 +67,7 @@ const RegisterPage = (props) => {
 
               <div>
                 <Button className="google-button" variant="info">
-                  Continue with Google
+                  Sign up with Google
                 </Button>
               </div>
               <div>
