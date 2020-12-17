@@ -7,7 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.user.UserPrivate;
+import se.experis.com.case2020.lagalt.models.user.UserProfileView;
 import se.experis.com.case2020.lagalt.services.UserService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,17 +21,17 @@ public class UserController {
     UserService userService;
 
     @GetMapping("/profile")
-    public ResponseEntity<CommonResponse> getPrivateUser(HttpServletRequest request, HttpServletResponse response, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
-        return userService.getPrivateUserDetails(request, response, Authorization);
+    public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+        return userService.getUserProfile(request, Authorization);
     }
 
     @GetMapping("/users/{username}")
-    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, HttpServletResponse response, @PathVariable("username") String username) throws InterruptedException, ExecutionException {
-        return userService.getPublicUserDetails(request, response, username);
+    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, @PathVariable("username") String username) throws InterruptedException, ExecutionException {
+        return userService.getPublicUserDetails(request, username);
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserPrivate user, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, HttpServletResponse response, @RequestBody UserProfileView user, @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
         return userService.updateUserDetails(request, response, user, Authorization);
     }
 }

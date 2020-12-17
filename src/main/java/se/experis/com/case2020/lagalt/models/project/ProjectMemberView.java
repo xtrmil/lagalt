@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Component
 @Data
-public class ProjectMember extends ProjectNonMember {
+public class ProjectMemberView extends ProjectNonMemberView {
 
     private Map<String,String> links;
     private Set<String> messageBoards;

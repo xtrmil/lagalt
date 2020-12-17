@@ -7,7 +7,7 @@ import java.util.Set;
 
 @Component
 @Data
-public class ProjectSearch {
+public class ProjectSummarizedView {
 
     private String projectId;
     private String title;
