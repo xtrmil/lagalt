@@ -3,6 +3,7 @@ import { Modal, Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from '../form/TextInput';
 import SelectInput from '../form/SelectInput';
+import MultiSelectInput from '../form/MultiSelectInput';
 import { editProfileSchema } from '../../utils/form/FormUtils';
 const ProfileModal = (props) => {
   const { showModal, handleCloseModal, handleSaveChanges, user } = props;
@@ -82,7 +83,7 @@ const ProfileModal = (props) => {
                     handleBlur={handleBlur}
                   ></TextInput>
 
-                  <SelectInput
+                  <MultiSelectInput
                     label="Select Skills*"
                     name="skills"
                     options={options}
@@ -93,7 +94,7 @@ const ProfileModal = (props) => {
                     setFieldTouched={setFieldTouched}
                     setFieldValue={setFieldValue}
                     isMulti={true}
-                  ></SelectInput>
+                  ></MultiSelectInput>
 
                   <SelectInput
                     label="Status*"

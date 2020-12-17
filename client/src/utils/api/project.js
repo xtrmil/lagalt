@@ -8,3 +8,11 @@ export async function getProject(projectId) {
     });
   return fetchData;
 }
+
+export async function updateProject(project) {
+  const updateData = await baseUrl
+    .put(`/projects/${project.projectId}`, project)
+    .then((response) => {
+      console.log(response);
+    });
+}

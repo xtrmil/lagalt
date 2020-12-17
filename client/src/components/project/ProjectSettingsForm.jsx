@@ -1,51 +1,77 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from '../form/TextInput';
 import SelectInput from '../form/SelectInput';
+import MultiSelectInput from '../form/MultiSelectInput';
 import { createProjectSchema } from '../../utils/form/FormUtils';
-
+import { getAllIndustries, getTagsByIndustry } from '../../utils/api/industry';
 const ProjectSettingsForm = (props) => {
-  const { project, setProject } = props;
-  console.log(project);
-  const currentSkills = project.skills.map((skill) => ({
-    value: skill,
-    label: skill,
-  }));
-  const initialValues = {
+  const { project, setProject, hideModal } = props;
+  const [industryOptions, setIndustryOptions] = useState();
+  const [tagOptions, setTagOptions] = useState();
+  const [initialTags] = useState(
+    project.tags.map((tag) => ({
+      value: tag,
+      label: tag,
+    })),
+  );
+  const [initialValues] = useState({
     title: project.title,
     industry: project.industry,
-    skills: currentSkills,
+    tags: initialTags,
     description: project.description,
-  };
+  });
   const currentIndustry = { value: project.industry, label: project.industry };
 
-  const options = [
-    { value: 'DRUMMER', label: 'Drummer' },
-    { value: 'WEB_DEV', label: 'WEB_DEV' },
-    { value: 'REACT', label: 'REACT' },
-    { value: 'SECURITY', label: 'SECURITY' },
-    { value: 'ANGULAR', label: 'ANGULAR' },
-  ];
+  const mapOptions = (array, data) => {
+    for (const [key, value] of Object.entries(data)) {
+      const option = { value: key, label: value };
+      array.push(option);
+    }
+    return array;
+  };
+  const fetchTagOptions = useCallback(async (industry) => {
+    let tagOptions = [];
+    await getTagsByIndustry(industry).then((response) => {
+      mapOptions(tagOptions, response.data);
+      setTagOptions(tagOptions);
+    });
+  }, []);
+  const fetchIndustries = useCallback(async () => {
+    let industriesOptions = [];
+    await getAllIndustries().then((response) => {
+      mapOptions(industriesOptions, response.data);
+      setIndustryOptions(industriesOptions);
+    });
+  }, []);
 
-  const industryOptions = [
-    { value: 'MUSIC', label: 'Music' },
-    { value: 'FILM', label: 'Film' },
-    { value: 'GAMEDEVELOPMENT', label: 'Game Development' },
-    { value: 'WEBDEVELOPMENT', label: 'Web Development' },
-  ];
+  useEffect(() => {
+    fetchTagOptions('Game');
+    fetchIndustries();
+  }, [fetchIndustries, fetchTagOptions]);
+
   const onFormSubmit = (values) => {
-    const { title, industry, skills, description } = values;
-    console.log(skills);
+    const { title, industry, tags, description } = values;
     const newProject = {
       ...project,
       title,
       industry,
-      skills: skills.map((skill) => skill.value),
+      tags: tags.map((tag) => tag.value),
       description,
     };
     console.log(newProject);
     setProject(newProject);
+    hideModal();
+  };
+
+  const onIndustryChange = (selected, setFieldValue) => {
+    setFieldValue('industry', selected.value);
+    setFieldValue('tags', null);
+    let label = selected.label;
+    label = label.split(' ')[0];
+    console.log(label);
+    fetchTagOptions(label);
   };
   return (
     <Formik
@@ -84,21 +110,19 @@ const ProjectSettingsForm = (props) => {
               errors={errors}
               defaultValue={currentIndustry}
               setFieldTouched={setFieldTouched}
-              setFieldValue={setFieldValue}
-              isMulti={false}
-            ></SelectInput>
-            <SelectInput
-              label="Select Skills*"
-              name="skills"
-              options={options}
+              onChange={(selected) => onIndustryChange(selected, setFieldValue)}
+            />
+            <MultiSelectInput
+              label="Select Tags*"
+              name="tags"
+              options={tagOptions}
               values={values}
               touched={touched}
               errors={errors}
-              defaultValue={currentSkills}
+              defaultValue={initialTags}
               setFieldTouched={setFieldTouched}
               setFieldValue={setFieldValue}
-              isMulti={true}
-            ></SelectInput>
+            ></MultiSelectInput>
             <TextInput
               type="text"
               label="Description*"

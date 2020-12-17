@@ -73,7 +73,7 @@ export const updateProjectSchema = yup.object({
 export const createProjectSchema = yup.object({
   title: yup.string().required('Title is required'),
   description: yup.string().required('Description is required'),
-  skills: yup
+  tags: yup
     .array()
     .of(
       yup.object().shape({
@@ -82,7 +82,7 @@ export const createProjectSchema = yup.object({
       }),
     )
     .nullable()
-    .required('At least one skill is required'),
+    .required('At least one tag is required'),
   industry: yup.string().required('Select an industry'),
 });
 

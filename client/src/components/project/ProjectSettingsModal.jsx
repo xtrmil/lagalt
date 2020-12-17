@@ -12,7 +12,7 @@ const ProjectSettingsModal = (props) => {
     <Modal show={showModal} onHide={onHideModal}>
       <Modal.Body className="mx-3">
         <h2 className="text-center mb-5">Edit project</h2>
-        <ProjectSettingsForm project={project} setProject={setProject} />
+        <ProjectSettingsForm project={project} setProject={setProject} hideModal={onHideModal} />
       </Modal.Body>
     </Modal>
   );

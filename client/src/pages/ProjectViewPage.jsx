@@ -19,13 +19,14 @@ const ProjectViewPage = (props) => {
       });
     };
     fetchData();
-  }, []);
+  }, [projectId]);
 
   return (
     <Container className="justify-content-center">
       {!isLoading && (
         <ProjectViewComponent
           project={project}
+          setProject={setProject}
           isAdmin={isAdmin}
           loggedIn={loggedIn}
           memberOf={memberOf}

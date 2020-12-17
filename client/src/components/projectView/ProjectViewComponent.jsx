@@ -6,10 +6,9 @@ import ProjectSettingsModal from '../project/ProjectSettingsModal';
 import JoinProjectModal from './JoinProjectModal';
 
 const ProjectViewComponent = (props) => {
+  const { project, setProject, isAdmin, loggedIn, memberOf } = props;
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showProjectSettingsModal, setShowProjectSettingsModal] = useState(false);
-  const { isAdmin, loggedIn, memberOf } = props;
-  const [project, setProject] = useState(props.project);
 
   const onJoinClick = () => {
     setShowJoinModal(true);
