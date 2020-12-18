@@ -27,11 +27,11 @@ public class MockAuthService extends AuthService {
 
     @Override
     public String getUsername(String userId) {
-        return "Bumpfel";
+        return "Bumpfel".toLowerCase();
     }
 
     @Override
     public String getUsernameFromToken(String invalidToken) {
-        return "Bumpfel";
+        return "Bumpfel".toLowerCase();
     }
 }

@@ -2,12 +2,12 @@ package se.experis.com.case2020.lagalt.services;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +21,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
+import com.google.firestore.v1.Document;
 
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -178,7 +179,7 @@ public class ProjectService {
         HttpStatus resp;
 
         try {
-            DocumentReference projectReference = getProjectFromName(owner, projectName);
+            DocumentReference projectReference = getProjectDocumentReference(owner, projectName);
             CollectionReference links = projectReference.collection("links");
             CollectionReference tags = projectReference.collection("tags");
             DocumentSnapshot projectDocument = projectReference.get().get();
@@ -270,7 +271,7 @@ public class ProjectService {
                     addCollectionToProjectDocument(docRef.getId(), new HashMap<>() {{
                         put("tags", project.getTagKeys());
 
-                    }}, userId);
+                    }});
                     project.setTagKeys(null);
                     docRef.set(project);  
                     
@@ -317,31 +318,75 @@ public class ProjectService {
                     // owner cannot be either member or admin
                     // a user cannot be both member and admin (becomes only admin if specified as both)
                     // editing user cannot remove him/herself as admin
-                    var existingAdmins = getLowerCaseSet(project.getAdmins());
-                    existingAdmins.add(authService.getUsernameFromToken(Authorization));
-                    existingAdmins.remove(owner.toLowerCase());
+                    var newAdminNames = getLowerCaseSet(project.getAdmins());
+                    newAdminNames.add(authService.getUsernameFromToken(Authorization));
+                    newAdminNames.remove(owner.toLowerCase());
+                    var newAdminIds = new HashSet<String>();
                     
-                    var existingMembers = getLowerCaseSet(project.getMembers());
-                    existingMembers.removeAll(existingAdmins);
-                    existingMembers.remove(owner.toLowerCase());
+                    var newMemberNames = getLowerCaseSet(project.getMembers());
+                    newMemberNames.removeAll(newAdminNames);
+                    newMemberNames.remove(owner.toLowerCase());
+                    var newMemberIds = new HashSet<String>();
 
-                    var map = new HashMap<String, Set<String>>();
-                    map.put("admins", existingAdmins);
-                    map.put("members", existingMembers);
-                    map.put("tags", project.getTagKeys());
-
-                    existingAdmins.forEach(admin -> {
-                        userService.addToUserDocument(authService.getUserId(admin), "memberOf", pid);
+                    newAdminNames.forEach(admin -> {
+                        String userId = authService.getUserId(admin);
+                        System.out.println("newAdminNames " + userId);
+                        if(userId != null) {
+                            System.out.println("newAdminNames " + userId);
+                            userService.addToUserDocument(userId, "memberOf", pid);
+                            newAdminIds.add(userId);
+                        }
                     });
 
-                    existingMembers.forEach(member -> {
-                        userService.addToUserDocument(authService.getUserId(member), "memberOf", pid);
+                    newMemberNames.forEach(member -> {
+                        String userId = authService.getUserId(member);
+                        
+                        System.out.println("newMemberNames " + userId);
+                        if(userId != null) {
+                            System.out.println("newMemberNames " + userId);
+                            userService.addToUserDocument(userId, "memberOf", pid);
+                            newMemberIds.add(userId);
+                        }
+                    });
+
+                    Set<String> previousUserIds = new HashSet<>();
+
+                    // var oldUsers = dbFireStore.collection("projects").document(pid).collection("members").get().get().getDocuments().stream().map(user -> user.getId()).collect(Collectors.toSet());
+                    // var projectOldAdmins = dbFireStore.collection("projects").document(pid).collection("admins").get().get().getDocuments().stream().map(user -> user.getId()).collect(Collectors.toSet());
+                    var projectOldAdmins = dbFireStore.collection("projects").document(pid).collection("admins").get().get();
+                    var projectOldMembers = dbFireStore.collection("projects").document(pid).collection("members").get().get();
+
+
+                    projectOldAdmins.forEach(userDocument -> {
+                        previousUserIds.add(userDocument.getId());
+                    });
+                    
+                    projectOldMembers.forEach(userDocument -> {
+                        previousUserIds.add(userDocument.getId());
+                    });
+
+                    previousUserIds.removeAll(newAdminIds);
+                    previousUserIds.removeAll(newMemberIds);
+
+                    System.out.println("removing " + previousUserIds.size() + " previous users");
+                    
+                    previousUserIds.forEach(userId ->{
+                        try {
+                            userService.deleteFromUserCollection(userId, "memberOf", pid);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     });
 
 
-                
-                    addCollectionToProjectDocument(pid, map, authService.getUserIdFromToken(Authorization));
+                    var projectCollections = new HashMap<String, Set<String>>();
+                    projectCollections.put("admins", newAdminIds);
+                    projectCollections.put("members", newMemberIds);
+                    projectCollections.put("tags", project.getTagKeys());
 
+                    addCollectionToProjectDocument(pid, projectCollections);
+
+                    
                     project.setOwner(authService.getUserId(owner));
                     project.setTitle(projectName);
                     project.setTagKeys(null);
@@ -368,6 +413,7 @@ public class ProjectService {
             e.printStackTrace();
         }
         cmd.setResult(resp);
+        System.out.println("-------------------");
         return new ResponseEntity<>(cr, resp);
     }
 
@@ -395,31 +441,32 @@ public class ProjectService {
         return project;
     }
 
-    private void addCollectionToProjectDocument(String projectId, Map<String, Set<String>> data, String userId) {       
+    private void addCollectionToProjectDocument(String projectId, Map<String, Set<String>> data) {       
         DatabaseService databaseService = new DatabaseService();
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        data.entrySet().forEach(entry -> {
 
-            if (dbFirestore.collection("projects").document(projectId).collection(entry.getKey()) != null) {
-                databaseService.emptyCollection(dbFirestore.collection("projects").document(projectId).collection(entry.getKey()), 10);
+        data.entrySet().forEach(entry -> {
+            var collectionName = entry.getKey();
+            var documentId = entry.getValue();
+
+            var collectionRef = getProjectDocumentReference(projectId).collection(collectionName);
+
+            if (collectionRef != null) {
+                databaseService.emptyCollection(collectionRef, 10);
+                System.out.println("emptied project collection " + collectionName);
             }
 
-           if (entry.getKey().equals("tags")) {
+           if (collectionName.equals("tags")) {
 
-                entry.getValue().forEach(tag -> {
+            documentId.forEach(tag -> {
                     if (EnumUtils.isValidEnum(Tag.class, tag)) {
-                        dbFirestore.collection("projects").document(projectId)
-                            .collection(entry.getKey()).document(tag).set(new HashMap<String, Object>());
+                        collectionRef.document(tag).set(new HashMap<String, Object>());
                     }
                 });
             } else {
 
-                entry.getValue().forEach(item -> {
+                documentId.forEach(item -> {
                     try {
-                        if (dbFirestore.collection("userRecords").document(item).get().get().exists()) {
-                            String uid = dbFirestore.collection("userRecords").document(item).get().get().get("uid").toString();
-                            dbFirestore.collection("projects").document(projectId).collection(entry.getKey()).document(uid).set(new HashMap<String, Object>());
-                        }
+                        collectionRef.document(item).set(new HashMap<String, Object>());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -445,7 +492,7 @@ public class ProjectService {
         return (owner + "-" + projectName).toLowerCase();
     }
 
-    private DocumentReference getProjectFromName(String owner, String projectName) {
+    private DocumentReference getProjectDocumentReference(String owner, String projectName) {
         try {
             var db = FirestoreClient.getFirestore();
 
@@ -458,6 +505,11 @@ public class ProjectService {
             System.err.println("getProjectFromName:" + e.getMessage());
         }
         return null;
+    }
+
+    private DocumentReference getProjectDocumentReference(String projectId) {
+        var db = FirestoreClient.getFirestore();
+        return db.collection("projects").document(projectId);
     }
 
     private Set<String> getLowerCaseSet(Set<String> set) {
