@@ -268,7 +268,7 @@ public class ProjectService {
                 
                     var docRef = db.collection("projects").document();
 
-                    addCollectionToProjectDocument(docRef.getId(), new HashMap<>() {{
+                    addCollectionsToProjectDocument(docRef.getId(), new HashMap<>() {{
                         put("tags", project.getTagKeys());
 
                     }});
@@ -314,81 +314,29 @@ public class ProjectService {
                 if (authService.isProjectAdmin(owner, projectName, Authorization)) {
                     project.setIndustryKey(addIndustry(project.getIndustryKey()));
 
-                    // deals with:
-                    // owner cannot be either member or admin
-                    // a user cannot be both member and admin (becomes only admin if specified as both)
-                    // editing user cannot remove him/herself as admin
-                    var newAdminNames = getLowerCaseSet(project.getAdmins());
-                    newAdminNames.add(authService.getUsernameFromToken(Authorization));
-                    newAdminNames.remove(owner.toLowerCase());
-                    var newAdminIds = new HashSet<String>();
-                    
-                    var newMemberNames = getLowerCaseSet(project.getMembers());
-                    newMemberNames.removeAll(newAdminNames);
-                    newMemberNames.remove(owner.toLowerCase());
-                    var newMemberIds = new HashSet<String>();
+                    // checks for valid new admins and members from the json and turns it into a set of user ids
+                    project.setOwner(owner);
+                    String editor = authService.getUsernameFromToken(Authorization);
+                    var newMemberIds = getNewMemberIds(project, pid, editor);
 
-                    newAdminNames.forEach(admin -> {
-                        String userId = authService.getUserId(admin);
-                        System.out.println("newAdminNames " + userId);
-                        if(userId != null) {
-                            System.out.println("newAdminNames " + userId);
-                            userService.addToUserDocument(userId, "memberOf", pid);
-                            newAdminIds.add(userId);
-                        }
-                    });
-
-                    newMemberNames.forEach(member -> {
-                        String userId = authService.getUserId(member);
-                        
-                        System.out.println("newMemberNames " + userId);
-                        if(userId != null) {
-                            System.out.println("newMemberNames " + userId);
-                            userService.addToUserDocument(userId, "memberOf", pid);
-                            newMemberIds.add(userId);
-                        }
-                    });
-
-                    Set<String> previousUserIds = new HashSet<>();
-
-                    // var oldUsers = dbFireStore.collection("projects").document(pid).collection("members").get().get().getDocuments().stream().map(user -> user.getId()).collect(Collectors.toSet());
-                    // var projectOldAdmins = dbFireStore.collection("projects").document(pid).collection("admins").get().get().getDocuments().stream().map(user -> user.getId()).collect(Collectors.toSet());
-                    var projectOldAdmins = dbFireStore.collection("projects").document(pid).collection("admins").get().get();
-                    var projectOldMembers = dbFireStore.collection("projects").document(pid).collection("members").get().get();
-
-
-                    projectOldAdmins.forEach(userDocument -> {
-                        previousUserIds.add(userDocument.getId());
-                    });
-                    
-                    projectOldMembers.forEach(userDocument -> {
-                        previousUserIds.add(userDocument.getId());
-                    });
-
-                    previousUserIds.removeAll(newAdminIds);
-                    previousUserIds.removeAll(newMemberIds);
-
-                    System.out.println("removing " + previousUserIds.size() + " previous users");
-                    
-                    previousUserIds.forEach(userId ->{
-                        try {
-                            userService.deleteFromUserCollection(userId, "memberOf", pid);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-
+                    // updates the memberOf collections in users to match the updated project's admins and members
+                    var previousUserIds = dbFireStore.collection("projects").document(pid).collection("members").get().get().getDocuments().stream().map(user -> user.getId()).collect(Collectors.toSet());
+                    var previousAdminIds = dbFireStore.collection("projects").document(pid).collection("admins").get().get().getDocuments().stream().map(user -> user.getId()).collect(Collectors.toSet());
+   
+                    previousUserIds.addAll(previousAdminIds);
+                    previousUserIds.removeAll(newMemberIds);                   
+                    previousUserIds.forEach(userId -> userService.deleteFromUserCollection(userId, "memberOf", pid));
 
                     var projectCollections = new HashMap<String, Set<String>>();
-                    projectCollections.put("admins", newAdminIds);
                     projectCollections.put("members", newMemberIds);
                     projectCollections.put("tags", project.getTagKeys());
 
-                    addCollectionToProjectDocument(pid, projectCollections);
+                    addCollectionsToProjectDocument(pid, projectCollections);
 
-                    
                     project.setOwner(authService.getUserId(owner));
                     project.setTitle(projectName);
+                    
+                    // setting all Sets from request to null before writing object to database ( Set not allowed in Firebase)
                     project.setTagKeys(null);
                     project.setAdmins(null);
                     project.setMembers(null);
@@ -441,7 +389,7 @@ public class ProjectService {
         return project;
     }
 
-    private void addCollectionToProjectDocument(String projectId, Map<String, Set<String>> data) {       
+    private void addCollectionsToProjectDocument(String projectId, Map<String, Set<String>> data) {       
         DatabaseService databaseService = new DatabaseService();
 
         data.entrySet().forEach(entry -> {
@@ -517,6 +465,47 @@ public class ProjectService {
             return new HashSet<>();
         }
         return set.stream().map(String::toLowerCase).collect(Collectors.toSet());
+    }
+
+    /**
+     * deals with:
+     * owner cannot be either member or admin
+     * a user cannot be both member and admin (becomes only admin if specified as both)
+     * editing user cannot remove him/herself as admin 
+     * @param project
+     * @param pid
+     * @param editor
+     * @return
+     */
+    private Set<String> getNewMemberIds(ProjectMemberView project, String pid, String editor) {
+        var newAdminNames = getLowerCaseSet(project.getAdmins());
+        newAdminNames.add(editor);
+        newAdminNames.remove(project.getOwner().toLowerCase());
+        
+        var newMemberNames = getLowerCaseSet(project.getMembers());
+        newMemberNames.removeAll(newAdminNames);
+        newMemberNames.remove(project.getOwner().toLowerCase());
+
+        var newAdminIds = mapNamesToIds(newAdminNames, pid);
+        var newMemberIds = mapNamesToIds(newMemberNames, pid);
+
+        var set = new HashSet<String>();
+        set.addAll(newAdminIds);
+        set.addAll(newMemberIds);
+
+        return set;
+    }
+
+    private Set<String> mapNamesToIds (Set<String> users ,String pid){
+        var set = new HashSet<String>();
+        users.forEach(member -> {
+            String userId = authService.getUserId(member);
+            if(userId != null) {
+                userService.addToUserDocument(userId, "memberOf", pid);
+                set.add(userId);
+            }
+        });
+        return set;
     }
 }
 

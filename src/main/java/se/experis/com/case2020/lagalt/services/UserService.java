@@ -162,14 +162,17 @@ public class UserService {
         dbFirestore.collection("users").document(userId).collection(category).document(documentId).set(new HashMap<String, Object>());
     }
 
-    public void deleteFromUserCollection(String userId, String category, String documentId) throws ExecutionException, InterruptedException {
-        System.out.println("deleting from user: " + userId + " category " + category + " documentId: " + documentId);
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category).document(documentId);
-        DocumentSnapshot document = documents.get().get();
-
-        if (document.exists()) {
-            documents.delete();
+    public void deleteFromUserCollection(String userId, String category, String documentId) {
+        try {
+            Firestore dbFirestore = FirestoreClient.getFirestore();
+            DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category).document(documentId);
+            DocumentSnapshot document = documents.get().get();
+            
+            if (document.exists()) {
+                documents.delete();
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
 
