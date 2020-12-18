@@ -10,16 +10,17 @@ const ProjectViewPage = (props) => {
   const isAdmin = true;
   const loggedIn = true;
   const memberOf = true;
-  const { projectId } = useParams();
+  const { userId, projectId } = useParams();
   useEffect(() => {
     const fetchData = async () => {
-      await getProject(projectId).then((response) => {
-        setProject(response.data.data);
+      await getProject(userId, projectId).then((response) => {
+        const { data } = response.data;
+        setProject(data);
         setIsLoading(false);
       });
     };
     fetchData();
-  }, [projectId]);
+  }, [userId, projectId]);
 
   return (
     <Container className="justify-content-center">

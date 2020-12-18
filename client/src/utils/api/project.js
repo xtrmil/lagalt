@@ -1,8 +1,8 @@
 import baseUrl from './baseUrl';
 
-export async function getProject(projectId) {
+export async function getProject(userId, projectId) {
   const fetchData = await baseUrl
-    .get(`/projects/${projectId}`, { headers: { userId: 'xtrmil' } })
+    .get(`/projects/${userId}/${projectId}`, { headers: { Authorization: '' } })
     .then((response) => {
       return response;
     });

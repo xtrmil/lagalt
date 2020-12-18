@@ -4,11 +4,15 @@ import ProjectResourcesComponent from './ProjectResourcesComponent';
 
 const ProjectViewMainSection = (props) => {
   const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick } = props;
-  const { tags } = project;
-
+  const industry = {
+    value: Object.keys(project.industry)[0],
+    label: Object.values(project.industry)[0],
+  };
   useEffect(() => {
     console.log(project);
   }, [project]);
+
+  const tagsArray = Object.values(project.tags);
 
   const membersList =
     project.members != null ? (
@@ -19,7 +23,7 @@ const ProjectViewMainSection = (props) => {
       <div>No members</div>
     );
 
-  const skillsList = tags.map((tag, index) => {
+  const tagsList = tagsArray.map((tag, index) => {
     return (
       <Col
         sm={5}
@@ -38,7 +42,7 @@ const ProjectViewMainSection = (props) => {
         <div className="imgplaceholder mb-4">IMAGE</div>
         <div className="mb-4">
           <h3 className="mb-2 text-center">Skills</h3>
-          <div className="text-center">{skillsList}</div>
+          <div className="text-center">{tagsList}</div>
         </div>
         <h3 className="mb-2 text-center">Members</h3>
         <div className="text-center">{membersList}</div>
@@ -48,7 +52,7 @@ const ProjectViewMainSection = (props) => {
           <Col sm={8}>
             <h2>{project.title}</h2>
             <h4>
-              <i>Industry: {project.industry}</i>
+              <i>Industry: {industry.label}</i>
             </h4>
             <h5>Status: {project.status}</h5>
           </Col>

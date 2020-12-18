@@ -4,33 +4,30 @@ import { Formik } from 'formik';
 import TextInput from '../form/TextInput';
 import SelectInput from '../form/SelectInput';
 import MultiSelectInput from '../form/MultiSelectInput';
-import { createProjectSchema } from '../../utils/form/FormUtils';
+import { editProjectSchema } from '../../utils/form/FormUtils';
 import { getAllIndustries, getTagsByIndustry } from '../../utils/api/industry';
+
+const mapOptions = (array, data) => {
+  for (const [key, value] of Object.entries(data)) {
+    const option = { value: key, label: value };
+    array.push(option);
+  }
+  return array;
+};
+
 const ProjectSettingsForm = (props) => {
   const { project, setProject, hideModal } = props;
   const [industryOptions, setIndustryOptions] = useState();
   const [tagOptions, setTagOptions] = useState();
-  const [initialTags] = useState(
-    project.tags.map((tag) => ({
-      value: tag,
-      label: tag,
-    })),
-  );
+
+  const initialTags = mapOptions([], project.tags);
+  const initialIndustry = mapOptions([], project.industry);
   const [initialValues] = useState({
-    title: project.title,
-    industry: project.industry,
+    industry: initialIndustry,
     tags: initialTags,
     description: project.description,
   });
-  const currentIndustry = { value: project.industry, label: project.industry };
 
-  const mapOptions = (array, data) => {
-    for (const [key, value] of Object.entries(data)) {
-      const option = { value: key, label: value };
-      array.push(option);
-    }
-    return array;
-  };
   const fetchTagOptions = useCallback(async (industry) => {
     let tagOptions = [];
     await getTagsByIndustry(industry).then((response) => {
@@ -38,6 +35,7 @@ const ProjectSettingsForm = (props) => {
       setTagOptions(tagOptions);
     });
   }, []);
+
   const fetchIndustries = useCallback(async () => {
     let industriesOptions = [];
     await getAllIndustries().then((response) => {
@@ -52,12 +50,12 @@ const ProjectSettingsForm = (props) => {
   }, [fetchIndustries, fetchTagOptions]);
 
   const onFormSubmit = (values) => {
-    const { title, industry, tags, description } = values;
+    const { industry, tags, description } = values;
+
     const newProject = {
       ...project,
-      title,
-      industry,
-      tags: tags.map((tag) => tag.value),
+      industry: industry.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
+      tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
       description,
     };
     console.log(newProject);
@@ -66,16 +64,15 @@ const ProjectSettingsForm = (props) => {
   };
 
   const onIndustryChange = (selected, setFieldValue) => {
-    setFieldValue('industry', selected.value);
+    setFieldValue('industry', [selected]);
     setFieldValue('tags', null);
     let label = selected.label;
     label = label.split(' ')[0];
-    console.log(label);
     fetchTagOptions(label);
   };
   return (
     <Formik
-      validationSchema={createProjectSchema}
+      validationSchema={editProjectSchema}
       onSubmit={(values) => onFormSubmit(values)}
       initialValues={initialValues}
     >
@@ -91,16 +88,6 @@ const ProjectSettingsForm = (props) => {
       }) => (
         <>
           <Form onSubmit={handleSubmit}>
-            <TextInput
-              type="text"
-              label="Project Name*"
-              name="title"
-              values={values}
-              touched={touched}
-              errors={errors}
-              handleChange={handleChange}
-              handleBlur={handleBlur}
-            ></TextInput>
             <SelectInput
               label="Select Industry*"
               name="industry"
@@ -108,7 +95,7 @@ const ProjectSettingsForm = (props) => {
               values={values}
               touched={touched}
               errors={errors}
-              defaultValue={currentIndustry}
+              defaultValue={initialIndustry}
               setFieldTouched={setFieldTouched}
               onChange={(selected) => onIndustryChange(selected, setFieldValue)}
             />
