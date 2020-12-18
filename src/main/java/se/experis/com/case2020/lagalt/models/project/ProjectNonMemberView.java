@@ -24,16 +24,16 @@ public class ProjectNonMemberView {
 
     @JsonProperty(access = Access.WRITE_ONLY)
     private String industryKey;
-    
+
     @Exclude
     private Map<String, String> industry;
-    
+
     @Exclude
-    private Map<String,String> images;
-    
+    private Map<String, String> images;
+
     @Exclude
-    private Map<String,String> tags;
-    
+    private Map<String, String> tags;
+
     @Exclude
     @JsonProperty(access = Access.WRITE_ONLY)
     private Set<String> tagKeys;

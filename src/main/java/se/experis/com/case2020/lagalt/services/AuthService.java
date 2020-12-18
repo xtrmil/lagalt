@@ -33,7 +33,7 @@ public class AuthService {
             Firestore db = FirestoreClient.getFirestore();
             var existingUser = db.collection("userRecords").document(username.toLowerCase()).get().get();
             return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             return HttpStatus.INTERNAL_SERVER_ERROR;
@@ -46,7 +46,7 @@ public class AuthService {
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("userRecords").document(username.toLowerCase()).get().get();
 
-            if(user.exists()) {
+            if (user.exists()) {
                 return user.get("uid").equals(fbToken.getUid());
             }
             return false;
@@ -86,7 +86,8 @@ public class AuthService {
             try {
                 Firestore db = FirestoreClient.getFirestore();
                 String projectId = projectService.getProjectNameId(owner, projectName);
-                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get().get();
+                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
+                        .get();
                 var ownerId = db.collection("projects").document(projectId).get().get().get("ownerId").toString();
                 return ref.exists() && ownerId == userId;
             } catch (Exception e) {
@@ -112,15 +113,15 @@ public class AuthService {
         try {
             var db = FirestoreClient.getFirestore();
             var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
-            if(userRecord.exists()) {
+            if (userRecord.exists()) {
                 return userRecord.get("uid").toString();
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
-    
+
     public String getUsernameFromToken(String jwtToken) {
         try {
             Firestore db = FirestoreClient.getFirestore();
@@ -149,15 +150,14 @@ public class AuthService {
 
         try {
             var userId = getUserIdFromToken(jwtToken);
-            if(userId == null) {
+            if (userId == null) {
                 throw new IllegalArgumentException();
             }
-            
+
             var db = FirestoreClient.getFirestore();
 
             var userRef = db.collection("users").document(userId);
             var userDocument = userRef.get().get();
-
 
             if (userDocument.exists()) {
                 // auth user is alredy tied to a db user
@@ -174,14 +174,14 @@ public class AuthService {
 
                 var authUser = auth.getUser(userId);
                 var userProfile = new UserProfileView();
-                userProfile.setUser(userId);
+                userProfile.setUsername(username);
                 userProfile.setEmail(authUser.getEmail());
                 userProfile.setName(authUser.getDisplayName());
-                
+
                 userRef.set(userProfile);
                 var userRecord = new HashMap<String, String>();
                 userRecord.put("uid", userId);
-                
+
                 // put userRecord that ties username to a uid
                 db.collection("userRecords").document(username.toLowerCase()).set(userRecord);
 
@@ -209,12 +209,12 @@ public class AuthService {
             cr.message = "You have been signed out";
             return new ResponseEntity<>(cr, HttpStatus.OK);
 
-        } catch(IllegalArgumentException | FirebaseAuthException e) {
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
             System.err.println("signOut: " + e.getMessage());
             cr.message = "Error: You are not authenticated";
             return new ResponseEntity<>(cr, HttpStatus.UNAUTHORIZED);
-        
-        } catch(Exception e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
             cr.message = "Could not sign out; an error occured on the server";
             return new ResponseEntity<>(cr, HttpStatus.INTERNAL_SERVER_ERROR);
