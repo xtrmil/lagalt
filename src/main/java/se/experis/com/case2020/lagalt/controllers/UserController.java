@@ -27,20 +27,17 @@ public class UserController {
     UserService userService;
 
     @GetMapping("/profile")
-    public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request,
-            @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+    public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request, @RequestHeader String Authorization) {
         return userService.getUserProfile(request, Authorization);
     }
 
     @GetMapping("/users/{username}")
-    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, @PathVariable String username)
-            throws InterruptedException, ExecutionException {
+    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, @PathVariable String username) {
         return userService.getPublicUserDetails(request, username);
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, @RequestBody UserProfileView user,
-            @RequestHeader String Authorization) throws InterruptedException, ExecutionException {
+    public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, @RequestBody UserProfileView user, @RequestHeader String Authorization) {
         return userService.updateUserDetails(request, user, Authorization);
     }
 }

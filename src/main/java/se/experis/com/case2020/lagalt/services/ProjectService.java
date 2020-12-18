@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,7 +20,6 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
-import com.google.firestore.v1.Document;
 
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +30,7 @@ import org.springframework.stereotype.Service;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Industry;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
+import se.experis.com.case2020.lagalt.models.exceptions.InvalidProjectException;
 import se.experis.com.case2020.lagalt.models.project.ProjectMemberView;
 import se.experis.com.case2020.lagalt.models.project.ProjectNonMemberView;
 import se.experis.com.case2020.lagalt.models.project.ProjectSummarizedView;
@@ -151,11 +150,10 @@ public class ProjectService {
                 summarizedProject.setOwner(authService.getUsername(summarizedProject.getOwner()));
 
                 String industryKey = projectDocument.get("industryKey").toString();
-                summarizedProject.setIndustry(new HashMap<>() {
-                    {
-                        put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
-                    }
-                });
+                // summarizedProject.setIndustry(new HashMap<>() {{
+                //     put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
+                // }});
+                summarizedProject.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));               
 
                 var tags = p.collection("tags").get().get().getDocuments();
                 Map<String, String> tagsMap = new HashMap<>();
@@ -224,11 +222,10 @@ public class ProjectService {
                     });
                     project.setTags(tagsMap);
                     String industryKey = project.getIndustryKey();
-                    project.setIndustry(new HashMap<>() {
-                        {
-                            put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
-                        }
-                    });
+                    // project.setIndustry(new HashMap<>() {{
+                    //     put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
+                    // }});
+                    project.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));
 
                     project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName);
                     project.setLinks(linksMap);
@@ -257,8 +254,7 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project,
-            String Authorization) {
+    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project, String Authorization) {
         CommonResponse cr = new CommonResponse();
         Command cmd = new Command(request);
         HttpStatus resp = HttpStatus.CREATED;
@@ -273,28 +269,31 @@ public class ProjectService {
 
                 var recordsRef = db.collection("projectRecords").document(projectId);
                 if (!recordsRef.get().get().exists()) {
-
-                    var industryKey = project.getIndustry().keySet().iterator().next();
-                    project.setIndustryKey(validateIndustry(industryKey));
+                    
+                    try {
+                        var industryKey = validateIndustry(project.getIndustry().keySet().iterator().next());
+                        project.setIndustryKey(industryKey);
+                    } catch(NullPointerException e) {
+                        throw new InvalidProjectException("Industry is not set");
+                    }
 
                     var docRef = db.collection("projects").document();
 
-                    addCollectionsToProjectDocument(docRef.getId(), new HashMap<>() {
-                        {
-                            put("tags", project.getTags().keySet());
-                        }
-                    });
+                    // addCollectionsToProjectDocument(docRef.getId(), new HashMap<>() {{
+                    //     put("tags", project.getTags().keySet());
+                    // }});
+                    if(project.getTags() != null) {
+                        addCollectionsToProjectDocument(docRef.getId(), Map.of("tags", project.getTags().keySet()));
+                    }
+
                     project.setIndustry(null);
-                    project.setTagKeys(null);
                     docRef.set(project);
 
-                    var projectRecord = new HashMap<String, String>() {
-                        {
-                            put("pid", docRef.getId());
-                        }
-                    };
+                    // var projectRecord = new HashMap<String, String>() {{
+                    //     put("pid", docRef.getId());
+                    // }};
 
-                    recordsRef.set(projectRecord);
+                    recordsRef.set(Map.of("pid", docRef.getId()));
                     cr.message = "Project with id " + projectId + " Created at " + project.getCreatedAtForDb().toDate();
                     resp = HttpStatus.CREATED;
                     return new ResponseEntity<>(cr, resp);
@@ -306,6 +305,9 @@ public class ProjectService {
                 cr.message = "Cannot create project. You are not logged in";
                 resp = HttpStatus.UNAUTHORIZED;
             }
+        } catch (InvalidProjectException e) {
+            cr.message = "Project is invalid. " + e.getMessage();
+            resp = HttpStatus.BAD_REQUEST;
         } catch (Exception e) {
             cr.message = "Server error";
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -332,8 +334,10 @@ public class ProjectService {
                 if (authService.isProjectAdmin(owner, projectName, Authorization)) {
                     var projectRef = getProjectDocumentReference(pid);
 
-                    String industryKey = validateIndustry(project.getIndustry().keySet().iterator().next());
-                    if (industryKey == null) {
+                    String industryKey;
+                    try {
+                        industryKey = validateIndustry(project.getIndustry().keySet().iterator().next());
+                    } catch(InvalidProjectException e) {
                         industryKey = projectRef.get().get().get("industryKey").toString();
                     }
                     project.setIndustryKey(industryKey);
@@ -364,11 +368,8 @@ public class ProjectService {
                     project.setOwner(authService.getUserId(owner));
                     project.setTitle(projectName);
 
-                    // setting all Sets from request to null before writing object to database ( Set
-                    // not allowed in Firebase)
+                    // setting all Sets from request to null before writing object to database (these are stored as collections)
                     project.setIndustry(null);
-                    project.setTagKeys(null);
-                    project.setTags(null);
                     project.setAdmins(null);
                     project.setMembers(null);
 
@@ -416,7 +417,6 @@ public class ProjectService {
             project.setMembers(memberNames);
         }
 
-        project.setTagKeys(projectInfo.get("tags"));
         project.setCreatedAt(project.getCreatedAtForDb().toString());
         return project;
     }
@@ -432,7 +432,6 @@ public class ProjectService {
 
             if (collectionRef != null) {
                 databaseService.emptyCollection(collectionRef, 10);
-                System.out.println("emptied project collection " + collectionName);
             }
 
             if (collectionName.equals("tags")) {
@@ -440,6 +439,8 @@ public class ProjectService {
                 documentId.forEach(tag -> {
                     if (EnumUtils.isValidEnum(Tag.class, tag)) {
                         collectionRef.document(tag).set(new HashMap<String, Object>());
+                    } else {
+                        System.err.println("IGNORING INVALID TAG: " + tag);
                     }
                 });
             } else {
@@ -455,13 +456,13 @@ public class ProjectService {
         });
     }
 
-    public String validateIndustry(String industry) {
+    public String validateIndustry(String industry) throws InvalidProjectException{
         if (industry != null) {
             if (EnumUtils.isValidEnum(Industry.class, industry)) {
                 return industry;
             }
         }
-        return null;
+        throw new InvalidProjectException("Industry is invalid.");
     }
 
     public String getProjectId(ProjectNonMemberView project) {

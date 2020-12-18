@@ -1,21 +1,28 @@
 package se.experis.com.case2020.lagalt.services;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.*;
-import com.google.firebase.cloud.FirestoreClient;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.MessageBoardPost;
-import se.experis.com.case2020.lagalt.utils.Command;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
-import java.util.concurrent.ExecutionException;
+
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.WriteResult;
+import com.google.firebase.cloud.FirestoreClient;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import se.experis.com.case2020.lagalt.models.CommonResponse;
+import se.experis.com.case2020.lagalt.models.MessageBoardPost;
+import se.experis.com.case2020.lagalt.utils.Command;
 
 @Service
 public class MessageBoardService {
@@ -26,16 +33,12 @@ public class MessageBoardService {
 
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference messageBoardReference = dbFirestore.collection("projects").document(projectId).collection("messageBoards").document("general");
-        ApiFuture<DocumentSnapshot> future = messageBoardReference.get();
-        DocumentSnapshot projectSnapshot = future.get();
-
         DocumentReference nextMessageId = messageBoardReference.collection(objectNode.get("title").asText()).document("nextId");
-        ApiFuture<DocumentSnapshot> messageFuture = nextMessageId.get();
-        DocumentSnapshot messageSnapshot = messageFuture.get();
-
-        ApiFuture<WriteResult> next = nextMessageId.set(new HashMap<String, Number>() {{
-            put("nextId", 1);
-        }});
+        
+        // nextMessageId.set(new HashMap<String, Integer>() {{
+        //     put("nextId", 1);
+        // }});
+        nextMessageId.set(Map.of("nextId", 1));
 
         ApiFuture<WriteResult> collectionApiFuture = messageBoardReference.collection(objectNode.get("title").asText()).document("0").set(createPost(objectNode.get("text").asText()));
         cr.data = collectionApiFuture.get().getUpdateTime().toString();

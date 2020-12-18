@@ -21,6 +21,8 @@ public class AuthService {
     @Autowired
     private ProjectService projectService;
 
+    private Firestore db = FirestoreClient.getFirestore();
+
     /**
      * Checks whether the user name (user id) is available or not. Used when signing
      * up
@@ -30,7 +32,6 @@ public class AuthService {
      */
     public HttpStatus getUserNameAvailability(String username) {
         try {
-            Firestore db = FirestoreClient.getFirestore();
             var existingUser = db.collection("userRecords").document(username.toLowerCase()).get().get();
             return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
 
@@ -42,7 +43,6 @@ public class AuthService {
 
     public boolean belongsToUser(String username, String jwtToken) {
         try {
-            Firestore db = FirestoreClient.getFirestore();
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("userRecords").document(username.toLowerCase()).get().get();
 
@@ -84,7 +84,6 @@ public class AuthService {
 
         if (userId != null) {
             try {
-                Firestore db = FirestoreClient.getFirestore();
                 String projectId = projectService.getProjectNameId(owner, projectName);
                 var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
                         .get();
@@ -111,7 +110,6 @@ public class AuthService {
 
     public String getUserId(String username) {
         try {
-            var db = FirestoreClient.getFirestore();
             var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
             if (userRecord.exists()) {
                 return userRecord.get("uid").toString();
@@ -124,7 +122,6 @@ public class AuthService {
 
     public String getUsernameFromToken(String jwtToken) {
         try {
-            Firestore db = FirestoreClient.getFirestore();
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("users").document(fbToken.getUid()).get().get();
 
@@ -139,65 +136,68 @@ public class AuthService {
         return null;
     }
 
-    public String getUsername(String uid) {
-        // TODO implement
+    public String getUsername(String userId) {
+        try {
+            var user = db.collection("users").document(userId).get().get();
+            if(user.exists()) {
+                return user.get("username").toString().toLowerCase();
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
         return null;
-        // .toLowerCase();
     }
 
     public ResponseEntity<CommonResponse> addUserRecord(String username, String jwtToken) {
+        HttpStatus resp;
         var cr = new CommonResponse();
 
         try {
             var userId = getUserIdFromToken(jwtToken);
             if (userId == null) {
-                throw new IllegalArgumentException();
-            }
 
-            var db = FirestoreClient.getFirestore();
+                var userRef = db.collection("users").document(userId);
+                var userDocument = userRef.get().get();
 
-            var userRef = db.collection("users").document(userId);
-            var userDocument = userRef.get().get();
+                if (userDocument.exists()) {
+                    // auth user is alredy tied to a db user
+                    cr.message = "There is already an account tied to this email";
+                    return new ResponseEntity<>(cr, HttpStatus.FORBIDDEN);
 
-            if (userDocument.exists()) {
-                // auth user is alredy tied to a db user
-                cr.message = "There is already an account tied to this email";
-                return new ResponseEntity<>(cr, HttpStatus.FORBIDDEN);
+                } else {
+                    var usernameAvailabilityStatus = getUserNameAvailability(username);
+                    if (!usernameAvailabilityStatus.is2xxSuccessful()) {
+                        cr.message = "That username is not available";
+                        return new ResponseEntity<>(cr, usernameAvailabilityStatus);
+                    }
+                    var auth = FirebaseAuth.getInstance();
 
-            } else {
-                var usernameAvailabilityStatus = getUserNameAvailability(username);
-                if (!usernameAvailabilityStatus.is2xxSuccessful()) {
-                    cr.message = "That username is not available";
-                    return new ResponseEntity<>(cr, usernameAvailabilityStatus);
+                    var authUser = auth.getUser(userId);
+                    var userProfile = new UserProfileView();
+                    userProfile.setUsername(username);
+                    userProfile.setEmail(authUser.getEmail());
+                    userProfile.setName(authUser.getDisplayName());
+
+                    userRef.set(userProfile);
+                    var userRecord = new HashMap<String, String>();
+                    userRecord.put("uid", userId);
+
+                    // put userRecord that ties username to a uid
+                    db.collection("userRecords").document(username.toLowerCase()).set(userRecord);
+
+                    cr.data = username;
+                    resp = HttpStatus.CREATED;
                 }
-                var auth = FirebaseAuth.getInstance();
-
-                var authUser = auth.getUser(userId);
-                var userProfile = new UserProfileView();
-                userProfile.setUsername(username);
-                userProfile.setEmail(authUser.getEmail());
-                userProfile.setName(authUser.getDisplayName());
-
-                userRef.set(userProfile);
-                var userRecord = new HashMap<String, String>();
-                userRecord.put("uid", userId);
-
-                // put userRecord that ties username to a uid
-                db.collection("userRecords").document(username.toLowerCase()).set(userRecord);
-
-                cr.data = username;
-                return new ResponseEntity<>(cr, HttpStatus.CREATED);
+            } else {
+                cr.message = "Error: You are not authenticated";
+                resp = HttpStatus.UNAUTHORIZED;
             }
-
-        } catch (IllegalArgumentException e) {
-            // invalid token
-            cr.message = "Error: You are not authenticated";
-            return new ResponseEntity<>(cr, HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
-            e.printStackTrace();
             cr.message = "An error occured on the server";
-            return new ResponseEntity<>(cr, HttpStatus.INTERNAL_SERVER_ERROR);
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
+            e.printStackTrace();
         }
+        return new ResponseEntity<>(cr, resp);
     }
 
     public ResponseEntity<CommonResponse> signOut(String jwtToken) {

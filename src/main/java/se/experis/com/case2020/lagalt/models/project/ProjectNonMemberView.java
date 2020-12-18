@@ -35,10 +35,6 @@ public class ProjectNonMemberView {
     private Map<String, String> tags;
 
     @Exclude
-    @JsonProperty(access = Access.WRITE_ONLY)
-    private Set<String> tagKeys;
-
-    @Exclude
     private Set<String> admins;
 
     @Exclude

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
-import se.experis.com.case2020.lagalt.models.project.ProjectMemberView;
 import se.experis.com.case2020.lagalt.models.user.UserProfileView;
 import se.experis.com.case2020.lagalt.models.user.UserPublicView;
 import se.experis.com.case2020.lagalt.utils.Command;
@@ -163,9 +161,6 @@ public class UserService {
                     user.setName(partialUser.getName());
                 }
 
-                getBogusObject(userId);
-                System.out.println("gotten bogus doc");
-
                 ApiFuture<WriteResult> collectionApiFuture = getUserDocument(userId).set(user);
 
                 cr.data = collectionApiFuture.get().getUpdateTime().toString();
@@ -230,15 +225,6 @@ public class UserService {
     private UserProfileView getUserProfileobject(String userId) {
         try {
             return getUserDocument(userId).get().get().toObject(UserProfileView.class);
-        } catch(ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private ProjectMemberView getBogusObject(String userId) {
-        try {
-            return getUserDocument(userId).get().get().toObject(ProjectMemberView.class);
         } catch(Exception e) {
             e.printStackTrace();
             return null;
