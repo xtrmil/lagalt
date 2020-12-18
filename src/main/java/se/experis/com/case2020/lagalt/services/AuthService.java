@@ -33,7 +33,7 @@ public class AuthService {
             Firestore db = FirestoreClient.getFirestore();
             var existingUser = db.collection("userRecords").document(username.toLowerCase()).get().get();
             return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
-
+            
         } catch (Exception e) {
             e.printStackTrace();
             return HttpStatus.INTERNAL_SERVER_ERROR;
@@ -128,7 +128,7 @@ public class AuthService {
             var user = db.collection("users").document(fbToken.getUid()).get().get();
 
             if (user.exists()) {
-                return user.get("username").toString();
+                return user.get("username").toString().toLowerCase();
             }
         } catch (IllegalArgumentException | FirebaseAuthException e) {
             System.err.println("getUsername: " + e.getMessage());
@@ -141,6 +141,7 @@ public class AuthService {
     public String getUsername(String uid) {
         // TODO implement
         return null;
+        // .toLowerCase();
     }
 
     public ResponseEntity<CommonResponse> addUserRecord(String username, String jwtToken) {

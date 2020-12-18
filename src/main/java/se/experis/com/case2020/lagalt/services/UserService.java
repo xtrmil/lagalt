@@ -157,21 +157,21 @@ public class UserService {
     }
 
     public void addToUserDocument(String userId, String category, String documentId) {
+        System.out.println("adding user: " + userId + " category: " + category + " documentId: " + documentId);
         Firestore dbFirestore = FirestoreClient.getFirestore();
         dbFirestore.collection("users").document(userId).collection(category).document(documentId).set(new HashMap<String, Object>());
     }
 
-    // public void deleteFromUserDb(String userId, String category, String documentId) throws ExecutionException, InterruptedException {
+    public void deleteFromUserCollection(String userId, String category, String documentId) throws ExecutionException, InterruptedException {
+        System.out.println("deleting from user: " + userId + " category " + category + " documentId: " + documentId);
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category).document(documentId);
+        DocumentSnapshot document = documents.get().get();
 
-    //     Firestore dbFirestore = FirestoreClient.getFirestore();
-    //     DocumentReference documents = dbFirestore.collection("users").document(userId).collection(category).document(documentId);
-    //     DocumentSnapshot document = documents.get().get();
-
-    //     if (document.exists()) {
-    //         Firestore dbFireStore = FirestoreClient.getFirestore();
-    //         dbFireStore.collection("users").document(userId).collection(category).document(documentId).delete();
-    //     }
-    // }
+        if (document.exists()) {
+            documents.delete();
+        }
+    }
 
     public UserPublicView getUserPublic(String userId) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
