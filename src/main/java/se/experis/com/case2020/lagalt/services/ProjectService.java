@@ -57,8 +57,7 @@ public class ProjectService {
             // var result =
             // db.collection("projects").orderBy("title").startAt(searchString).endAt(searchString
             // + "\uf8ff").get().get().getDocuments();
-            var result = db.collection("projects").whereArrayContains("searchArr", searchString).get().get()
-                    .getDocuments();
+            var result = db.collection("projects").whereArrayContains("searchArr", searchString).get().get().getDocuments();
 
             System.out.println(result.size());
             for (var document : result) {
@@ -536,7 +535,7 @@ public class ProjectService {
         users.forEach(member -> {
             String userId = authService.getUserId(member);
             if (userId != null) {
-                userService.addToUserDocument(userId, "memberOf", pid);
+                userService.addCollectionToUserDocument(userId, "memberOf", pid);
                 set.add(userId);
             }
         });

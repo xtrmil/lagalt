@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -23,19 +24,16 @@ import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
+import se.experis.com.case2020.lagalt.models.project.ProjectMemberView;
 import se.experis.com.case2020.lagalt.models.user.UserProfileView;
 import se.experis.com.case2020.lagalt.models.user.UserPublicView;
 import se.experis.com.case2020.lagalt.utils.Command;
-import se.experis.com.case2020.lagalt.utils.ObjectTool;
 
 @Service
 public class UserService {
 
     @Autowired
     MockAuthService authService;
-
-    @Autowired
-    ObjectTool objectTool;
 
     public ResponseEntity<CommonResponse> getUserProfile(HttpServletRequest request, String Authorization) {
         Command cmd = new Command(request);
@@ -124,8 +122,7 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser,
-            String Authorization) {
+    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -135,63 +132,61 @@ public class UserService {
 
             if (userId != null) {
                 DocumentReference documentReference = getUserDocument(userId);
-                var tempUser = getUserPublicObject(userId);
-                var updatedUser = new UserProfileView();
-                objectTool.updateNonNullFields(tempUser, updatedUser);
-                objectTool.updateNonNullFields(partialUser, updatedUser);
+                var user = getUserProfileobject(userId);
 
                 if (partialUser.getTags() != null) {
                     DatabaseService databaseService = new DatabaseService();
                     databaseService.emptyCollection(documentReference.collection("tags"), 10);
 
-                    partialUser.getTags().entrySet().forEach(tag -> {
-                        System.out.println(tag.getKey());
-                        if (EnumUtils.isValidEnum(Tag.class, tag.getKey())) {
-                            System.out.println("VALID");
-                            addToUserDocument(userId, "tags", tag.getKey());
+                    // TODO not waiting on emptying the collection can cause problems
+
+                    partialUser.getTags().keySet().forEach(tagKey -> {
+                        if (EnumUtils.isValidEnum(Tag.class, tagKey)) {
+                            addCollectionToUserDocument(userId, "tags", tagKey);
                         }
                     });
                     partialUser.setTags(null);
                 }
-                // if (partialUser.getDescription() == null) {
-                // partialUser.setDescription(dbUser.getDescription());
-                // }
-                // if (partialUser.getHidden() == null) {
-                // partialUser.setHidden(dbUser.getHidden());
-                // }
-                // if (partialUser.getImageURL() == null) {
-                // partialUser.setImageURL(dbUser.getImageURL());
-                // }
-                // if (partialUser.getPortfolio() == null) {
-                // partialUser.setPortfolio(dbUser.getPortfolio());
-                // }
-                // if (partialUser.getName() == null) {
-                // partialUser.setName(dbUser.getName());
-                // }
-                // partialUser.setEmail(dbUser.getEmail());
-                // partialUser.setUsername(userId);
+                if (partialUser.getDescription() != null) {
+                    user.setDescription(partialUser.getDescription());
+                }
+                if (partialUser.getHidden() == null) {
+                    user.setHidden(partialUser.getHidden());
+                }
+                if (partialUser.getImageURL() == null) {
+                    user.setImageURL(partialUser.getImageURL());
+                }
+                if (partialUser.getPortfolio() == null) {
+                    user.setPortfolio(partialUser.getPortfolio());
+                }
+                if (partialUser.getName() == null) {
+                    user.setName(partialUser.getName());
+                }
 
-                ApiFuture<WriteResult> collectionApiFuture = getUserDocument(userId).set(updatedUser);
+                getBogusObject(userId);
+                System.out.println("gotten bogus doc");
+
+                ApiFuture<WriteResult> collectionApiFuture = getUserDocument(userId).set(user);
 
                 cr.data = collectionApiFuture.get().getUpdateTime().toString();
                 cr.message = "User data successfully updated";
                 resp = HttpStatus.OK;
             } else {
+                cr.message = "You are not authenticated";
                 resp = HttpStatus.UNAUTHORIZED;
-                cr.message = "You are not authorized to edit user " + userId;
             }
         } catch (Exception e) {
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
             e.printStackTrace();
         }
+        System.out.println("---------");
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
 
-    public void addToUserDocument(String userId, String category, String documentId) {
+    public void addCollectionToUserDocument(String userId, String category, String documentId) {
         try {
-            System.out.println("adding user: " + userId + " category: " + category + " documentId: " + documentId);
-            getUserDocument(userId).collection(category).document(documentId).set(new HashMap<String, Object>());
+            getUserDocument(userId).collection(category).document(documentId).create(new HashMap<String, Object>());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -232,8 +227,27 @@ public class UserService {
         return user;
     }
 
+    private UserProfileView getUserProfileobject(String userId) {
+        try {
+            return getUserDocument(userId).get().get().toObject(UserProfileView.class);
+        } catch(ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private ProjectMemberView getBogusObject(String userId) {
+        try {
+            return getUserDocument(userId).get().get().toObject(ProjectMemberView.class);
+        } catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private DocumentReference getUserDocument(String userId) {
         var db = FirestoreClient.getFirestore();
         return db.collection("users").document(userId);
     }
+
 }
