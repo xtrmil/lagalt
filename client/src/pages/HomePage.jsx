@@ -1,20 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './HomePage.css';
 import { Button, Tabs, Tab, Form, FormControl } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import CheckboxInput from '../components/form/CheckboxInput';
+import JoinProjectModal from '../components/projectView/JoinProjectModal';
 
 const HomePage = (props) => {
-  const onProjectViewClick = () => {
-    props.history.push('/project');
+  const [showJoinModal, setShowJoinModal] = useState(false);
+
+  const onJoinClick = () => {
+    setShowJoinModal(true);
+  };
+
+  const hideJoinModal = () => {
+    setShowJoinModal(false);
   };
 
   const onProjectAdminPageClick = () => {
     props.history.push('/admin');
   };
 
+  const onMessageBoardAndChatPageClick = () => {
+    props.history.push('/message_board_and_chat');
+  };
+
+  function refreshPage() {
+    window.location.reload(false);
+  }
+
   return (
     <>
+      <JoinProjectModal showJoinModal={showJoinModal} hideJoinModal={hideJoinModal} />
+
       <Form inline>
         <h5 className="filter-text">FILTER BY</h5>
         <div className="filter-function">
@@ -42,7 +58,7 @@ const HomePage = (props) => {
         </Tab>
       </Tabs>
 
-      <Button className="btn-viewAll" variant="secondary">
+      <Button onClick={refreshPage} className="btn-viewAll" variant="secondary">
         View all
       </Button>
 
@@ -62,7 +78,7 @@ const HomePage = (props) => {
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
               <div className="stretched-button-join">
-                <Button onClick={onProjectViewClick} variant="success">
+                <Button onClick={onJoinClick} variant="success">
                   Join
                 </Button>
               </div>
@@ -87,7 +103,7 @@ const HomePage = (props) => {
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
               <div className="stretched-button-join">
-                <Button onClick={onProjectViewClick} variant="success">
+                <Button onClick={onJoinClick} variant="success">
                   Join
                 </Button>
               </div>
@@ -112,7 +128,7 @@ const HomePage = (props) => {
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
               <div className="stretched-button-admin">
-                <Button onClick={onProjectViewClick} variant="info">
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
                   Message Board & Chat
                 </Button>
                 <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
@@ -140,7 +156,7 @@ const HomePage = (props) => {
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
               <div className="stretched-button-mb">
-                <Button onClick={onProjectViewClick} variant="info">
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
                   Message Board & Chat
                 </Button>
               </div>
