@@ -1,32 +1,62 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from './form/TextInput';
 import SelectInput from './form/SelectInput';
+import MultiSelectInput from './form/MultiSelectInput';
 import { createProjectSchema } from '../utils/form/FormUtils';
+import { createProject } from '../utils/api/project';
+import { getAllIndustries, getTagsByIndustry } from '../utils/api/industry';
 const ProjectForm = () => {
-  const initialValues = { title: '', description: '', skills: null, industry: '' };
+  const initialValues = { title: '', description: '', tags: null, industry: null };
+  const [industryOptions, setIndustryOptions] = useState();
+  const [tagOptions, setTagOptions] = useState();
 
-  const options = [
-    { value: 'DRUMMER', label: 'Drummer' },
-    { value: 'WEB_DEV', label: 'WEB_DEV' },
-    { value: 'REACT', label: 'REACT' },
-    { value: 'SECURITY', label: 'SECURITY' },
-    { value: 'ANGULAR', label: 'ANGULAR' },
-  ];
+  const mapOptions = (array, data) => {
+    for (const [key, value] of Object.entries(data)) {
+      const option = { value: key, label: value };
+      array.push(option);
+    }
+    return array;
+  };
+  const fetchTagOptions = useCallback(async (industry) => {
+    let tagOptions = [];
+    await getTagsByIndustry(industry).then((response) => {
+      mapOptions(tagOptions, response.data);
+      setTagOptions(tagOptions);
+    });
+  }, []);
 
-  const industryOptions = [
-    { value: 'MUSIC', label: 'Music' },
-    { value: 'FILM', label: 'Film' },
-    { value: 'GAMEDEVELOPMENT', label: 'Game Development' },
-    { value: 'WEBDEVELOPMENT', label: 'Web Development' },
-  ];
+  const fetchIndustries = useCallback(async () => {
+    let industriesOptions = [];
+    await getAllIndustries().then((response) => {
+      mapOptions(industriesOptions, response.data);
+      setIndustryOptions(industriesOptions);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchIndustries();
+  }, [fetchIndustries, fetchTagOptions]);
+
+  const onIndustryChange = (selected, setFieldValue) => {
+    setFieldValue('industry', [selected]);
+    setFieldValue('tags', null);
+    let label = selected.label;
+    label = label.split(' ')[0];
+    fetchTagOptions(label);
+  };
+
   const onFormSubmit = (values) => {
+    const { title, description, industry, tags } = values;
+
     const project = {
-      ...values,
-      industry: values.industry,
-      skills: values.skills.map((skill) => skill.value),
+      title,
+      description,
+      industry: industry.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
+      tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
     };
+    createProject(project);
     console.log(project);
   };
   return (
@@ -65,20 +95,19 @@ const ProjectForm = () => {
               touched={touched}
               errors={errors}
               setFieldTouched={setFieldTouched}
-              setFieldValue={setFieldValue}
+              onChange={(selected) => onIndustryChange(selected, setFieldValue)}
               isMulti={false}
             ></SelectInput>
-            <SelectInput
-              label="Select Skills*"
-              name="skills"
-              options={options}
+            <MultiSelectInput
+              label="Select tags*"
+              name="tags"
+              options={tagOptions}
               values={values}
               touched={touched}
               errors={errors}
               setFieldTouched={setFieldTouched}
               setFieldValue={setFieldValue}
-              isMulti={true}
-            ></SelectInput>
+            ></MultiSelectInput>
             <TextInput
               type="text"
               label="Description*"

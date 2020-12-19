@@ -6,7 +6,7 @@ import SelectInput from '../form/SelectInput';
 import MultiSelectInput from '../form/MultiSelectInput';
 import { editProjectSchema } from '../../utils/form/FormUtils';
 import { getAllIndustries, getTagsByIndustry } from '../../utils/api/industry';
-
+import { updateProject } from '../../utils/api/project';
 const mapOptions = (array, data) => {
   for (const [key, value] of Object.entries(data)) {
     const option = { value: key, label: value };
@@ -58,8 +58,9 @@ const ProjectSettingsForm = (props) => {
       tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
       description,
     };
-    console.log(newProject);
     setProject(newProject);
+    console.log(JSON.stringify(newProject, null, 2));
+    updateProject(newProject);
     hideModal();
   };
 
