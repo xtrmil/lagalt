@@ -11,19 +11,16 @@ import se.experis.com.case2020.lagalt.services.ProjectService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.concurrent.ExecutionException;
-
 
 @RestController
 @RequestMapping(value = "/api/v1/projects", produces = MediaType.APPLICATION_JSON_VALUE)
 public class ProjectController {
 
     @Autowired
-    ProjectService projectService;
+    private ProjectService projectService;
 
     @GetMapping("")
-    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search)
-    throws ExecutionException, InterruptedException {
+    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search) {
         if(search != null ) {
             return projectService.getProjectsSearch(request, search);
         }
