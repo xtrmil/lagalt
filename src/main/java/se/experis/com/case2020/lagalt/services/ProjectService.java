@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
@@ -40,19 +41,19 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class ProjectService {
 
     @Autowired
-    MockAuthService authService;
+    private MockAuthService authService;
 
     @Autowired
-    UserService userService;
+    private UserService userService;
 
     // @PostConstruct
     public void testSearchQuery() {
         try {
+            var db = FirestoreClient.getFirestore();
             var list = new ArrayList<String>();
             String searchString = "project";
             var searchList = Arrays.asList(searchString.split(" "));
 
-            Firestore db = FirestoreClient.getFirestore();
             // var result =
             // db.collection("projects").orderBy("title").startAt(searchString).endAt(searchString
             // + "\uf8ff").get().get().getDocuments();
@@ -72,9 +73,10 @@ public class ProjectService {
 
     public void javaSearch() {
         try {
+            var db = FirestoreClient.getFirestore();
+
             var list = new ArrayList<String>();
             String searchString = "proj";
-            Firestore db = FirestoreClient.getFirestore();
             var result = db.collection("projects").get().get().getDocuments();
 
             for (var document : result) {
@@ -96,8 +98,9 @@ public class ProjectService {
         Command cmd = new Command(request);
 
         try {
-            Firestore dbFirestore = FirestoreClient.getFirestore();
-            var documents = dbFirestore.collection("projects").orderBy("title").startAt(search).endAt(search + "\uf8ff")
+            var db = FirestoreClient.getFirestore();
+            
+            var documents = db.collection("projects").orderBy("title").startAt(search).endAt(search + "\uf8ff")
                     .get().get().getDocuments();
 
             List<DocumentReference> projects = new ArrayList<>();
@@ -119,12 +122,12 @@ public class ProjectService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Command cmd = new Command(request);
-
+        
         try {
-            Firestore dbFirestore = FirestoreClient.getFirestore();
-            var projects = dbFirestore.collection("projects").listDocuments();
-            var count = dbFirestore.collection("projects").get().get().getDocuments();
-            System.out.println(count);
+            var db = FirestoreClient.getFirestore();
+
+            var projects = db.collection("projects").listDocuments();
+            var count = db.collection("projects").get().get().getDocuments();
             var formattedProjects = getFormattedProjects(projects);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
@@ -150,9 +153,6 @@ public class ProjectService {
                 summarizedProject.setOwner(authService.getUsername(summarizedProject.getOwner()));
 
                 String industryKey = projectDocument.get("industryKey").toString();
-                // summarizedProject.setIndustry(new HashMap<>() {{
-                //     put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
-                // }});
                 summarizedProject.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));               
 
                 var tags = p.collection("tags").get().get().getDocuments();
@@ -222,9 +222,6 @@ public class ProjectService {
                     });
                     project.setTags(tagsMap);
                     String industryKey = project.getIndustryKey();
-                    // project.setIndustry(new HashMap<>() {{
-                    //     put(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME);
-                    // }});
                     project.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));
 
                     project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName);
@@ -263,8 +260,9 @@ public class ProjectService {
             String userId = authService.getUserIdFromToken(Authorization);
 
             if (userId != null) {
+                var db = FirestoreClient.getFirestore();
+
                 project.setOwner(userId);
-                Firestore db = FirestoreClient.getFirestore();
                 String projectId = getProjectId(project);
 
                 var recordsRef = db.collection("projectRecords").document(projectId);
@@ -279,19 +277,12 @@ public class ProjectService {
 
                     var docRef = db.collection("projects").document();
 
-                    // addCollectionsToProjectDocument(docRef.getId(), new HashMap<>() {{
-                    //     put("tags", project.getTags().keySet());
-                    // }});
                     if(project.getTags() != null) {
                         addCollectionsToProjectDocument(docRef.getId(), Map.of("tags", project.getTags().keySet()));
                     }
 
                     project.setIndustry(null);
                     docRef.set(project);
-
-                    // var projectRecord = new HashMap<String, String>() {{
-                    //     put("pid", docRef.getId());
-                    // }};
 
                     recordsRef.set(Map.of("pid", docRef.getId()));
                     cr.message = "Project with id " + projectId + " Created at " + project.getCreatedAtForDb().toDate();
@@ -325,8 +316,8 @@ public class ProjectService {
         String projectNameId = getProjectNameId(owner, projectName);
 
         try {
-            Firestore dbFireStore = FirestoreClient.getFirestore();
-            var projectRecord = dbFireStore.collection("projectRecords").document(projectNameId).get().get();
+            var db = FirestoreClient.getFirestore();
+            var projectRecord = db.collection("projectRecords").document(projectNameId).get().get();
 
             if (projectRecord.exists()) {
                 String pid = projectRecord.get("pid").toString();
@@ -393,7 +384,6 @@ public class ProjectService {
             e.printStackTrace();
         }
         cmd.setResult(resp);
-        System.out.println("-------------------");
         return new ResponseEntity<>(cr, resp);
     }
 
@@ -423,35 +413,40 @@ public class ProjectService {
 
     private void addCollectionsToProjectDocument(String projectId, Map<String, Set<String>> data) {
         DatabaseService databaseService = new DatabaseService();
-
+        
         data.entrySet().forEach(entry -> {
-            var collectionName = entry.getKey();
-            var documentId = entry.getValue();
+            try {
+                var collectionName = entry.getKey();
+                var documentId = entry.getValue();
 
-            var collectionRef = getProjectDocumentReference(projectId).collection(collectionName);
+                var collectionRef = getProjectDocumentReference(projectId).collection(collectionName);
 
-            if (collectionRef != null) {
-                databaseService.emptyCollection(collectionRef, 10);
-            }
+                if (collectionRef != null) {
+                    var futures = databaseService.emptyCollection(collectionRef);
+                    ApiFutures.allAsList(futures).get(); // block thread until done
+                }
 
-            if (collectionName.equals("tags")) {
+                if (collectionName.equals("tags")) {
 
-                documentId.forEach(tag -> {
-                    if (EnumUtils.isValidEnum(Tag.class, tag)) {
-                        collectionRef.document(tag).set(new HashMap<String, Object>());
-                    } else {
-                        System.err.println("IGNORING INVALID TAG: " + tag);
-                    }
-                });
-            } else {
+                    documentId.forEach(tag -> {
+                        if (EnumUtils.isValidEnum(Tag.class, tag)) {
+                            collectionRef.document(tag).set(new HashMap<String, Object>());
+                        } else {
+                            System.err.println("IGNORING INVALID TAG: " + tag);
+                        }
+                    });
+                } else {
 
-                documentId.forEach(item -> {
-                    try {
-                        collectionRef.document(item).set(new HashMap<String, Object>());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+                    documentId.forEach(item -> {
+                        try {
+                            collectionRef.document(item).set(new HashMap<String, Object>());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -477,12 +472,11 @@ public class ProjectService {
     private DocumentReference getProjectDocumentReference(String owner, String projectName) {
         try {
             var db = FirestoreClient.getFirestore();
-
             var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get()
                     .get();
             if (projectRecord.exists()) {
                 var projectId = (String) projectRecord.get("pid");
-                return db.collection("projects").document(projectId);
+                return getProjectDocumentReference(projectId);
             }
         } catch (Exception e) {
             System.err.println("getProjectFromName:" + e.getMessage());
@@ -491,8 +485,7 @@ public class ProjectService {
     }
 
     private DocumentReference getProjectDocumentReference(String projectId) {
-        var db = FirestoreClient.getFirestore();
-        return db.collection("projects").document(projectId);
+        return FirestoreClient.getFirestore().collection("projects").document(projectId);
     }
 
     private Set<String> getLowerCaseSet(Set<String> set) {

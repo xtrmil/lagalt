@@ -26,13 +26,15 @@ import se.experis.com.case2020.lagalt.utils.Command;
 
 @Service
 public class MessageBoardService {
+
     public ResponseEntity<CommonResponse> createThread(HttpServletRequest request, HttpServletResponse response, String projectId, ObjectNode objectNode) throws ExecutionException, InterruptedException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference messageBoardReference = dbFirestore.collection("projects").document(projectId).collection("messageBoards").document("general");
+        var db = FirestoreClient.getFirestore();
+
+        DocumentReference messageBoardReference = db.collection("projects").document(projectId).collection("messageBoards").document("general");
         DocumentReference nextMessageId = messageBoardReference.collection(objectNode.get("title").asText()).document("nextId");
         
         // nextMessageId.set(new HashMap<String, Integer>() {{
@@ -54,13 +56,12 @@ public class MessageBoardService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        CollectionReference threadReference = dbFirestore.collection("projects").document(projectId).collection("messageBoards").document("general").collection(threadId);
+        var db = FirestoreClient.getFirestore();
+
+        CollectionReference threadReference = db.collection("projects").document(projectId).collection("messageBoards").document("general").collection(threadId);
         DocumentReference nextMessageId = threadReference.document("nextId");
         ApiFuture<DocumentSnapshot> messageFuture = nextMessageId.get();
         DocumentSnapshot messageSnapshot = messageFuture.get();
-
-
 
         ApiFuture<WriteResult> collectionApiFuture = threadReference.document(messageSnapshot.get("nextId").toString()).set(createPost(objectNode.get("text").asText()));
         cr.data = collectionApiFuture.get().getUpdateTime().toString();
@@ -78,8 +79,9 @@ public class MessageBoardService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference messageDocument = dbFirestore.collection("projects").document(projectId).collection("messageBoards").document("general")
+        var db = FirestoreClient.getFirestore();
+
+        DocumentReference messageDocument = db.collection("projects").document(projectId).collection("messageBoards").document("general")
                 .collection(threadId).document(objectNode.get("messageId").asText());
         System.out.println(objectNode.get("messageId").asText());
         System.out.println(messageDocument);

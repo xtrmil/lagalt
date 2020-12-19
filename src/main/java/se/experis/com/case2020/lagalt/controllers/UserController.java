@@ -1,7 +1,5 @@
 package se.experis.com.case2020.lagalt.controllers;
 
-import java.util.concurrent.ExecutionException;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +22,7 @@ import se.experis.com.case2020.lagalt.services.UserService;
 public class UserController {
 
     @Autowired
-    UserService userService;
+    private UserService userService;
 
     @GetMapping("/profile")
     public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request, @RequestHeader String Authorization) {

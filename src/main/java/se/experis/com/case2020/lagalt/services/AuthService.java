@@ -2,7 +2,6 @@ package se.experis.com.case2020.lagalt.services;
 
 import java.util.HashMap;
 
-import com.google.cloud.firestore.Firestore;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.cloud.FirestoreClient;
@@ -21,8 +20,6 @@ public class AuthService {
     @Autowired
     private ProjectService projectService;
 
-    private Firestore db = FirestoreClient.getFirestore();
-
     /**
      * Checks whether the user name (user id) is available or not. Used when signing
      * up
@@ -32,6 +29,7 @@ public class AuthService {
      */
     public HttpStatus getUserNameAvailability(String username) {
         try {
+            var db = FirestoreClient.getFirestore();
             var existingUser = db.collection("userRecords").document(username.toLowerCase()).get().get();
             return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
 
@@ -41,8 +39,9 @@ public class AuthService {
         }
     }
 
-    public boolean belongsToUser(String username, String jwtToken) {
+    public boolean belongsToUser(String username, String jwtToken) { // unsure if used
         try {
+            var db = FirestoreClient.getFirestore();
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("userRecords").document(username.toLowerCase()).get().get();
 
@@ -81,9 +80,10 @@ public class AuthService {
 
     private boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken, String collection) {
         String userId = getUserIdFromToken(jwtToken);
-
+        
         if (userId != null) {
             try {
+                var db = FirestoreClient.getFirestore();
                 String projectId = projectService.getProjectNameId(owner, projectName);
                 var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
                         .get();
@@ -110,6 +110,7 @@ public class AuthService {
 
     public String getUserId(String username) {
         try {
+            var db = FirestoreClient.getFirestore();
             var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
             if (userRecord.exists()) {
                 return userRecord.get("uid").toString();
@@ -122,6 +123,7 @@ public class AuthService {
 
     public String getUsernameFromToken(String jwtToken) {
         try {
+            var db = FirestoreClient.getFirestore();
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             var user = db.collection("users").document(fbToken.getUid()).get().get();
 
@@ -138,6 +140,7 @@ public class AuthService {
 
     public String getUsername(String userId) {
         try {
+            var db = FirestoreClient.getFirestore();
             var user = db.collection("users").document(userId).get().get();
             if(user.exists()) {
                 return user.get("username").toString().toLowerCase();
@@ -155,7 +158,7 @@ public class AuthService {
         try {
             var userId = getUserIdFromToken(jwtToken);
             if (userId == null) {
-
+                var db = FirestoreClient.getFirestore();
                 var userRef = db.collection("users").document(userId);
                 var userDocument = userRef.get().get();
 

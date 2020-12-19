@@ -1,17 +1,20 @@
 package se.experis.com.case2020.lagalt.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.cloud.firestore.QuerySnapshot;
-import org.springframework.stereotype.Service;
+import com.google.cloud.firestore.WriteResult;
 
-import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class DatabaseService {
 
-    void emptyCollection(CollectionReference collection, int batchSize) {
+    public void emptyCollection_old(CollectionReference collection, int batchSize) {
         try {
             ApiFuture<QuerySnapshot> future = collection.limit(batchSize).get();
             int deleted = 0;
@@ -21,11 +24,21 @@ public class DatabaseService {
                 ++deleted;
             }
             if (deleted >= batchSize) {
-                emptyCollection(collection, batchSize);
+                emptyCollection_old(collection, batchSize);
             }
         } catch (Exception e) {
-            System.err.println("Error deleting collection : " + e.getMessage());
+            e.printStackTrace();
         }
+    }
+
+    public List<ApiFuture<WriteResult>> emptyCollection(CollectionReference collection) {
+        List<ApiFuture<WriteResult>> futures = new ArrayList<>();
+        try {
+            collection.listDocuments().forEach(document -> futures.add(document.delete()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return futures;
     }
 
 }

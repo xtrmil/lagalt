@@ -1,31 +1,44 @@
 package se.experis.com.case2020.lagalt.services;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.*;
+import com.google.cloud.firestore.CollectionReference;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
+
 import org.apache.commons.lang3.EnumUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.application.ApplicationAdminView;
 import se.experis.com.case2020.lagalt.models.application.ApplicationProfileView;
 import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
 import se.experis.com.case2020.lagalt.models.user.UserPublicView;
 import se.experis.com.case2020.lagalt.utils.Command;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 @Service
 public class ApplicationService {
-    UserService userService = new UserService();
-    MockAuthService authService = new MockAuthService();
+    
+    @Autowired
+    private UserService userService;
 
+    @Autowired
+    private MockAuthService authService = new MockAuthService();
+    
     public ResponseEntity<CommonResponse> getApplications(HttpServletRequest request, HttpServletResponse response,
             String projectId, String Authorization) {
         Command cmd = new Command(request);
@@ -34,8 +47,9 @@ public class ApplicationService {
         Set<ApplicationAdminView> applicationSet = new HashSet<>();
 
         if (authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
-            Firestore dbFireStore = FirestoreClient.getFirestore();
-            CollectionReference ApplicationsCollection = dbFireStore.collection("projects").document(projectId)
+            var db = FirestoreClient.getFirestore();
+
+            CollectionReference ApplicationsCollection = db.collection("projects").document(projectId)
                     .collection("applications");
 
             Iterable<DocumentReference> projectCollections = ApplicationsCollection.listDocuments();
@@ -43,7 +57,7 @@ public class ApplicationService {
             projectCollections.forEach(application -> {
                 ApplicationAdminView applicationAdminView = new ApplicationAdminView();
                 try {
-                    DocumentReference ApplicationsUser = dbFireStore.collection("applications")
+                    DocumentReference ApplicationsUser = db.collection("applications")
                             .document(application.getId());
                     ApiFuture<DocumentSnapshot> userFuture = ApplicationsUser.get();
                     DocumentSnapshot userDocument = userFuture.get();
@@ -77,23 +91,20 @@ public class ApplicationService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
 
-        Firestore dbFireStore = FirestoreClient.getFirestore();
         if (authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
-            DocumentReference userReference = dbFireStore.collection("users")
-                    .document(authService.getUserIdFromToken(Authorization));
-            DocumentReference projectReference = dbFireStore.collection("projects").document(projectId);
+            var db = FirestoreClient.getFirestore();
+
+            DocumentReference userReference = db.collection("users").document(authService.getUserIdFromToken(Authorization));
+            DocumentReference projectReference = db.collection("projects").document(projectId);
 
             ApplicationProfileView applicationProfileView = new ApplicationProfileView();
             applicationProfileView.setProjectId(projectId);
             applicationProfileView.setMotivation(motivation.get("motivation").asText());
 
-            var ref = dbFireStore.collection("applications").document(projectId).collection("applications").document();
-            ApiFuture<WriteResult> applicationscollectionApiFuture = dbFireStore.collection("applications")
-                    .document(ref.getId()).set(applicationProfileView);
-            ApiFuture<WriteResult> userApplicationsApiFuture = userReference.collection("appliedTo")
-                    .document(ref.getId()).set(new HashMap<>());
-            ApiFuture<WriteResult> projectApplicationApiFuture = projectReference.collection("applications")
-                    .document(ref.getId()).set(new HashMap<>());
+            var ref = db.collection("applications").document(projectId).collection("applications").document();
+            db.collection("applications").document(ref.getId()).set(applicationProfileView);
+            userReference.collection("appliedTo").document(ref.getId()).set(new HashMap<>());
+            projectReference.collection("applications").document(ref.getId()).set(new HashMap<>());
 
             response.addHeader("Location", "/projects/" + projectId + "/application/");
             cr.data = "your motivation: " + motivation.get("motivation").asText();
@@ -115,8 +126,9 @@ public class ApplicationService {
         String message = application.get("message").asText();
         ApplicationStatus status = ApplicationStatus.valueOf(application.get("status").asText());
 
-        Firestore dbFirestore = FirestoreClient.getFirestore();
-        DocumentReference applicationReference = dbFirestore.collection("applications").document(applicationId);
+        var db = FirestoreClient.getFirestore();
+
+        DocumentReference applicationReference = db.collection("applications").document(applicationId);
         ApiFuture<DocumentSnapshot> future = applicationReference.get();
         DocumentSnapshot document = future.get();
 
@@ -132,7 +144,7 @@ public class ApplicationService {
                 updatedApplication.setUserId(document.getData().get("userId").toString());
                 updatedApplication.setProjectId(projectId);
 
-                ApiFuture<WriteResult> applicationApiFuture = dbFirestore.collection("applications")
+                ApiFuture<WriteResult> applicationApiFuture = db.collection("applications")
                         .document(applicationId).set(updatedApplication);
                 response.addHeader("Location", "/projects/" + projectId + "/application/");
                 cr.message = "Application with id: " + applicationId + "for project with id: " + projectId

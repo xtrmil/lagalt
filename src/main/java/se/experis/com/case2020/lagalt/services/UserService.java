@@ -8,10 +8,14 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.EventListener;
+import com.google.cloud.firestore.FirestoreException;
+import com.google.cloud.firestore.ListenerRegistration;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -31,7 +35,7 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class UserService {
 
     @Autowired
-    MockAuthService authService;
+    private MockAuthService authService;
 
     public ResponseEntity<CommonResponse> getUserProfile(HttpServletRequest request, String Authorization) {
         Command cmd = new Command(request);
@@ -39,7 +43,7 @@ public class UserService {
         HttpStatus resp;
 
         try {
-            Firestore db = FirestoreClient.getFirestore();
+            var db = FirestoreClient.getFirestore();
             String userId = authService.getUserIdFromToken(Authorization);
 
             if (userId != null) {
@@ -72,7 +76,7 @@ public class UserService {
                         user.setAppliedTo(userInfo.get("appliedTo"));
                     }
                     user.setContributedTo(userInfo.get("contributedTo"));
-                    user.setMemberOf(userInfo.get("memberOf"));
+                    user.setMemberOf(userInfo.get("memberOf")); // TODO returns projectId. return owner/projectName ?
 
                     cr.message = "Profile user details for: " + user.getUsername();
                     cr.data = user;
@@ -132,19 +136,6 @@ public class UserService {
                 DocumentReference documentReference = getUserDocument(userId);
                 var user = getUserProfileobject(userId);
 
-                if (partialUser.getTags() != null) {
-                    DatabaseService databaseService = new DatabaseService();
-                    databaseService.emptyCollection(documentReference.collection("tags"), 10);
-
-                    // TODO not waiting on emptying the collection can cause problems
-
-                    partialUser.getTags().keySet().forEach(tagKey -> {
-                        if (EnumUtils.isValidEnum(Tag.class, tagKey)) {
-                            addCollectionToUserDocument(userId, "tags", tagKey);
-                        }
-                    });
-                    partialUser.setTags(null);
-                }
                 if (partialUser.getDescription() != null) {
                     user.setDescription(partialUser.getDescription());
                 }
@@ -160,7 +151,19 @@ public class UserService {
                 if (partialUser.getName() == null) {
                     user.setName(partialUser.getName());
                 }
+                if (partialUser.getTags() != null) {
+                    DatabaseService databaseService = new DatabaseService();
+                    var futures = databaseService.emptyCollection(documentReference.collection("tags"));
+                    
+                    ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't added before they're deleted 
 
+                    partialUser.getTags().keySet().forEach(tagKey -> {
+                        if (EnumUtils.isValidEnum(Tag.class, tagKey)) {
+                            addCollectionToUserDocument(userId, "tags", tagKey);
+                        }
+                    });
+                    partialUser.setTags(null);
+                }
                 ApiFuture<WriteResult> collectionApiFuture = getUserDocument(userId).set(user);
 
                 cr.data = collectionApiFuture.get().getUpdateTime().toString();
@@ -174,7 +177,6 @@ public class UserService {
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
             e.printStackTrace();
         }
-        System.out.println("---------");
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
@@ -232,8 +234,7 @@ public class UserService {
     }
 
     private DocumentReference getUserDocument(String userId) {
-        var db = FirestoreClient.getFirestore();
-        return db.collection("users").document(userId);
+        return FirestoreClient.getFirestore().collection("users").document(userId);
     }
 
 }
