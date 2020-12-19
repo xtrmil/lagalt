@@ -23,7 +23,7 @@ public class FirebaseInitialize {
             if(FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
             }
-        }catch (Exception e){
+        } catch (Exception e){
             e.printStackTrace();
         }
     }
