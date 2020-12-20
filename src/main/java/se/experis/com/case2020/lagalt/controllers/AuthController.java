@@ -3,7 +3,6 @@ package se.experis.com.case2020.lagalt.controllers;
 import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.firebase.auth.FirebaseAuth;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,7 +35,7 @@ public class AuthController {
 
     @CrossOrigin(origins = allowedHost)
     @GetMapping("/loggedInUser")
-    public ResponseEntity<String> loggedInUser(@RequestHeader String Authorization) {      
+    public ResponseEntity<String> loggedInUser(@RequestHeader(required = false) String Authorization) {      
         return new ResponseEntity<>(authService.getUsernameFromToken(Authorization), HttpStatus.OK);
     }
 

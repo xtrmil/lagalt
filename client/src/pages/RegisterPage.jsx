@@ -37,7 +37,6 @@ const RegisterPage = (props) => {
                 errors={errors}
                 handleChange={handleChange}
                 handleBlur={handleBlur}
-                textarea="textarea"
               ></TextInput>
 
               <TextInput
@@ -49,11 +48,10 @@ const RegisterPage = (props) => {
                 errors={errors}
                 handleChange={handleChange}
                 handleBlur={handleBlur}
-                textarea="textarea"
               ></TextInput>
 
               <TextInput
-                type="text"
+                type="password"
                 label="Password"
                 name="password"
                 values={values}
@@ -61,7 +59,6 @@ const RegisterPage = (props) => {
                 errors={errors}
                 handleChange={handleChange}
                 handleBlur={handleBlur}
-                textarea="textarea"
               ></TextInput>
               <div>
                 <Button variant="info">Continue with Google</Button>

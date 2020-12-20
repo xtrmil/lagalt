@@ -11,7 +11,6 @@ import lombok.Data;
 public class UserProfileView extends UserPublicView {
     private Boolean hidden = false;
     private Set<String> memberOf;
-    private Set<String> following;
     private Set<String> contributedTo;
     private Set<String> appliedTo;
 }

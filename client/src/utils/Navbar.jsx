@@ -16,8 +16,8 @@ const Navbar = (props) => {
       </BootstrapNavbar.Brand>
 
       <Nav className="mr-auto">
-        <Nav.Link href="#placeholder">Placeholder</Nav.Link>
-        <Nav.Link href="#placeholder">Placeholder</Nav.Link>
+        <Nav.Link href="/profile">Profile</Nav.Link>
+        <Nav.Link href="/projects">Projects</Nav.Link>
       </Nav>
       <Button onClick={onLoginClick} variant="dark">
         Login
