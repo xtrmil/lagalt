@@ -30,6 +30,7 @@ import se.experis.com.case2020.lagalt.models.enums.Tag;
 @RequestMapping(value = {"/api/v1/available/{enumType}", "/api/v1/available/{enumType}/{industry}"}, produces = MediaType.APPLICATION_JSON_VALUE)
 public class EnumController {
     Map<String,EnumItem[]> enumMap;
+
     @PostConstruct
     private void initializeEnums(){
         enumMap = new HashMap<>()
@@ -46,9 +47,6 @@ public class EnumController {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
         response.addHeader("Location", "/available/"+enumType);
-
-        Class<EnumItem> en = (Class<EnumItem>) Class.forName(enumType);
-        System.out.println(en.getSimpleName());
 
         if(!industry.isPresent()) {
             cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
