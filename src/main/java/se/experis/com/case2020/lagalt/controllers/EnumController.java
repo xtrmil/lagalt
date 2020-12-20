@@ -1,15 +1,11 @@
 package se.experis.com.case2020.lagalt.controllers;
 
-<<<<<<< HEAD
-=======
-
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
->>>>>>> 3feda46926d7ddcd910a446f025f91a6c9a2d210
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,11 +41,14 @@ public class EnumController {
         }};
     }
     @GetMapping("")
-    public ResponseEntity<CommonResponse> getEnumsFiltered(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) {
+    public ResponseEntity<CommonResponse> getEnumsFiltered(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) throws ClassNotFoundException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
         response.addHeader("Location", "/available/"+enumType);
+
+        Class<EnumItem> en = (Class<EnumItem>) Class.forName(enumType);
+        System.out.println(en.getSimpleName());
 
         if(!industry.isPresent()) {
             cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
