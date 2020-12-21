@@ -4,4 +4,5 @@ public interface EnumItem {
 
 
     String getLabel();
+
 }

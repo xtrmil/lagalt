@@ -1,5 +1,7 @@
 package se.experis.com.case2020.lagalt.controllers;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,12 +44,12 @@ public class EnumController {
         }};
     }
     @GetMapping("")
-    public ResponseEntity<CommonResponse> getEnumsFiltered(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) throws ClassNotFoundException {
+    public ResponseEntity<CommonResponse> getEnums(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = HttpStatus.OK;
         response.addHeader("Location", "/available/"+enumType);
-
+        
         if(!industry.isPresent()) {
             cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
                     .collect(Collectors.toMap(e -> e.toString(), e -> e.getLabel()));

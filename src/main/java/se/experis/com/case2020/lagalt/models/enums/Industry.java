@@ -19,6 +19,7 @@ public enum Industry implements EnumItem{
         this.TAGS = tags;
     }
 
+
     @Override
     public String getLabel() {
         return INDUSTRY_NAME;
