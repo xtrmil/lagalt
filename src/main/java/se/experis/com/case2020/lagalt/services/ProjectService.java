@@ -18,7 +18,6 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -183,11 +182,11 @@ public class ProjectService {
 
         try {
             DocumentReference projectReference = getProjectDocumentReference(owner, projectName);
-            CollectionReference links = projectReference.collection("links");
-            CollectionReference tags = projectReference.collection("tags");
-            DocumentSnapshot projectDocument = projectReference.get().get();
-
-            if (projectDocument.exists()) {
+            
+            if(projectReference != null) {
+                CollectionReference links = projectReference.collection("links");
+                CollectionReference tags = projectReference.collection("tags");
+                DocumentSnapshot projectDocument = projectReference.get().get();
 
                 Map<String, Set<String>> projectInfo = new HashMap<>();
                 projectReference.listCollections().forEach(projectCollection -> {
@@ -236,7 +235,6 @@ public class ProjectService {
                     cr.data = project;
                 }
                 resp = HttpStatus.OK;
-
             } else {
                 resp = HttpStatus.NOT_FOUND;
                 cr.message = "Project not found";
@@ -475,14 +473,13 @@ public class ProjectService {
     private DocumentReference getProjectDocumentReference(String owner, String projectName) {
         try {
             var db = FirestoreClient.getFirestore();
-            var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get()
-                    .get();
+            var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get().get();
             if (projectRecord.exists()) {
                 var projectId = (String) projectRecord.get("pid");
                 return getProjectDocumentReference(projectId);
             }
         } catch (Exception e) {
-            System.err.println("getProjectFromName:" + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }

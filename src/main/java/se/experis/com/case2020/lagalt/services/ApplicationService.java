@@ -136,7 +136,6 @@ public class ApplicationService {
             if (authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
                 ApplicationProfileView updatedApplication = new ApplicationProfileView();
                 if (EnumUtils.isValidEnum(ApplicationStatus.class, status.toString())) {
-                    System.out.println("Valid enum");
                     updatedApplication.setStatus(status);
                 }
                 updatedApplication.setFeedback(message);
