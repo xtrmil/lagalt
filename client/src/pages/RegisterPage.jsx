@@ -60,8 +60,11 @@ const RegisterPage = (props) => {
                 handleChange={handleChange}
                 handleBlur={handleBlur}
               ></TextInput>
+
               <div>
-                <Button variant="info">Continue with Google</Button>
+                <Button className="google-button" variant="info">
+                  Continue with Google
+                </Button>
               </div>
               <div>
                 <Button type="submit">Register</Button>

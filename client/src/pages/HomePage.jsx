@@ -81,7 +81,7 @@ const HomePage = (props) => {
               <h6>Industry: ............... Skills needed: ..............................</h6>
               <div className="stretched-button-admin">
                 <Button onClick={onProjectViewClick} variant="info">
-                  Message board & chat
+                  Message Board & Chat
                 </Button>
                 <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
                   Admin
@@ -109,7 +109,7 @@ const HomePage = (props) => {
               <h6>Industry: ............... Skills needed: ..............................</h6>
               <div className="stretched-button-mb">
                 <Button onClick={onProjectViewClick} variant="info">
-                  Message board & chat
+                  Message Board & Chat
                 </Button>
               </div>
             </div>

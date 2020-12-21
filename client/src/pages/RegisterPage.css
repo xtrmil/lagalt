@@ -15,8 +15,16 @@
     margin-top: 30px;
     }
 
+.google-button {
+    margin-bottom: 20px;
+}
+
 .handleSubmit {
     width: 100px;
+}
+
+.Form {
+    width: 40px;
 }
 
 h1, h4, h6 {
