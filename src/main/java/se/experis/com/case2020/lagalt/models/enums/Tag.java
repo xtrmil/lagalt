@@ -1,6 +1,6 @@
 package se.experis.com.case2020.lagalt.models.enums;
 
-public enum Tag {
+public enum Tag implements EnumItem{
     // Music
     SINGER("Singer","Music"), GUITARRIST("Guitarrist","Music"), BASSIST("Bassist","Music"), DRUMMER("Drummer","Music"),
 
@@ -17,10 +17,14 @@ public enum Tag {
 
     public final String DISPLAY_TAG,INDUSTRY;
 
-
     Tag(String displayTag, String industry) {
 
         this.DISPLAY_TAG = displayTag;
         this.INDUSTRY = industry;
+    }
+
+    @Override
+    public String getLabel() {
+        return DISPLAY_TAG;
     }
 }
