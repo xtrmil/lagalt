@@ -12,10 +12,6 @@ import com.google.api.core.ApiFutures;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.EventListener;
-import com.google.cloud.firestore.FirestoreException;
-import com.google.cloud.firestore.ListenerRegistration;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -62,8 +58,8 @@ public class UserService {
                             userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(doc.getId());
                         });
                     });
-                    Set<String> applications = new HashSet<>();
                     if (userInfo.get("appliedTo") != null) {
+                        Set<String> applications = new HashSet<>();
 
                         userInfo.get("appliedTo").forEach(application -> {
                             try {
@@ -75,8 +71,17 @@ public class UserService {
                         });
                         user.setAppliedTo(userInfo.get("appliedTo"));
                     }
-                    user.setContributedTo(userInfo.get("contributedTo"));
-                    user.setMemberOf(userInfo.get("memberOf")); // TODO returns projectId. return owner/projectName ?
+                    if(userInfo.get("tags") != null) {                        
+                        Map<String, String> tagsMap = new HashMap<>();
+                        
+                        userInfo.get("tags").forEach(tag -> {
+                            tagsMap.put(tag, Tag.valueOf(tag.toString()).DISPLAY_TAG);
+                        });
+                        user.setTags(tagsMap);
+                    }
+                        
+                        user.setContributedTo(userInfo.get("contributedTo"));
+                        user.setMemberOf(userInfo.get("memberOf")); // TODO returns projectId. return owner/projectName ?
 
                     cr.message = "Profile user details for: " + user.getUsername();
                     cr.data = user;
