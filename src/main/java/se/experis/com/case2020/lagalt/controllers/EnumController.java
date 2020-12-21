@@ -1,18 +1,15 @@
 package se.experis.com.case2020.lagalt.controllers;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.*;
 import se.experis.com.case2020.lagalt.utils.Command;
@@ -45,7 +42,6 @@ public class EnumController {
         response.addHeader("Location", "/available/"+enumType);
 
         if(!industry.isPresent()) {
-
             cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
                     .collect(Collectors.toMap(e -> e.toString(), e -> e.getLabel()));
         }else{
