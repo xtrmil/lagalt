@@ -98,7 +98,7 @@ public class ApplicationService {
             DocumentReference projectReference = db.collection("projects").document(projectId);
 
             ApplicationProfileView applicationProfileView = new ApplicationProfileView();
-            applicationProfileView.setProjectId(projectId);
+            applicationProfileView.setProject(projectId);
             applicationProfileView.setMotivation(motivation.get("motivation").asText());
 
             var ref = db.collection("applications").document(projectId).collection("applications").document();
@@ -141,8 +141,7 @@ public class ApplicationService {
                 }
                 updatedApplication.setFeedback(message);
                 updatedApplication.setMotivation(document.getData().get("motivation").toString());
-                updatedApplication.setUserId(document.getData().get("userId").toString());
-                updatedApplication.setProjectId(projectId);
+                updatedApplication.setProject(projectId);
 
                 ApiFuture<WriteResult> applicationApiFuture = db.collection("applications")
                         .document(applicationId).set(updatedApplication);

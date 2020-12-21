@@ -28,28 +28,38 @@ public class EnumController {
     private void initializeEnums(){
         enumMap = new HashMap<>()
         {{
-            put (ApplicationStatus.class.getSimpleName().toLowerCase(), ApplicationStatus.values());
-            put (Industry.class.getSimpleName().toLowerCase(), Industry.values());
-            put (Tag.class.getSimpleName().toLowerCase(), Tag.values());
-            put (ProjectStatus.class.getSimpleName().toLowerCase(), ProjectStatus.values());
+            put ("applicationstatuses", ApplicationStatus.values());
+            put ("industries", Industry.values());
+            put ("tags", Tag.values());
+            put ("projectstatuses", ProjectStatus.values());
         }};
     }
     @GetMapping("")
-    public ResponseEntity<CommonResponse> getEnums(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+    public ResponseEntity<CommonResponse> getEnums(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
+        HttpStatus resp;
         response.addHeader("Location", "/available/"+enumType);
 
-        if(!industry.isPresent()) {
-            cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
-                    .collect(Collectors.toMap(e -> e.toString(), e -> e.getLabel()));
-        }else{
-            cr.data = Stream.of((Tag[]) enumMap.get(enumType.toLowerCase()))
-                    .filter(tag -> tag.INDUSTRY.equals(industry.get()))
-                    .collect(Collectors.toMap(e -> e.name(), e -> e.getLabel()));
+        try {
+            if(!industry.isPresent()) {
+                cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
+                .collect(Collectors.toMap(e -> e.toString(), e -> e.getLabel()));
+            }else{
+                cr.data = Stream.of((Tag[]) enumMap.get(enumType.toLowerCase()))
+                .filter(tag -> tag.INDUSTRY.equals(industry.get()))
+                .collect(Collectors.toMap(e -> e.name(), e -> e.getLabel()));
+            }
+            resp = HttpStatus.OK;
+            cr.message = "Successfully retrieved available " + enumType;
+        } catch(NullPointerException e) {
+            resp = HttpStatus.NOT_FOUND;
+            cr.message = "Path does not exist";
+        } catch(Exception e) {
+            e.printStackTrace();
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
-        cr.message = "Successfully retrieved available " + enumType;
+
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }

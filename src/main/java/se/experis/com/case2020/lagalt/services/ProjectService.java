@@ -328,7 +328,7 @@ public class ProjectService {
                     String industryKey;
                     try {
                         industryKey = validateIndustry(project.getIndustry().keySet().iterator().next());
-                    } catch(InvalidProjectException e) {
+                    } catch(InvalidProjectException | NullPointerException e) {
                         industryKey = projectRef.get().get().get("industryKey").toString();
                     }
                     project.setIndustryKey(industryKey);
@@ -341,9 +341,9 @@ public class ProjectService {
 
                     // updates the memberOf collections in users to match the updated project's
                     // admins and members
-                    var previousUserIds = projectRef.collection("members").get().get().getDocuments().stream()
+                    Set<String> previousUserIds = projectRef.collection("members").get().get().getDocuments().stream()
                             .map(user -> user.getId()).collect(Collectors.toSet());
-                    var previousAdminIds = projectRef.collection("admins").get().get().getDocuments().stream()
+                    Set<String> previousAdminIds = projectRef.collection("admins").get().get().getDocuments().stream()
                             .map(user -> user.getId()).collect(Collectors.toSet());
 
                     previousUserIds.addAll(previousAdminIds);
@@ -352,7 +352,9 @@ public class ProjectService {
 
                     var projectCollections = new HashMap<String, Set<String>>();
                     projectCollections.put("members", newMemberIds);
-                    projectCollections.put("tags", project.getTags().keySet());
+                    if(project.getTags() != null) {
+                        projectCollections.put("tags", project.getTags().keySet());
+                    }
 
                     addCollectionsToProjectDocument(pid, projectCollections);
 
@@ -363,6 +365,7 @@ public class ProjectService {
                     project.setIndustry(null);
                     project.setAdmins(null);
                     project.setMembers(null);
+                    project.setTags(null);
 
                     ApiFuture<WriteResult> collectionApiFuture = projectRef.set(project);
 
@@ -534,5 +537,24 @@ public class ProjectService {
             }
         });
         return set;
+    }
+
+    public String getProjectTitle(String projectId) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            return db.collection("projects").document(projectId).get().get().get("title").toString();
+        } catch(Exception e) {
+            return null;
+        }
+    }
+
+    public Set<String> translateIdsToProjectNames(Set<String> collection) {
+        Set<String> projectNames = new HashSet<>();
+        if(collection != null) {
+            collection.forEach(projectId -> {
+                projectNames.add(getProjectTitle(projectId));
+            });
+        }
+        return projectNames;
     }
 }
