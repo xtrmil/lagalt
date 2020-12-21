@@ -1,12 +1,29 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
 
 const ProjectViewMainSection = (props) => {
   const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick } = props;
-  const { skills } = project;
+  const industry = {
+    value: Object.keys(project.industry)[0],
+    label: Object.values(project.industry)[0],
+  };
+  useEffect(() => {
+    console.log(project);
+  }, [project]);
 
-  const skillsList = skills.map((skill, index) => {
+  const tagsArray = Object.values(project.tags);
+
+  const membersList =
+    project.members != null ? (
+      project.members.map((member, index) => {
+        return <div key={index}>{member}</div>;
+      })
+    ) : (
+      <div>No members</div>
+    );
+
+  const tagsList = tagsArray.map((tag, index) => {
     return (
       <Col
         sm={5}
@@ -15,7 +32,7 @@ const ProjectViewMainSection = (props) => {
         }
         key={index}
       >
-        {skill}
+        {tag}
       </Col>
     );
   });
@@ -25,23 +42,17 @@ const ProjectViewMainSection = (props) => {
         <div className="imgplaceholder mb-4">IMAGE</div>
         <div className="mb-4">
           <h3 className="mb-2 text-center">Skills</h3>
-          <div className="text-center">{skillsList}</div>
+          <div className="text-center">{tagsList}</div>
         </div>
         <h3 className="mb-2 text-center">Members</h3>
-        <div className="text-center">
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-          <div>there should be a list of people here</div>
-        </div>
+        <div className="text-center">{membersList}</div>
       </Col>
       <Col sm={8} className="pl-0">
         <Row className="no-gutters">
           <Col sm={8}>
             <h2>{project.title}</h2>
             <h4>
-              <i>Industry: {project.industry}</i>
+              <i>Industry: {industry.label}</i>
             </h4>
             <h5>Status: {project.status}</h5>
           </Col>
@@ -57,7 +68,11 @@ const ProjectViewMainSection = (props) => {
                   Settings
                 </Button>
               )}
-              {loggedIn && memberOf && <Button>Message Board & Chat</Button>}
+              {loggedIn && memberOf && (
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
+                  Message Board & Chat
+                </Button>
+              )}
             </div>
           </Col>
         </Row>

@@ -1,19 +1,67 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './HomePage.css';
-import { Button } from 'react-bootstrap';
+import { Button, Tabs, Tab, Form, FormControl } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import JoinProjectModal from '../components/projectView/JoinProjectModal';
 
 const HomePage = (props) => {
-  const onProjectViewClick = () => {
-    props.history.push('/project');
+  const [showJoinModal, setShowJoinModal] = useState(false);
+
+  const onJoinClick = () => {
+    setShowJoinModal(true);
+  };
+
+  const hideJoinModal = () => {
+    setShowJoinModal(false);
   };
 
   const onProjectAdminPageClick = () => {
     props.history.push('/admin');
   };
 
+  const onMessageBoardAndChatPageClick = () => {
+    props.history.push('/message_board_and_chat');
+  };
+
+  function refreshPage() {
+    window.location.reload(false);
+  }
+
   return (
     <>
+      <JoinProjectModal showJoinModal={showJoinModal} hideJoinModal={hideJoinModal} />
+
+      <Form inline>
+        <h5 className="filter-text">FILTER BY</h5>
+        <div className="filter-function">
+          <FormControl
+            type="text"
+            placeholder="Search for projects..."
+            className="search mr-sm-2"
+          />
+          <Button variant="outline-success">Search</Button>
+        </div>
+      </Form>
+
+      <Tabs defaultActiveKey="filterTabs" className="filter-tabs">
+        <Tab eventKey="industry" title="Industry">
+          <p>
+            Music........................Film........................Game
+            Development........................Web Development........................
+          </p>
+        </Tab>
+        <Tab eventKey="skills" title="Skills">
+          <p>Different skills........................</p>
+        </Tab>
+        <Tab eventKey="time" title="Time">
+          <p>Newest projects........................Oldest projects........................</p>
+        </Tab>
+      </Tabs>
+
+      <Button onClick={refreshPage} className="btn-viewAll" variant="secondary">
+        View all
+      </Button>
+
       <h1 className="homePageHeading">Projects</h1>
       <div className="card w-75 homePageCard">
         <div className="card-body homePageCardBody">
@@ -29,8 +77,8 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
-                <Button onClick={onProjectViewClick} variant="success">
+              <div className="stretched-button-join">
+                <Button onClick={onJoinClick} variant="success">
                   Join
                 </Button>
               </div>
@@ -54,8 +102,8 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
-                <Button onClick={onProjectViewClick} variant="success">
+              <div className="stretched-button-join">
+                <Button onClick={onJoinClick} variant="success">
                   Join
                 </Button>
               </div>
@@ -79,9 +127,9 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
-                <Button onClick={onProjectViewClick} variant="info">
-                  Message board & chat
+              <div className="stretched-button-admin">
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
+                  Message Board & Chat
                 </Button>
                 <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
                   Admin
@@ -107,9 +155,9 @@ const HomePage = (props) => {
                 <Link to="/project">(Read more)</Link>
               </h6>
               <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button">
-                <Button onClick={onProjectViewClick} variant="info">
-                  Message board & chat
+              <div className="stretched-button-mb">
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
+                  Message Board & Chat
                 </Button>
               </div>
             </div>

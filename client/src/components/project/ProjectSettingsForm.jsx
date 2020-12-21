@@ -1,55 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from '../form/TextInput';
 import SelectInput from '../form/SelectInput';
-import { createProjectSchema } from '../../utils/form/FormUtils';
+import MultiSelectInput from '../form/MultiSelectInput';
+import { editProjectSchema } from '../../utils/form/FormUtils';
+import { getAllIndustries, getTagsByIndustry } from '../../utils/api/industry';
+import { updateProject } from '../../utils/api/project';
+const mapOptions = (array, data) => {
+  for (const [key, value] of Object.entries(data)) {
+    const option = { value: key, label: value };
+    array.push(option);
+  }
+  return array;
+};
 
 const ProjectSettingsForm = (props) => {
-  const { project, setProject } = props;
-  console.log(project);
-  const currentSkills = project.skills.map((skill) => ({
-    value: skill,
-    label: skill,
-  }));
-  const initialValues = {
-    title: project.title,
-    industry: project.industry,
-    skills: currentSkills,
+  const { project, setProject, hideModal } = props;
+  const [industryOptions, setIndustryOptions] = useState();
+  const [tagOptions, setTagOptions] = useState();
+
+  const initialTags = mapOptions([], project.tags);
+  const initialIndustry = mapOptions([], project.industry);
+  const [initialValues] = useState({
+    industry: initialIndustry,
+    tags: initialTags,
     description: project.description,
-  };
-  const currentIndustry = { value: project.industry, label: project.industry };
+  });
 
-  const options = [
-    { value: 'DRUMMER', label: 'Drummer' },
-    { value: 'WEB_DEV', label: 'WEB_DEV' },
-    { value: 'REACT', label: 'REACT' },
-    { value: 'SECURITY', label: 'SECURITY' },
-    { value: 'ANGULAR', label: 'ANGULAR' },
-  ];
+  const fetchTagOptions = useCallback(async (industry) => {
+    let tagOptions = [];
+    await getTagsByIndustry(industry).then((response) => {
+      mapOptions(tagOptions, response.data);
+      setTagOptions(tagOptions);
+    });
+  }, []);
 
-  const industryOptions = [
-    { value: 'MUSIC', label: 'Music' },
-    { value: 'FILM', label: 'Film' },
-    { value: 'GAMEDEVELOPMENT', label: 'Game Development' },
-    { value: 'WEBDEVELOPMENT', label: 'Web Development' },
-  ];
+  const fetchIndustries = useCallback(async () => {
+    let industriesOptions = [];
+    await getAllIndustries().then((response) => {
+      mapOptions(industriesOptions, response.data);
+      setIndustryOptions(industriesOptions);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchTagOptions('Game');
+    fetchIndustries();
+  }, [fetchIndustries, fetchTagOptions]);
+
   const onFormSubmit = (values) => {
-    const { title, industry, skills, description } = values;
-    console.log(skills);
+    const { industry, tags, description } = values;
+
     const newProject = {
       ...project,
-      title,
-      industry,
-      skills: skills.map((skill) => skill.value),
+      industry: industry.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
+      tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
       description,
     };
-    console.log(newProject);
     setProject(newProject);
+    console.log(JSON.stringify(newProject, null, 2));
+    updateProject(newProject);
+    hideModal();
+  };
+
+  const onIndustryChange = (selected, setFieldValue) => {
+    setFieldValue('industry', [selected]);
+    setFieldValue('tags', null);
+    let label = selected.label;
+    label = label.split(' ')[0];
+    fetchTagOptions(label);
   };
   return (
     <Formik
-      validationSchema={createProjectSchema}
+      validationSchema={editProjectSchema}
       onSubmit={(values) => onFormSubmit(values)}
       initialValues={initialValues}
     >
@@ -65,16 +89,6 @@ const ProjectSettingsForm = (props) => {
       }) => (
         <>
           <Form onSubmit={handleSubmit}>
-            <TextInput
-              type="text"
-              label="Project Name*"
-              name="title"
-              values={values}
-              touched={touched}
-              errors={errors}
-              handleChange={handleChange}
-              handleBlur={handleBlur}
-            ></TextInput>
             <SelectInput
               label="Select Industry*"
               name="industry"
@@ -82,23 +96,21 @@ const ProjectSettingsForm = (props) => {
               values={values}
               touched={touched}
               errors={errors}
-              defaultValue={currentIndustry}
+              defaultValue={initialIndustry}
               setFieldTouched={setFieldTouched}
-              setFieldValue={setFieldValue}
-              isMulti={false}
-            ></SelectInput>
-            <SelectInput
-              label="Select Skills*"
-              name="skills"
-              options={options}
+              onChange={(selected) => onIndustryChange(selected, setFieldValue)}
+            />
+            <MultiSelectInput
+              label="Select Tags*"
+              name="tags"
+              options={tagOptions}
               values={values}
               touched={touched}
               errors={errors}
-              defaultValue={currentSkills}
+              defaultValue={initialTags}
               setFieldTouched={setFieldTouched}
               setFieldValue={setFieldValue}
-              isMulti={true}
-            ></SelectInput>
+            ></MultiSelectInput>
             <TextInput
               type="text"
               label="Description*"
