@@ -7,14 +7,17 @@ const ProjectAdminPage = (props) => {
   const onProjectViewClick = () => {
     props.history.push('/project');
   };
+
+  const onCreateProjectPageClick = () => {
+    props.history.push('/project/create');
+  };
+
   return (
     <>
-      <Button className="btn-createNewProject" onClick={onProjectViewClick} variant="info">
+      <Button className="btn-createNewProject" onClick={onCreateProjectPageClick} variant="info">
         Create new project
       </Button>
-      <div className="projectAdminHeading">
-        <h1>Incoming applications</h1>
-      </div>
+      <h1 className="projectAdminHeading">Incoming applications</h1>
       <table className="table w-50">
         <thead>
           <tr>
@@ -77,9 +80,7 @@ const ProjectAdminPage = (props) => {
           </tr>
         </tbody>
       </table>
-      <div className="projectAdminHeading">
-        <h1>Project overview update</h1>
-      </div>
+      <h1 className="projectOverviewHeading">Project overview update</h1>
       <div className="card w-50 projectAdminPageCard">
         <div className="card-body projectAdminPageCardBody">
           <div className="row project">

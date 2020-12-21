@@ -11,7 +11,7 @@ const Navbar = (props) => {
 
   return (
     <BootstrapNavbar bg="dark" variant="dark" expand="lg">
-      <BootstrapNavbar.Brand className="light" href="/">
+      <BootstrapNavbar.Brand className="light" href="/home">
         Lagalt
       </BootstrapNavbar.Brand>
 

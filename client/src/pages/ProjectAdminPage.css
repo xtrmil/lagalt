@@ -15,7 +15,12 @@
 }
 
 .projectAdminHeading {
-    margin-left: 156px;
+    margin-left: 315px;
+}
+
+.projectOverviewHeading {
+    margin-left: 315px;
+    margin-top: 35px;
 }
 
 .col {

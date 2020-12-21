@@ -68,7 +68,11 @@ const ProjectViewMainSection = (props) => {
                   Settings
                 </Button>
               )}
-              {loggedIn && memberOf && <Button>Message Board & Chat</Button>}
+              {loggedIn && memberOf && (
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
+                  Message Board & Chat
+                </Button>
+              )}
             </div>
           </Col>
         </Row>

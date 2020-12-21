@@ -1,0 +1,39 @@
+.chatCard {
+    margin: 0 auto;
+    float: none;
+    margin-bottom: 10px;
+    height: 175px;
+}
+
+chatCardBody {
+    margin-left: 10px;
+    margin-top: -35px;
+    }
+
+.table {
+    margin-left: 315px;
+}
+
+.messageBoardAndChatHeading {
+    margin-left: 315px;
+    margin-top: 55px;
+}
+
+.col {
+    color: #184A73;
+}
+
+.btn-newPost {
+    margin-left: 260px;
+}
+
+.topic, .user, .replies, .latestPost {
+    color: #184A73;
+}
+
+h4, h6 {
+    color: #184A73;
+}
+
+
+
