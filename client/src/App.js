@@ -8,10 +8,11 @@ import ProjectsPage from './pages/ProjectsPage';
 import ProjectAdminPage from './pages/ProjectAdminPage';
 import ProfilePage from './pages/ProfilePage';
 import MessageBoardAndChatPage from './pages/MessageBoardAndChatPage';
+import CreateProjectPage from './pages/CreateProjectPage';
+import MessageBoardPostPage from './pages/MessageBoardPostPage';
 import { Router, Route, Switch } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserHistory } from 'history';
-import CreateProjectPage from './pages/CreateProjectPage';
 
 const history = createBrowserHistory();
 
@@ -29,6 +30,7 @@ function App() {
         <Route exact path="/profile" component={ProfilePage} />
         <Route exact path="/projects" component={ProjectsPage} />
         <Route exact path="/message_board_and_chat" component={MessageBoardAndChatPage} />
+        <Route exact path="/message_board_post" component={MessageBoardPostPage} />
       </Switch>
     </Router>
   );

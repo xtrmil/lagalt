@@ -46,8 +46,19 @@
     margin-top: 15px;
 }
 
+.stretched-button-mb {
+    z-index:4;
+    position:relative;
+    width: 189px;
+}
+
 .homePageHeading {
     margin-top: 30px;
+}
+
+.matchedNotMatched {
+    margin-left: 170px;
+    color: #51AA3A;
 }
 
 .stretched-button-join {

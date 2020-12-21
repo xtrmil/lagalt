@@ -2,7 +2,7 @@ import React from 'react';
 import './MessageBoardAndChatPage.css';
 import { Button } from 'react-bootstrap';
 
-const ProjectAdminPage = (props) => {
+const MessageBoardAndChatPage = (props) => {
   const onProjectViewClick = () => {
     props.history.push('/project');
   };
@@ -11,10 +11,11 @@ const ProjectAdminPage = (props) => {
     <>
       <h1 className="messageBoardAndChatHeading">
         Message Board
-        <Button className="btn-newPost" onClick={onProjectViewClick} variant="info">
+        <Button className="btn-newPostPt1" onClick={onProjectViewClick} variant="info">
           New Post
         </Button>
       </h1>
+
       <table className="table w-50">
         <thead>
           <tr>
@@ -68,4 +69,4 @@ const ProjectAdminPage = (props) => {
   );
 };
 
-export default ProjectAdminPage;
+export default MessageBoardAndChatPage;

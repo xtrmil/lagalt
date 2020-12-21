@@ -70,7 +70,14 @@ const HomePage = (props) => {
               <img className="homepage-img" src="nedladdning.jpg"></img>
             </div>
             <div className="ml-2">
-              <h4>Project</h4>
+              <div className="row">
+                <div className="col">
+                  <h4>Project</h4>
+                </div>
+                <div className="col">
+                  <h6 className="matchedNotMatched">Matched/not matched</h6>
+                </div>
+              </div>
               <h6>
                 Project
                 description..........................................................................................................................
@@ -95,7 +102,14 @@ const HomePage = (props) => {
               <img className="homepage-img" src="nedladdning.jpg"></img>
             </div>
             <div className="ml-2">
-              <h4>Project</h4>
+              <div className="row">
+                <div className="col">
+                  <h4>Project</h4>
+                </div>
+                <div className="col">
+                  <h6 className="matchedNotMatched">Matched/not matched</h6>
+                </div>
+              </div>
               <h6>
                 Project
                 description..........................................................................................................................
