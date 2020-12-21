@@ -1,0 +1,31 @@
+.skill{
+    display: inline-block;
+    background-color: yellowgreen;
+    padding: 10px;
+    border-radius: 10px;
+    color: white;
+
+}
+
+.odd{
+    background-color: burlywood;
+}
+
+.imgplaceholder{
+    border: 1px solid black;
+    background-color: burlywood;
+    width: 100%;
+    height: 150px
+}
+
+.edit-button-wrapper{
+    position: absolute;
+    right: 0;
+}
+.input-box{
+    width: 100%;
+}
+.description-text-area{
+    width: 100%;
+    min-height: 200px;
+}
