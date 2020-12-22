@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -238,16 +240,11 @@ public class UserService {
         return user;
     }
 
-    private UserProfileView getUserProfileobject(String userId) {
-        try {
-            return getUserDocument(userId).get().get().toObject(UserProfileView.class);
-        } catch(Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    private UserProfileView getUserProfileobject(String userId) throws InterruptedException, CancellationException, ExecutionException {
+        return getUserDocument(userId).get().get().toObject(UserProfileView.class);
     }
 
-    private DocumentReference getUserDocument(String userId) {
+    public DocumentReference getUserDocument(String userId) {
         return FirestoreClient.getFirestore().collection("users").document(userId);
     }
 

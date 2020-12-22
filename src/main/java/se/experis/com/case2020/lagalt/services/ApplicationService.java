@@ -3,15 +3,12 @@ package se.experis.com.case2020.lagalt.services;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.apache.commons.lang3.EnumUtils;
@@ -49,17 +46,19 @@ public class ApplicationService {
             String projectId = projectService.getProjectId(owner, projectName);
             
             if(projectId != null) {
-                var db = FirestoreClient.getFirestore();
-                var projectCollections = db.collection("projects").document(projectId).collection("applications").listDocuments();
+                var projectCollections = projectService.getProjectDocumentReference(projectId).collection("applications").listDocuments();
                 
                 projectCollections.forEach(application -> {
                     try {
-                        DocumentSnapshot applicationDocument = db.collection("applications").document(application.getId()).get().get();
-                        var applicationAdminView = applicationDocument.toObject(ApplicationAdminView.class);
-                        UserPublicView user = userService.getUserPublicObject(applicationDocument.get("userId").toString());
+                        DocumentSnapshot applicationDocument = getApplicationDocumentReference(application.getId()).get().get();
+                        var applicationView = new ApplicationAdminView();
+                        applicationView.setApplicationId(applicationDocument.getId());
+                        applicationView.setMotivation(applicationDocument.get("motivation").toString());                      
+
+                        UserPublicView user = userService.getUserPublicObject(applicationDocument.get("user").toString());
+                        applicationView.setUser(user);
                         
-                        applicationAdminView.setUser(user);
-                        applicationSet.add(applicationAdminView);
+                        applicationSet.add(applicationView);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -97,9 +96,6 @@ public class ApplicationService {
                 if (userId != null) {
                     var db = FirestoreClient.getFirestore();
 
-                    DocumentReference userReference = db.collection("users").document(userId);
-                    DocumentReference projectReference = db.collection("projects").document(projectId);
-
                     ApplicationProfileView applicationProfileView = new ApplicationProfileView();
                     applicationProfileView.setProject(projectId);
                     applicationProfileView.setMotivation(motivation.get("motivation").asText());
@@ -109,11 +105,11 @@ public class ApplicationService {
                         var applicationRecord = db.collection("pendingApplicationRecords").document(projectId).collection("users").document(userId);
                         if(!applicationRecord.get().get().exists()) {
                             
-                            var ref = db.collection("applications").document(projectId).collection("applications").document();
                             applicationRecord.set(new HashMap<>());
-                            db.collection("applications").document(ref.getId()).set(applicationProfileView);
-                            userReference.collection("appliedTo").document(ref.getId()).set(new HashMap<>());
-                            projectReference.collection("applications").document(ref.getId()).set(new HashMap<>());
+                            var applicationDocRef = projectService.getProjectDocumentReference(projectId).collection("applications").document();
+                            applicationDocRef.set(applicationProfileView);
+                            userService.getUserDocument(userId).collection("appliedTo").document(applicationDocRef.getId()).set(new HashMap<>());
+                            projectService.getProjectDocumentReference(projectId).collection("applications").document(applicationDocRef.getId()).set(new HashMap<>());
                             
                             cr.data = "Your motivation: " + motivation.get("motivation").asText();
                             cr.message = "Application successfully submitted to project: " + projectId;
@@ -143,7 +139,7 @@ public class ApplicationService {
     }
 
 
-    public ResponseEntity<CommonResponse> answerApplication(HttpServletRequest request, String owner, String projectName, String applicationId, ObjectNode application,
+    public ResponseEntity<CommonResponse> answerApplication(HttpServletRequest request, String owner, String projectName, String applicationId, ObjectNode requestBody,
     String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
@@ -151,35 +147,40 @@ public class ApplicationService {
         String projectId = projectService.getProjectId(owner, projectName);
 
         try {
-            String message = application.get("message").asText();
-            ApplicationStatus status = ApplicationStatus.valueOf(application.get("status").asText());
+            if(EnumUtils.isValidEnum(ApplicationStatus.class, requestBody.get("status").asText())) {
+                var db = FirestoreClient.getFirestore();
+                ApplicationStatus status = ApplicationStatus.valueOf(requestBody.get("status").asText());
 
-            var db = FirestoreClient.getFirestore();
-            DocumentSnapshot applicationDocument = db.collection("applications").document(applicationId).get().get();
+                var projectApplication = projectService.getProjectDocumentReference(projectId).collection("applications").document(applicationId).get().get();
+                if (projectApplication.exists()) {
+                    DocumentSnapshot applicationDocument = getApplicationDocumentReference(applicationId).get().get();
 
-            if (applicationDocument.exists()) {
-                if (authService.isProjectAdmin(owner, projectName, Authorization)) {
-                    ApplicationProfileView updatedApplication = new ApplicationProfileView();
-                    if (EnumUtils.isValidEnum(ApplicationStatus.class, status.toString())) {
-                        updatedApplication.setStatus(status);
+                    if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+                        ApplicationProfileView updatedApplication = new ApplicationProfileView();
+                        if (EnumUtils.isValidEnum(ApplicationStatus.class, status.toString())) {
+                            updatedApplication.setStatus(status);
+                        }
+                        updatedApplication.setFeedback(requestBody.get("message").asText());
+                        updatedApplication.setMotivation(applicationDocument.get("motivation").toString());
+                        updatedApplication.setProject(projectId);
+                        String applicantId = applicationDocument.get("user").toString();
+                        updatedApplication.setUser(applicantId);
+                        
+                        getApplicationDocumentReference(applicationId).set(updatedApplication);
+                        db.collection("pendingApplicationRecords").document(projectId).collection("users").document(applicantId).delete();
+                        cr.message = "Application updated";
+                        resp = HttpStatus.OK;
+                    } else {
+                        cr.message = "Not authorized to edit application";
+                        resp = HttpStatus.UNAUTHORIZED;
                     }
-                    updatedApplication.setFeedback(message);
-                    updatedApplication.setMotivation(applicationDocument.getData().get("motivation").toString());
-                    updatedApplication.setProject(projectId);
-                    String applicantId = applicationDocument.get("user").toString();
-                    updatedApplication.setUser(applicantId);
-
-                    db.collection("applications").document(applicationId).set(updatedApplication);
-                    db.collection("pendingApplicationRecords").document(projectId).collection("users").document(applicantId).delete();
-                    cr.message = "Application with id: " + applicationId + "for project with id: " + projectId + " successfully Updated";
-                    resp = HttpStatus.OK;
                 } else {
-                    cr.message = "Not authorized to edit application with id: " + applicationId;
-                    resp = HttpStatus.UNAUTHORIZED;
+                    cr.message = "Application not found";
+                    resp = HttpStatus.NOT_FOUND;
                 }
             } else {
-                cr.message = "Application with id: " + applicationId + " not found";
-                resp = HttpStatus.NOT_FOUND;
+                cr.message = "Invalid request body";
+                resp = HttpStatus.BAD_REQUEST;
             }
         } catch(Exception e) {
             e.printStackTrace();
@@ -187,5 +188,9 @@ public class ApplicationService {
         }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
+    }
+
+    private DocumentReference getApplicationDocumentReference(String applicationId) {
+        return FirestoreClient.getFirestore().collection("applications").document(applicationId);
     }
 }

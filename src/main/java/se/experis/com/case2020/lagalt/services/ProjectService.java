@@ -468,7 +468,7 @@ public class ProjectService {
         return null;
     }
 
-    private DocumentReference getProjectDocumentReference(String projectId) {
+    public DocumentReference getProjectDocumentReference(String projectId) {
         return FirestoreClient.getFirestore().collection("projects").document(projectId);
     }
 

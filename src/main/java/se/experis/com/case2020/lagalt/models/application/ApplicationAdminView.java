@@ -3,6 +3,7 @@ package se.experis.com.case2020.lagalt.models.application;
 import org.springframework.stereotype.Component;
 
 import lombok.Data;
+import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
 import se.experis.com.case2020.lagalt.models.user.UserPublicView;
 
 @Component
