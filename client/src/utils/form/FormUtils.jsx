@@ -101,3 +101,21 @@ export const loginSchema = yup.object({
   email: yup.string().required('Email is required'),
   password: yup.string().required('Password is required'),
 });
+
+export const createPostSchema = yup.object({
+  topicHeading: yup.string().required('Topic heading is required'),
+  topicText: yup.string().required('Topic text is required'),
+});
+
+export const replyPostSchema = yup.object({
+  replyPost: yup.string().required('Text is required'),
+});
+
+export const editPostSchema = yup.object({
+  topicHeading: yup.string().required('Topic heading is required'),
+  topicText: yup.string().required('Topic text is required'),
+});
+
+export const deletePostSchema = yup.object({
+  deletePost: yup.string().required('Text is required'),
+});
