@@ -8,6 +8,7 @@ import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
 @Data
 public class ApplicationProfileView {
 
+    private String user;
     private String project;
     private String motivation;
     private String feedback;

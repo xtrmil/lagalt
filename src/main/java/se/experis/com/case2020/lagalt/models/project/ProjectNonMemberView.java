@@ -10,6 +10,8 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.annotation.Exclude;
 
 import org.springframework.stereotype.Component;
+import se.experis.com.case2020.lagalt.models.enums.ProjectStatus;
+import se.experis.com.case2020.lagalt.models.enums.Industry;
 
 import lombok.Data;
 
@@ -21,12 +23,13 @@ public class ProjectNonMemberView {
     private String description;
     private String owner;
     private String createdAt;
+    private ProjectStatus status = ProjectStatus.FOUNDING;
 
     @JsonProperty(access = Access.WRITE_ONLY)
-    private String industryKey;
+    private Industry industryKey;
 
     @Exclude
-    private Map<String, String> industry;
+    private Map<Industry, String> industry;
 
     @Exclude
     private Map<String, String> images;

@@ -153,16 +153,16 @@ public class UserService {
                 if (partialUser.getDescription() != null) {
                     user.setDescription(partialUser.getDescription());
                 }
-                if (partialUser.getHidden() == null) {
+                if (partialUser.getHidden() != null) {
                     user.setHidden(partialUser.getHidden());
                 }
-                if (partialUser.getImageURL() == null) {
+                if (partialUser.getImageURL() != null) {
                     user.setImageURL(partialUser.getImageURL());
                 }
-                if (partialUser.getPortfolio() == null) {
+                if (partialUser.getPortfolio() != null) {
                     user.setPortfolio(partialUser.getPortfolio());
                 }
-                if (partialUser.getName() == null) {
+                if (partialUser.getName() != null) {
                     user.setName(partialUser.getName());
                 }
                 if (partialUser.getTags() != null) {
