@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Container } from 'react-bootstrap';
 import ProfileComponent from '../components/profile/ProfileComponent';
 import { getUserByUserId } from '../utils/api/user';
+import * as Auth from '../utils/Auth';
+
 const ProfilePage = (props) => {
-  const loggedInUserId = 'Bumpfel';
+  const [loggedInUser, setLoggedInUser] = useState();
+  const [mockLoggedInUser, setMockLoggedInUser] = useState('');
   const [tempUser, setTempUser] = useState();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,12 +17,22 @@ const ProfilePage = (props) => {
     setIsLoading(false);
   };
   useEffect(() => {
-    getUserProfile();
+    Auth.loggedInUser().subscribe((user) => {
+      setMockLoggedInUser(user.username);
+      setLoggedInUser('Bumpfel');
+      getUserProfile(user.username);
+    });
   }, []);
 
   return (
     <Container className="justify-content-center">
-      {!isLoading && <ProfileComponent user={tempUser} loggedInUserId={loggedInUserId} />}
+      {!isLoading && (
+        <ProfileComponent
+          user={tempUser}
+          loggedInUserId={loggedInUser}
+          mockLoggedInUser={mockLoggedInUser}
+        />
+      )}
     </Container>
   );
 };

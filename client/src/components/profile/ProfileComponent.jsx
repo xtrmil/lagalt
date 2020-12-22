@@ -4,7 +4,7 @@ import './ProfileComponent.css';
 import { Button } from 'react-bootstrap';
 import ProfileModal from './ProfileModal';
 const ProfileComponent = (props) => {
-  const { loggedInUserId } = props;
+  const { loggedInUserId, mockLoggedInUser } = props;
   const [user, setUser] = useState(props.user);
   const profileOwner = loggedInUserId === user.username ? true : false;
   const skillsList =
@@ -46,6 +46,7 @@ const ProfileComponent = (props) => {
         handleCloseModal={handleCloseModal}
         handleSaveChanges={handleSaveChanges}
         user={user}
+        loggedInUserId={mockLoggedInUser}
       ></ProfileModal>
 
       <div className="card">
@@ -55,10 +56,17 @@ const ProfileComponent = (props) => {
               <div className="imgplaceholder mb-2">IMAGE</div>
               <h3 className="mb-1 text-center">Skills</h3>
               <div className="mb-2 text-center">{skillsList}</div>
-
               <h3 className="mb-1 text-center">Portfolio</h3>
               <div className="text-center">
                 {user.portfolio ? user.portfolio : 'No portfolio available'}
+              </div>
+              <h3 className="mb-1 text-center">Working on</h3>
+              <div className="text-center">
+                {user.memberOf
+                  ? user.memberOf.map((project, index) => {
+                      return <div key={index}>{project}</div>;
+                    })
+                  : 'Not working on anything'}
               </div>
             </div>
             <div className="col-sm-8 pl-0">

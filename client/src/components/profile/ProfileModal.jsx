@@ -6,26 +6,14 @@ import SelectInput from '../form/SelectInput';
 import MultiSelectInput from '../form/MultiSelectInput';
 import { editProfileSchema } from '../../utils/form/FormUtils';
 import { getAllTags } from '../../utils/api/industry';
+import { editUserProfile } from '../../utils/api/user';
+import { mapOptions } from '../../utils/MapOptions';
+
 const ProfileModal = (props) => {
-  const { showModal, handleCloseModal, handleSaveChanges, user } = props;
+  const { showModal, handleCloseModal, handleSaveChanges, user, loggedInUserId } = props;
   const [tagOptions, setTagOptions] = useState();
-  const mapOptions = (array, data) => {
-    for (const [key, value] of Object.entries(data)) {
-      const option = { value: key, label: value };
-      array.push(option);
-    }
-    return array;
-  };
+
   const currentTags = mapOptions([], user.tags);
-  const fetchTags = useCallback(async () => {
-    await getAllTags().then((response) => {
-      const temp = mapOptions([], response.data);
-      setTagOptions(temp);
-    });
-  }, []);
-  useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
 
   const initialValues = {
     name: user.name,
@@ -41,6 +29,18 @@ const ProfileModal = (props) => {
     { value: true, label: 'Hidden' },
     { value: false, label: 'Public' },
   ];
+
+  const fetchTags = useCallback(async () => {
+    await getAllTags().then((response) => {
+      const temp = mapOptions([], response.data);
+      setTagOptions(temp);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
   const onFormSubmit = (values) => {
     const { tags } = values;
     const updatedUser = {
@@ -49,7 +49,7 @@ const ProfileModal = (props) => {
       hidden: values.hidden.label ? values.hidden.value : values.hidden,
       tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
     };
-    console.log(updatedUser);
+    editUserProfile(updatedUser, loggedInUserId);
     handleSaveChanges(updatedUser);
   };
 

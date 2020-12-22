@@ -8,3 +8,12 @@ export async function getUserByUserId(userId) {
     });
   return fetchData;
 }
+
+export async function editUserProfile(profile, userId) {
+  const sendData = await baseUrl
+    .put('/profile', profile, { headers: { Authorization: userId } })
+    .then((response) => {
+      return response.data;
+    });
+  return sendData;
+}
