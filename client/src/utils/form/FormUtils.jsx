@@ -61,7 +61,7 @@ export const editProjectSchema = yup.object({
 
 export const editProfileSchema = yup.object({
   name: yup.string().required('Name is a required field'),
-  skills: yup
+  tags: yup
     .array()
     .of(
       yup.object().shape({
@@ -71,7 +71,7 @@ export const editProfileSchema = yup.object({
     )
     .nullable()
     .required('Select at least one skill'),
-  description: yup.string().required('Description is a required field'),
+  description: yup.string().nullable().required('Description is a required field'),
 });
 
 export const updateProjectSchema = yup.object({

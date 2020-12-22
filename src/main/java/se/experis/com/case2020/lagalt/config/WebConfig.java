@@ -9,6 +9,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedMethods("*").allowedOrigins("https://lagalt-2020.herokuapp.com");
+        registry.addMapping("/**").allowedMethods("*").allowedOrigins("http://localhost:3000");
     }
 }

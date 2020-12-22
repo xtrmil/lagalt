@@ -22,6 +22,7 @@ const ProjectViewMainSection = (props) => {
     ) : (
       <div>No members</div>
     );
+  const onMessageBoardAndChatPageClick = () => {};
 
   const tagsList = tagsArray.map((tag, index) => {
     return (
