@@ -452,12 +452,12 @@ public class ProjectService {
         return (owner + "-" + projectName).toLowerCase();
     }
 
-    private DocumentReference getProjectDocumentReference(String owner, String projectName) {
+    public DocumentReference getProjectDocumentReference(String owner, String projectName) {
         try {
             var db = FirestoreClient.getFirestore();
             var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get().get();
             if (projectRecord.exists()) {
-                var projectId = (String) projectRecord.get("pid");
+                var projectId = projectRecord.getString("pid");
                 return getProjectDocumentReference(projectId);
             }
         } catch (Exception e) {
@@ -472,10 +472,7 @@ public class ProjectService {
 
     public String getProjectId(String owner, String projectName) {
         var docRef = getProjectDocumentReference(owner, projectName);
-        if(docRef != null) {
-            return docRef.getId();
-        }
-        return null;
+        return docRef.getId();
     }
 
     private Set<String> getLowerCaseSet(Set<String> set) {

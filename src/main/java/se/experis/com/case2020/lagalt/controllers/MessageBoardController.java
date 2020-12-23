@@ -11,27 +11,39 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping(value = "/api/v1/projects/{owner}/{projectName}/messageboard", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/projects/{projectOwner}/{projectName}/messageboard", produces = MediaType.APPLICATION_JSON_VALUE)
 public class MessageBoardController {
 
     @Autowired
-    MessageBoardService messageBoardService;
+    private MessageBoardService messageBoardService;
     
+    @GetMapping("")
+    public ResponseEntity<CommonResponse> getAllThreads(HttpServletRequest request, @PathVariable String projectOwner, @PathVariable String projectName,
+    @RequestHeader String Authorization) {
+        return messageBoardService.getAllThreads(request, projectOwner, projectName, Authorization);
+    }
+
     @PostMapping("")
-    ResponseEntity<CommonResponse> createThread(HttpServletRequest request, HttpServletResponse response, @PathVariable String owner, @PathVariable String projectName,
+    public ResponseEntity<CommonResponse> createThread(HttpServletRequest request, HttpServletResponse response, @PathVariable String projectOwner, @PathVariable String projectName,
     @RequestBody ObjectNode thread, @RequestHeader String Authorization) {
-        return messageBoardService.createThread(request, response, owner, projectName, thread, Authorization);
+        return messageBoardService.createThread(request, response, projectOwner, projectName, thread, Authorization);
     }
     
     @PostMapping("/{threadId}")
-    ResponseEntity<CommonResponse> createPost(HttpServletRequest request, HttpServletResponse response, @PathVariable String owner, @PathVariable String projectName, 
+    public ResponseEntity<CommonResponse> createPost(HttpServletRequest request, HttpServletResponse response, @PathVariable String projectOwner, @PathVariable String projectName, 
     @PathVariable String threadId, @RequestBody ObjectNode post, @RequestHeader String Authorization) {
-        return messageBoardService.createPost(request, response, owner, projectName, threadId, post, Authorization);
+        return messageBoardService.createPost(request, response, projectOwner, projectName, threadId, post, Authorization);
+    }
+
+    @GetMapping("/{threadId}")
+    public ResponseEntity<CommonResponse> getPosts(HttpServletRequest request, @PathVariable String projectOwner, @PathVariable String projectName, 
+    @PathVariable String threadId, @RequestHeader String Authorization){
+        return messageBoardService.getPosts(request, projectOwner, projectName, threadId, Authorization);
     }
 
     @DeleteMapping("/{threadId}/{messageId}")
-    ResponseEntity<CommonResponse> deletePost(HttpServletRequest request, HttpServletResponse response,@PathVariable String owner, @PathVariable String projectName, 
+    public ResponseEntity<CommonResponse> deletePost(HttpServletRequest request, @PathVariable String projectOwner, @PathVariable String projectName, 
     @PathVariable String threadId, @PathVariable String messageId, @RequestHeader String Authorization) {
-        return messageBoardService.deletePost(request, response, owner, projectName, threadId, messageId, Authorization);
+        return messageBoardService.deletePost(request, projectOwner, projectName, threadId, messageId, Authorization);
     }
 }
