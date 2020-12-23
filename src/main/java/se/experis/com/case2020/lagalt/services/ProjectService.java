@@ -18,7 +18,6 @@ import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -30,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Industry;
+import se.experis.com.case2020.lagalt.models.enums.ProjectStatus;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.exceptions.InvalidProjectException;
 import se.experis.com.case2020.lagalt.models.project.ProjectMemberView;
@@ -127,7 +127,6 @@ public class ProjectService {
             var db = FirestoreClient.getFirestore();
 
             var projects = db.collection("projects").listDocuments();
-            var count = db.collection("projects").get().get().getDocuments();
             var formattedProjects = getFormattedProjects(projects);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
@@ -152,7 +151,7 @@ public class ProjectService {
 
                 summarizedProject.setOwner(authService.getUsername(summarizedProject.getOwner()));
 
-                String industryKey = projectDocument.get("industryKey").toString();
+                String industryKey = projectDocument.getString("industryKey");
                 summarizedProject.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));               
 
                 var tags = p.collection("tags").get().get().getDocuments();
@@ -162,9 +161,7 @@ public class ProjectService {
                 });
 
                 summarizedProject.setTags(tagsMap);
-
-                Timestamp createdAtForDb = (Timestamp) projectDocument.get("createdAtForDb");
-                summarizedProject.setCreatedAt(createdAtForDb.toString());
+                summarizedProject.setCreatedAt(projectDocument.getCreateTime());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -175,19 +172,18 @@ public class ProjectService {
         return allProjects;
     }
 
-    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, String owner,
-            String projectName, String Authorization) {
+    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, String owner, String projectName, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         try {
             DocumentReference projectReference = getProjectDocumentReference(owner, projectName);
-            CollectionReference links = projectReference.collection("links");
-            CollectionReference tags = projectReference.collection("tags");
-            DocumentSnapshot projectDocument = projectReference.get().get();
-
-            if (projectDocument.exists()) {
+            
+            if(projectReference != null) {
+                CollectionReference links = projectReference.collection("links");
+                CollectionReference tags = projectReference.collection("tags");
+                DocumentSnapshot projectDocument = projectReference.get().get();
 
                 Map<String, Set<String>> projectInfo = new HashMap<>();
                 projectReference.listCollections().forEach(projectCollection -> {
@@ -208,7 +204,7 @@ public class ProjectService {
                     links.listDocuments().forEach(link -> {
                         try {
                             DocumentSnapshot linkSnapShot = link.get().get();
-                            linksMap.put(linkSnapShot.get("name").toString(), linkSnapShot.get("url").toString());
+                            linksMap.put(linkSnapShot.getString("name"), linkSnapShot.getString("url"));
 
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -221,22 +217,23 @@ public class ProjectService {
                         tagsMap.put(tag.getId(), Tag.valueOf(tag.getId().toString()).DISPLAY_TAG);
                     });
                     project.setTags(tagsMap);
-                    String industryKey = project.getIndustryKey();
-                    project.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));
+                    Industry industryKey = project.getIndustryKey();
+                    project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
 
-                    project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName);
+                    project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName, projectDocument.getCreateTime());
                     project.setLinks(linksMap);
                     project.setMessageBoards(projectInfo.get("messageBoards"));
-                    cr.data = project;
-                } else {
 
+                    cr.data = project;
+                    
+                } else {
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
                     project.setOwner(authService.getUsername(project.getOwner()));
-                    project = addDataToResponseProject(project, projectInfo, projectName);
+                    project = addDataToResponseProject(project, projectInfo, projectName, projectDocument.getCreateTime());
+
                     cr.data = project;
                 }
                 resp = HttpStatus.OK;
-
             } else {
                 resp = HttpStatus.NOT_FOUND;
                 cr.message = "Project not found";
@@ -267,13 +264,10 @@ public class ProjectService {
 
                 var recordsRef = db.collection("projectRecords").document(projectId);
                 if (!recordsRef.get().get().exists()) {
-                    
-                    try {
-                        var industryKey = validateIndustry(project.getIndustry().keySet().iterator().next());
-                        project.setIndustryKey(industryKey);
-                    } catch(NullPointerException e) {
-                        throw new InvalidProjectException("Industry is not set");
-                    }
+      
+                    String industryKey = project.getIndustry().keySet().iterator().next().toString();
+                    project.setIndustryKey(Industry.valueOf(industryKey));
+
 
                     var docRef = db.collection("projects").document();
 
@@ -285,7 +279,7 @@ public class ProjectService {
                     docRef.set(project);
 
                     recordsRef.set(Map.of("pid", docRef.getId()));
-                    cr.message = "Project with id " + projectId + " Created at " + project.getCreatedAtForDb().toDate();
+                    cr.message = "Project with id " + projectId + " Created at " + Timestamp.now();
                     resp = HttpStatus.CREATED;
                     return new ResponseEntity<>(cr, resp);
                 } else {
@@ -296,9 +290,6 @@ public class ProjectService {
                 cr.message = "Cannot create project. You are not logged in";
                 resp = HttpStatus.UNAUTHORIZED;
             }
-        } catch (InvalidProjectException e) {
-            cr.message = "Project is invalid. " + e.getMessage();
-            resp = HttpStatus.BAD_REQUEST;
         } catch (Exception e) {
             cr.message = "Server error";
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -308,8 +299,7 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, String owner,
-            String projectName, ProjectMemberView project, String Authorization) {
+    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, String owner, String projectName, ProjectMemberView partialProject, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -320,24 +310,18 @@ public class ProjectService {
             var projectRecord = db.collection("projectRecords").document(projectNameId).get().get();
 
             if (projectRecord.exists()) {
-                String pid = projectRecord.get("pid").toString();
 
+                String pid = projectRecord.getString("pid");
+                
                 if (authService.isProjectAdmin(owner, projectName, Authorization)) {
                     var projectRef = getProjectDocumentReference(pid);
-
-                    String industryKey;
-                    try {
-                        industryKey = validateIndustry(project.getIndustry().keySet().iterator().next());
-                    } catch(InvalidProjectException | NullPointerException e) {
-                        industryKey = projectRef.get().get().get("industryKey").toString();
-                    }
-                    project.setIndustryKey(industryKey);
+                    var dbProject = projectRef.get().get().toObject(ProjectMemberView.class);
 
                     // checks for valid new admins and members from the json and turns it into a set
                     // of user ids
-                    project.setOwner(owner);
                     String editor = authService.getUsernameFromToken(Authorization);
-                    var newMemberIds = getNewMemberIds(project, pid, editor);
+                    partialProject.setOwner(owner);
+                    var newMemberIds = getNewMemberIds(partialProject, pid, editor);
 
                     // updates the memberOf collections in users to match the updated project's
                     // admins and members
@@ -352,46 +336,51 @@ public class ProjectService {
 
                     var projectCollections = new HashMap<String, Set<String>>();
                     projectCollections.put("members", newMemberIds);
-                    if(project.getTags() != null) {
-                        projectCollections.put("tags", project.getTags().keySet());
+                    if(partialProject.getTags() != null) {
+                        projectCollections.put("tags", partialProject.getTags().keySet());
                     }
 
                     addCollectionsToProjectDocument(pid, projectCollections);
 
-                    project.setOwner(authService.getUserId(owner));
-                    project.setTitle(projectName);
+                    if(partialProject.getDescription() != null) {
+                        dbProject.setDescription(partialProject.getDescription());
+                    }
+                    if(partialProject.getIndustry() != null) {
+                        String industryKey = partialProject.getIndustry().keySet().iterator().next().toString();
+                        dbProject.setIndustryKey(Industry.valueOf(industryKey));
+                    }
+                    if(partialProject.getStatus() != null) {
+                        dbProject.setStatus(partialProject.getStatus());
+                    }
+                    if(partialProject.getLinks() != null) {
+                        dbProject.setLinks(partialProject.getLinks());
+                    }
+                    if(partialProject.getImages() != null) {
+                        dbProject.setImages(partialProject.getImages());
+                    }
 
-                    // setting all Sets from request to null before writing object to database (these are stored as collections)
-                    project.setIndustry(null);
-                    project.setAdmins(null);
-                    project.setMembers(null);
-                    project.setTags(null);
-
-                    ApiFuture<WriteResult> collectionApiFuture = projectRef.set(project);
-
-                    cr.data = collectionApiFuture.get().getUpdateTime().toString();
+                    projectRef.set(dbProject);
                     cr.message = "Project data successfully updated for project: " + projectNameId;
                     resp = HttpStatus.OK;
 
                 } else {
-                    resp = HttpStatus.UNAUTHORIZED;
                     cr.message = "You are not authorized to edit project with id: " + projectNameId;
+                    resp = HttpStatus.UNAUTHORIZED;
                 }
             } else {
-                resp = HttpStatus.NOT_FOUND;
                 cr.message = "Project not found";
+                resp = HttpStatus.NOT_FOUND;
             }
         } catch (Exception e) {
-            resp = HttpStatus.INTERNAL_SERVER_ERROR;
             cr.message = "Server error";
             e.printStackTrace();
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
 
-    private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project,
-            Map<String, Set<String>> projectInfo, String projectId) {
+    private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project, Map<String, Set<String>> projectInfo, String projectId, Timestamp createdAt) {
         var admins = projectInfo.get("admins");
         if (admins != null) {
             Set<String> adminNames = new HashSet<>();
@@ -409,8 +398,8 @@ public class ProjectService {
             });
             project.setMembers(memberNames);
         }
+        project.setCreatedAt(createdAt);
 
-        project.setCreatedAt(project.getCreatedAtForDb().toString());
         return project;
     }
 
@@ -454,15 +443,6 @@ public class ProjectService {
         });
     }
 
-    public String validateIndustry(String industry) throws InvalidProjectException{
-        if (industry != null) {
-            if (EnumUtils.isValidEnum(Industry.class, industry)) {
-                return industry;
-            }
-        }
-        throw new InvalidProjectException("Industry is invalid.");
-    }
-
     public String getProjectId(ProjectNonMemberView project) {
         return (authService.getUsername(project.getOwner()) + "-" + project.getTitle().replaceAll(" ", "-"))
                 .toLowerCase();
@@ -475,20 +455,27 @@ public class ProjectService {
     private DocumentReference getProjectDocumentReference(String owner, String projectName) {
         try {
             var db = FirestoreClient.getFirestore();
-            var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get()
-                    .get();
+            var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get().get();
             if (projectRecord.exists()) {
                 var projectId = (String) projectRecord.get("pid");
                 return getProjectDocumentReference(projectId);
             }
         } catch (Exception e) {
-            System.err.println("getProjectFromName:" + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
 
-    private DocumentReference getProjectDocumentReference(String projectId) {
+    public DocumentReference getProjectDocumentReference(String projectId) {
         return FirestoreClient.getFirestore().collection("projects").document(projectId);
+    }
+
+    public String getProjectId(String owner, String projectName) {
+        var docRef = getProjectDocumentReference(owner, projectName);
+        if(docRef != null) {
+            return docRef.getId();
+        }
+        return null;
     }
 
     private Set<String> getLowerCaseSet(Set<String> set) {
@@ -542,7 +529,7 @@ public class ProjectService {
     public String getProjectTitle(String projectId) {
         try {
             var db = FirestoreClient.getFirestore();
-            return db.collection("projects").document(projectId).get().get().get("title").toString();
+            return db.collection("projects").document(projectId).get().get().getString("title");
         } catch(Exception e) {
             return null;
         }

@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -153,16 +155,16 @@ public class UserService {
                 if (partialUser.getDescription() != null) {
                     user.setDescription(partialUser.getDescription());
                 }
-                if (partialUser.getHidden() == null) {
+                if (partialUser.getHidden() != null) {
                     user.setHidden(partialUser.getHidden());
                 }
-                if (partialUser.getImageURL() == null) {
+                if (partialUser.getImageURL() != null) {
                     user.setImageURL(partialUser.getImageURL());
                 }
-                if (partialUser.getPortfolio() == null) {
+                if (partialUser.getPortfolio() != null) {
                     user.setPortfolio(partialUser.getPortfolio());
                 }
-                if (partialUser.getName() == null) {
+                if (partialUser.getName() != null) {
                     user.setName(partialUser.getName());
                 }
                 if (partialUser.getTags() != null) {
@@ -238,16 +240,11 @@ public class UserService {
         return user;
     }
 
-    private UserProfileView getUserProfileobject(String userId) {
-        try {
-            return getUserDocument(userId).get().get().toObject(UserProfileView.class);
-        } catch(Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    private UserProfileView getUserProfileobject(String userId) throws InterruptedException, CancellationException, ExecutionException {
+        return getUserDocument(userId).get().get().toObject(UserProfileView.class);
     }
 
-    private DocumentReference getUserDocument(String userId) {
+    public DocumentReference getUserDocument(String userId) {
         return FirestoreClient.getFirestore().collection("users").document(userId);
     }
 
