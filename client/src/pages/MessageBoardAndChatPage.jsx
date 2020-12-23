@@ -1,17 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './MessageBoardAndChatPage.css';
 import { Button } from 'react-bootstrap';
+import CreatePostModal from './CreatePostModal';
 
 const MessageBoardAndChatPage = (props) => {
-  const onProjectViewClick = () => {
-    props.history.push('/project');
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+
+  const onCreatePostClick = () => {
+    setShowCreatePostModal(true);
+  };
+
+  const hideCreatePostModal = () => {
+    setShowCreatePostModal(false);
+  };
+
+  const onMessageBoardPostClick = () => {
+    props.history.push('/message_board_post');
   };
 
   return (
     <>
+      <CreatePostModal
+        showCreatePostModal={showCreatePostModal}
+        hideCreatePostModal={hideCreatePostModal}
+      />
+
       <h1 className="messageBoardAndChatHeading">
         Message Board
-        <Button className="btn-newPostPt1" onClick={onProjectViewClick} variant="info">
+        <Button className="btn-newPostPt1" onClick={onCreatePostClick} variant="info">
           New Post
         </Button>
       </h1>
@@ -35,28 +51,44 @@ const MessageBoardAndChatPage = (props) => {
         </thead>
         <tbody>
           <tr>
-            <td className="topic">Topic text here</td>
+            <td className="topic" onClick={onMessageBoardPostClick}>
+              Topic text here
+            </td>
             <td className="user">username</td>
             <td className="replies">11</td>
-            <td className="latestPost">username (2020-12-09)</td>
+            <td className="latestPost" onClick={onMessageBoardPostClick}>
+              username (2020-12-09)
+            </td>
           </tr>
           <tr>
-            <td className="topic">Topic text here</td>
+            <td className="topic" onClick={onMessageBoardPostClick}>
+              Topic text here
+            </td>
             <td className="user">username</td>
             <td className="replies">6</td>
-            <td className="latestPost">username (2020-11-30)</td>
+            <td className="latestPost" onClick={onMessageBoardPostClick}>
+              username (2020-11-30)
+            </td>
           </tr>
           <tr>
-            <td className="topic">Topic text here</td>
+            <td className="topic" onClick={onMessageBoardPostClick}>
+              Topic text here
+            </td>
             <td className="user">username</td>
             <td className="replies">3</td>
-            <td className="latestPost">username (2020-11-29)</td>
+            <td className="latestPost" onClick={onMessageBoardPostClick}>
+              username (2020-11-29)
+            </td>
           </tr>
           <tr>
-            <td className="topic">Topic text here</td>
+            <td className="topic" onClick={onMessageBoardPostClick}>
+              Topic text here
+            </td>
             <td className="user">username</td>
             <td className="replies">4</td>
-            <td className="latestPost">username (2020-11-23)</td>
+            <td className="latestPost" onClick={onMessageBoardPostClick}>
+              username (2020-11-23)
+            </td>
           </tr>
         </tbody>
       </table>
