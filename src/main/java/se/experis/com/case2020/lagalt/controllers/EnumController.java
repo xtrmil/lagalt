@@ -39,15 +39,15 @@ public class EnumController {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
-        response.addHeader("Location", "/available/"+enumType);
+        response.addHeader("Location", "/available/" + enumType);
 
         try {
             if(!industry.isPresent()) {
                 cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
                 .collect(Collectors.toMap(e -> e.toString(), e -> e.getLabel()));
-            }else{
+            } else {
                 cr.data = Stream.of((Tag[]) enumMap.get(enumType.toLowerCase()))
-                .filter(tag -> tag.INDUSTRY.equals(industry.get()))
+                .filter(tag -> tag.INDUSTRY.equalsIgnoreCase(industry.get()))
                 .collect(Collectors.toMap(e -> e.name(), e -> e.getLabel()));
             }
             resp = HttpStatus.OK;
