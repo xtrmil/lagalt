@@ -6,7 +6,7 @@ import ProjectSettingsModal from '../project/ProjectSettingsModal';
 import JoinProjectModal from './JoinProjectModal';
 import { createApplication } from '../../utils/api/application';
 const ProjectViewComponent = (props) => {
-  const { project, setProject, isAdmin, loggedIn, memberOf } = props;
+  const { project, setProject, isAdmin, loggedIn, memberOf, loggedInUser } = props;
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showProjectSettingsModal, setShowProjectSettingsModal] = useState(false);
   const user = { username: 'eric' };
@@ -25,9 +25,6 @@ const ProjectViewComponent = (props) => {
   };
   const handleJoinProject = (motivation) => {
     const projectId = `${project.owner}-${project.title}`;
-    console.log(projectId);
-    console.log(user.username);
-    console.log(motivation);
     createApplication(projectId, motivation, user.username).then((response) => {
       console.log(response);
     });

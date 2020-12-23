@@ -21,7 +21,13 @@ const ProjectViewPage = (props) => {
       });
     };
     Auth.loggedInUser().subscribe((user) => {
+      //Eftersom att backend alltid kommer returna Bumpfel så kan vi skicka in det här just nu
       fetchUser(user.username);
+
+      //När vi har fixat att man kan logga in så ska det här användas istället
+      // if (user.username) {
+      //   fetchUser(user.username);
+      // }
     });
   }, []);
 
@@ -53,6 +59,7 @@ const ProjectViewPage = (props) => {
           isAdmin={isAdmin}
           loggedIn={loggedIn}
           memberOf={memberOf}
+          loggedInUser={loggedInUser}
         ></ProjectViewComponent>
       )}
     </Container>
