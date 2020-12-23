@@ -43,16 +43,30 @@ public class MockAuthService extends AuthService {
 
         try {
             var db = FirestoreClient.getFirestore();
-            boolean isAdmin = super.isProjectAdmin(owner, projectName, invalidToken);
-            boolean isMember = super.isProjectMember(owner, projectName, invalidToken);
+            boolean isAdmin = isPartOfProjectCollection(owner, projectName, "members");
+            boolean isMember = isPartOfProjectCollection(owner, projectName, "admins");
             String projectId = projectService.getProjectId(owner, projectName);
             
-            var ownerId = db.collection("projects").document(projectId).get().get().get("owner").toString();
+            var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
             return ownerId == userId || isAdmin || isMember;
         } catch(Exception e) {
             e.printStackTrace();
         }
 
+        return false;
+    }
+
+    private boolean isPartOfProjectCollection(String owner, String projectName, String collection) {
+        String userId = getUserIdFromToken(null);
+
+        try {
+            var db = FirestoreClient.getFirestore();
+            String projectId = projectService.getProjectId(owner, projectName);
+            var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get().get();
+            return ref.exists();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return false;
     }
 }

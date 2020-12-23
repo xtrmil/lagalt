@@ -71,7 +71,7 @@ public class AuthService {
                 boolean isMember = isProjectMember(owner, projectName, jwtToken);
                 String projectId = projectService.getProjectId(owner, projectName);
                 
-                var ownerId = db.collection("projects").document(projectId).get().get().get("owner").toString();
+                var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
                 return ownerId == userId || isAdmin || isMember;
             } catch(Exception e) {
                 e.printStackTrace();
@@ -86,7 +86,7 @@ public class AuthService {
         if (userId != null) {
             try {
                 var db = FirestoreClient.getFirestore();
-                String projectId = projectService.getProjectNameId(owner, projectName);
+                String projectId = projectService.getProjectId(owner, projectName);
                 var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get().get();
                 return ref.exists();
             } catch (Exception e) {
@@ -113,7 +113,7 @@ public class AuthService {
             var db = FirestoreClient.getFirestore();
             var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
             if (userRecord.exists()) {
-                return userRecord.get("uid").toString();
+                return userRecord.getString("uid");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -128,7 +128,7 @@ public class AuthService {
             var user = db.collection("users").document(fbToken.getUid()).get().get();
 
             if (user.exists()) {
-                return user.get("username").toString().toLowerCase();
+                return user.getString("username").toLowerCase();
             }
         } catch (IllegalArgumentException | FirebaseAuthException e) {
             System.err.println("getUsername: " + e.getMessage());
@@ -143,7 +143,7 @@ public class AuthService {
             var db = FirestoreClient.getFirestore();
             var user = db.collection("users").document(userId).get().get();
             if(user.exists()) {
-                return user.get("username").toString().toLowerCase();
+                return user.getString("username").toLowerCase();
             }
         } catch(Exception e) {
             e.printStackTrace();

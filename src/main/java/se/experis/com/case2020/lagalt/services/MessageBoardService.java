@@ -93,11 +93,11 @@ public class MessageBoardService {
                     ApiFuture<DocumentSnapshot> messageFuture = nextMessageId.get();
                     DocumentSnapshot messageSnapshot = messageFuture.get();
                     
-                    ApiFuture<WriteResult> collectionApiFuture = threadReference.document(messageSnapshot.get("nextId").toString()).set(createPost(post.get("text").asText()));
+                    ApiFuture<WriteResult> collectionApiFuture = threadReference.document(messageSnapshot.getString("nextId")).set(createPost(post.get("text").asText()));
                     cr.data = collectionApiFuture.get().getUpdateTime().toString();
                     Long next = (Long) messageSnapshot.get("nextId");
                     resp = HttpStatus.OK;
-                    response.addHeader("Location", "/"+projectId + "/messageBoard/"+ post.get("title").asText()+"/" + messageSnapshot.get("nextId"));
+                    response.addHeader("Location", "/"+projectId + "/messageBoard/"+ post.get("title").asText()+"/" + messageSnapshot.getString("nextId"));
                     nextMessageId.update("nextId", (next + 1));
                 } else {
                     resp = HttpStatus.UNAUTHORIZED;
@@ -154,8 +154,6 @@ public class MessageBoardService {
     public MessageBoardPost createPost(String text) {
         MessageBoardPost post = new MessageBoardPost();
         post.setText(text);
-        post.setCreatedAt(Timestamp.now());
-        post.setEditedAt(Timestamp.now());
         return post;
     }
 }

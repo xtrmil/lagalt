@@ -5,6 +5,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import org.springframework.stereotype.Component;
+import com.google.cloud.Timestamp;
 
 import lombok.Data;
 
@@ -20,6 +21,6 @@ public class ProjectSummarizedView {
     private Map<String, String> industry;
     private Map<String, String> tags;
     private Map<String,String> images;
-    private String createdAt;
+    private Timestamp createdAt;
     private int memberCount;
 }

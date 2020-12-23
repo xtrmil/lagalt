@@ -9,7 +9,5 @@ import org.springframework.stereotype.Component;
 public class MessageBoardPost {
     private String text;
     private String userId;
-    private Timestamp createdAt;
-    private Timestamp editedAt;
-    private boolean deleted = false;
+    private Timestamp createdAt = Timestamp.now();
 }

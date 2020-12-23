@@ -127,7 +127,6 @@ public class ProjectService {
             var db = FirestoreClient.getFirestore();
 
             var projects = db.collection("projects").listDocuments();
-            var count = db.collection("projects").get().get().getDocuments();
             var formattedProjects = getFormattedProjects(projects);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
@@ -152,7 +151,7 @@ public class ProjectService {
 
                 summarizedProject.setOwner(authService.getUsername(summarizedProject.getOwner()));
 
-                String industryKey = projectDocument.get("industryKey").toString();
+                String industryKey = projectDocument.getString("industryKey");
                 summarizedProject.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));               
 
                 var tags = p.collection("tags").get().get().getDocuments();
@@ -162,9 +161,7 @@ public class ProjectService {
                 });
 
                 summarizedProject.setTags(tagsMap);
-
-                Timestamp createdAtForDb = (Timestamp) projectDocument.get("createdAtForDb");
-                summarizedProject.setCreatedAt(createdAtForDb.toString());
+                summarizedProject.setCreatedAt(projectDocument.getCreateTime());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -207,7 +204,7 @@ public class ProjectService {
                     links.listDocuments().forEach(link -> {
                         try {
                             DocumentSnapshot linkSnapShot = link.get().get();
-                            linksMap.put(linkSnapShot.get("name").toString(), linkSnapShot.get("url").toString());
+                            linksMap.put(linkSnapShot.getString("name"), linkSnapShot.getString("url"));
 
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -223,15 +220,17 @@ public class ProjectService {
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
 
-                    project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName);
+                    project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName, projectDocument.getCreateTime());
                     project.setLinks(linksMap);
                     project.setMessageBoards(projectInfo.get("messageBoards"));
+
                     cr.data = project;
                     
                 } else {
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
                     project.setOwner(authService.getUsername(project.getOwner()));
-                    project = addDataToResponseProject(project, projectInfo, projectName);
+                    project = addDataToResponseProject(project, projectInfo, projectName, projectDocument.getCreateTime());
+
                     cr.data = project;
                 }
                 resp = HttpStatus.OK;
@@ -280,7 +279,7 @@ public class ProjectService {
                     docRef.set(project);
 
                     recordsRef.set(Map.of("pid", docRef.getId()));
-                    cr.message = "Project with id " + projectId + " Created at " + project.getCreatedAtForDb().toDate();
+                    cr.message = "Project with id " + projectId + " Created at " + Timestamp.now();
                     resp = HttpStatus.CREATED;
                     return new ResponseEntity<>(cr, resp);
                 } else {
@@ -312,7 +311,7 @@ public class ProjectService {
 
             if (projectRecord.exists()) {
 
-                String pid = projectRecord.get("pid").toString();
+                String pid = projectRecord.getString("pid");
                 
                 if (authService.isProjectAdmin(owner, projectName, Authorization)) {
                     var projectRef = getProjectDocumentReference(pid);
@@ -381,8 +380,7 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project,
-            Map<String, Set<String>> projectInfo, String projectId) {
+    private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project, Map<String, Set<String>> projectInfo, String projectId, Timestamp createdAt) {
         var admins = projectInfo.get("admins");
         if (admins != null) {
             Set<String> adminNames = new HashSet<>();
@@ -400,8 +398,8 @@ public class ProjectService {
             });
             project.setMembers(memberNames);
         }
+        project.setCreatedAt(createdAt);
 
-        project.setCreatedAt(project.getCreatedAtForDb().toString());
         return project;
     }
 
@@ -531,7 +529,7 @@ public class ProjectService {
     public String getProjectTitle(String projectId) {
         try {
             var db = FirestoreClient.getFirestore();
-            return db.collection("projects").document(projectId).get().get().get("title").toString();
+            return db.collection("projects").document(projectId).get().get().getString("title");
         } catch(Exception e) {
             return null;
         }
