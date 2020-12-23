@@ -8,10 +8,6 @@ const ProjectViewMainSection = (props) => {
     value: Object.keys(project.industry)[0],
     label: Object.values(project.industry)[0],
   };
-  useEffect(() => {
-    console.log(project);
-  }, [project]);
-
   const tagsArray = Object.values(project.tags);
 
   const membersList =
