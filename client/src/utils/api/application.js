@@ -1,9 +1,9 @@
 import baseUrl from './baseUrl';
 
-export async function createApplication(projectId, motivation, userId) {
+export async function createApplication(owner, title, motivation, userId) {
   const sendData = await baseUrl
     .post(
-      `/projects/${projectId}/application`,
+      `/projects/${owner}/${title}/applications`,
       { motivation },
       { headers: { Authorization: userId } },
     )

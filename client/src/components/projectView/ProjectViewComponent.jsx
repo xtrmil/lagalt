@@ -24,8 +24,8 @@ const ProjectViewComponent = (props) => {
     setShowProjectSettingsModal(false);
   };
   const handleJoinProject = (motivation) => {
-    const projectId = `${project.owner}-${project.title}`;
-    createApplication(projectId, motivation, user.username).then((response) => {
+    const { owner, title } = project;
+    createApplication(owner, title, motivation, user.username).then((response) => {
       console.log(response);
     });
   };
