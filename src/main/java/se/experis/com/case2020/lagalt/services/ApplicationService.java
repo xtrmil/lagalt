@@ -172,7 +172,9 @@ public class ApplicationService {
                             
                             if(incomingStatus == ApplicationStatus.APPROVED || incomingStatus == ApplicationStatus.REJECTED) {
                                 if(incomingStatus == ApplicationStatus.APPROVED) {
-                                    db.collection("users").document(applicantId).collection("memberOf").document(projectId).set(new HashMap<>());
+                                    var newMember = db.collection("users").document(applicantId);
+                                    newMember.collection("memberOf").document(projectId).set(new HashMap<>());
+                                    newMember.collection("contributedTo").document(projectId).set(new HashMap<>());
                                     projectDocumentReference.collection("members").document(applicantId).set(new HashMap<>());
                                 }
                                 projectDocumentReference.collection("archivedApplications").document(applicationId).set(new HashMap<>());

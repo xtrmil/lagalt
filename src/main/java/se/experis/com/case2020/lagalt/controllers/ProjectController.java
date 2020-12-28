@@ -20,21 +20,25 @@ public class ProjectController {
     private ProjectService projectService;
 
     @GetMapping("")
-    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search) {
+    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search, @RequestHeader(required = false) String Authorization) {
         if(search != null ) {
-            return projectService.getProjectsSearch(request, search);
+            return projectService.getProjectsSearch(request, search, Authorization);
+        }else {
+            if (Authorization != null) {
+                return projectService.getProjectsBasedOnHistory(request, response, Authorization);
+            }
+            return projectService.getProjects(request, response, null);
         }
-        return projectService.getProjects(request, response);
     }
 
     @GetMapping("/{owner}/{projectName}")
-    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, @PathVariable String owner, 
+    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, @PathVariable String owner,
     @PathVariable String projectName, @RequestHeader String Authorization) {
         return projectService.getProjectDetails(request, owner, projectName, Authorization);
     }
 
     @PostMapping("/new")
-    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMemberView project, 
+    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, HttpServletResponse response, @RequestBody ProjectNonMemberView project,
     @RequestHeader String Authorization) {
         return projectService.createNewProject(request, project, Authorization);
     }
