@@ -13,16 +13,22 @@ export default class ChatTest extends React.Component {
   chatSubscription = null;
 
   async componentDidMount() {
-    this.chatSubscription = Chat.chatData().subscribe((data) => {
+    if (this.chatSubscription) {
+      console.log('unsubbed');
+      this.chatSubscription.unsubscribe();
+    }
+    this.chatSubscription = Chat.chatData(
+      this.props.match.params.owner,
+      this.props.match.params.projectName,
+    ).subscribe((data) => {
       data.forEach((doc) => this.chatDataArr.push(doc));
       this.setState({ chatData: this.chatDataArr });
-      setTimeout(() => this.scrollToBottom(), 0);
+      this.scrollToBottom();
     });
-    Auth.loggedInUser().subscribe((user) => (this.loggedInUser = 'some_user')); // user.username // TODO temp
+    Auth.loggedInUser().subscribe((user) => (this.loggedInUser = 'bumpfel')); // user.username // TODO temp
   }
 
   componentWillUnmount() {
-    console.log('unmounted');
     this.chatSubscription.unsubscribe();
   }
 
@@ -35,13 +41,18 @@ export default class ChatTest extends React.Component {
     e.preventDefault();
     const msg = this.chatMsgRef.current.value;
     if (msg.trim().length > 0) {
-      Chat.sendMsg(this.chatMsgRef.current.value.trim());
+      Chat.sendMsg(msg, this.props.match.params.owner, this.props.match.params.projectName);
       this.chatMsgRef.current.value = '';
     }
   };
 
   getDate(timestamp) {
-    const date = new Date(timestamp);
+    let date;
+    if (typeof timestamp === 'number') {
+      date = new Date(timestamp);
+    } else {
+      date = timestamp.toDate();
+    }
     return date.toUTCString();
   }
 

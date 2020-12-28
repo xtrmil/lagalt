@@ -1,6 +1,7 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import { Observable } from 'rxjs';
+import * as chatAPI from './api/chat';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyAVWbW60FddjaHMM6HKERGtLeKR7-t_CQ8',
@@ -18,24 +19,18 @@ if (!firebase.apps.find((app) => app.name === 'chat')) {
 }
 
 const db = firebase.firestore();
+let cachedDbPath;
 
-// TODO endpoint för att få kollektion/path för project chat
-// /api/v1/project/:owner/:projectName/chat/default
-const dbPath = 'projects/m8RlRYZGMl7ckpgCd5Q9/chat/default/default/';
-
-const getProjectChat = () => db.collection(dbPath);
-
-let length = 0;
-
-export const chatData = () => {
-  return new Observable((observer) => {
-    getProjectChat()
+export const chatData = (owner, title) => {
+  return new Observable(async (observer) => {
+    if (!cachedDbPath) {
+      cachedDbPath = chatAPI.getDBPath(owner, title);
+    }
+    db.collection(await cachedDbPath)
       .orderBy('timestamp')
+      .limitToLast(10)
       .onSnapshot((collection) => {
-        length = collection.docs.length;
-        let arr = [];
-
-        arr = collection.docChanges().map((change) => ({
+        const arr = collection.docChanges().map((change) => ({
           id: change.doc.id,
           timestamp: change.doc.data().timestamp,
           user: change.doc.data().user,
@@ -46,14 +41,6 @@ export const chatData = () => {
   });
 };
 
-export const sendMsg = (text) => {
-  // TODO server-side endpoint istället?
-  getProjectChat()
-    .doc(length + '')
-    .set({ text, user: 'some_user', timestamp: Date.now() });
+export const sendMsg = async (text, owner, title) => {
+  chatAPI.newChatMessage(text, owner, title);
 };
-
-// export const getInitial = async () => {
-//   const collection = await db.collection(dbPath).get();
-//   return collection.docs.map((doc) => doc.data());
-// };
