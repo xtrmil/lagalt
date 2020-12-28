@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
 
@@ -8,10 +8,6 @@ const ProjectViewMainSection = (props) => {
     value: Object.keys(project.industry)[0],
     label: Object.values(project.industry)[0],
   };
-  useEffect(() => {
-    console.log(project);
-  }, [project]);
-
   const tagsArray = Object.values(project.tags);
 
   const membersList =
@@ -22,6 +18,7 @@ const ProjectViewMainSection = (props) => {
     ) : (
       <div>No members</div>
     );
+  const onMessageBoardAndChatPageClick = () => {};
 
   const tagsList = tagsArray.map((tag, index) => {
     return (
@@ -68,7 +65,11 @@ const ProjectViewMainSection = (props) => {
                   Settings
                 </Button>
               )}
-              {loggedIn && memberOf && <Button>Message Board & Chat</Button>}
+              {loggedIn && memberOf && (
+                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
+                  Message Board & Chat
+                </Button>
+              )}
             </div>
           </Col>
         </Row>

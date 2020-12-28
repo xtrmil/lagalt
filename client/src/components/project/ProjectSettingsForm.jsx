@@ -7,13 +7,7 @@ import MultiSelectInput from '../form/MultiSelectInput';
 import { editProjectSchema } from '../../utils/form/FormUtils';
 import { getAllIndustries, getTagsByIndustry } from '../../utils/api/industry';
 import { updateProject } from '../../utils/api/project';
-const mapOptions = (array, data) => {
-  for (const [key, value] of Object.entries(data)) {
-    const option = { value: key, label: value };
-    array.push(option);
-  }
-  return array;
-};
+import { mapOptions } from '../../utils/MapOptions';
 
 const ProjectSettingsForm = (props) => {
   const { project, setProject, hideModal } = props;

@@ -1,0 +1,57 @@
+.postCard {
+    margin-top: 50px;
+}
+
+.postCardBody {
+    margin-left: 10px;
+    }
+
+.col {
+    color: #184A73;
+}
+
+.topicText {
+    margin-top: -32px;
+    margin-left: 90px;
+}
+
+.postReply {
+    margin-top: -29px;
+    margin-left: 90px;
+}
+
+.usernamePost {
+    margin-top: 15px;
+    margin-left: -10px;
+}
+
+.btn-back {
+    margin-left: -5px;
+}
+
+.btn-reply {
+    margin-left: 341px;
+}
+
+.btn-newPostPt2 {
+    margin-left: 20px;
+}
+
+.btn-edit {
+    margin-left: 10px;
+}
+
+.btn-delete {
+    margin-left: 5px;
+}
+
+.topic, .user, .replies, .latestPost {
+    color: #184A73;
+}
+
+h4, h6 {
+    color: #184A73;
+}
+
+
+

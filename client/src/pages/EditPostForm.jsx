@@ -1,21 +1,20 @@
 import { Formik } from 'formik';
 import React from 'react';
 import { Form, Button } from 'react-bootstrap';
-import TextInput from '../form/TextInput';
-import CheckboxInput from '../form/CheckboxInput';
-import { joinProjectSchema } from '../../utils/form/FormUtils';
-const JoinProjectForm = (props) => {
-  const { handleJoinProject } = props;
-  const initialValues = { motivation: '', acceptTerms: false };
+import TextInput from '../components/form/TextInput';
+import { editPostSchema } from '../utils/form/FormUtils';
+const EditPostForm = () => {
+  const initialValues = { topicText: '' };
 
   const onFormSubmit = (values) => {
-    const motivation = values.motivation;
-    handleJoinProject(motivation);
+    console.log('Values from the form: ', values);
+    const application = { topicText: values.motivation };
+    console.log('This should be the application', application);
   };
 
   return (
     <Formik
-      validationSchema={joinProjectSchema}
+      validationSchema={editPostSchema}
       initialValues={initialValues}
       onSubmit={(values) => onFormSubmit(values)}
     >
@@ -23,8 +22,19 @@ const JoinProjectForm = (props) => {
         <Form onSubmit={handleSubmit}>
           <TextInput
             type="text"
-            label="Motivation"
-            name="motivation"
+            label="Topic heading"
+            name="topicHeading"
+            handleChange={handleChange}
+            handleBlur={handleBlur}
+            errors={errors}
+            touched={touched}
+            values={values}
+            textarea="textarea"
+          ></TextInput>
+          <TextInput
+            type="text"
+            label="Topic text"
+            name="topicText"
             handleChange={handleChange}
             handleBlur={handleBlur}
             errors={errors}
@@ -33,18 +43,8 @@ const JoinProjectForm = (props) => {
             textarea="textarea"
           ></TextInput>
 
-          <CheckboxInput
-            name="acceptTerms"
-            label="I am aware that by applying to this project, I give permission to the project admins to
-            see my profile regardless of my profile status."
-            errors={errors}
-            touched={touched}
-            handleChange={handleChange}
-            handleBlur={handleBlur}
-          ></CheckboxInput>
-
           <Button type="submit" variant="success">
-            Apply now
+            Save changes
           </Button>
         </Form>
       )}
@@ -52,4 +52,4 @@ const JoinProjectForm = (props) => {
   );
 };
 
-export default JoinProjectForm;
+export default EditPostForm;

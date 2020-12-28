@@ -3,18 +3,12 @@ package se.experis.com.case2020.lagalt.services;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.apache.commons.lang3.EnumUtils;
@@ -37,46 +31,51 @@ public class ApplicationService {
     private UserService userService;
 
     @Autowired
-    private MockAuthService authService = new MockAuthService();
+    private MockAuthService authService;
+
+    @Autowired
+    private ProjectService projectService;
     
-    public ResponseEntity<CommonResponse> getApplications(HttpServletRequest request, HttpServletResponse response,
-            String projectId, String Authorization) {
+    public ResponseEntity<CommonResponse> getApplications(HttpServletRequest request, String owner, String projectName, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
+        HttpStatus resp;
         Set<ApplicationAdminView> applicationSet = new HashSet<>();
+        
+        if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+            String projectId = projectService.getProjectId(owner, projectName);
+            
+            if(projectId != null) {
+                var projectCollections = projectService.getProjectDocumentReference(projectId).collection("activeApplications").listDocuments();
+                
+                projectCollections.forEach(application -> {
+                    try {
+                        DocumentSnapshot applicationDocument = getApplicationDocumentReference(application.getId()).get().get();
+                        var applicationView = new ApplicationAdminView();
+                        applicationView.setApplicationId(applicationDocument.getId());
+                        applicationView.setMotivation(applicationDocument.getString("motivation"));
+                        applicationView.setCreatedAt(applicationDocument.getCreateTime());
 
-        if (authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
-            var db = FirestoreClient.getFirestore();
-
-            CollectionReference ApplicationsCollection = db.collection("projects").document(projectId)
-                    .collection("applications");
-
-            Iterable<DocumentReference> projectCollections = ApplicationsCollection.listDocuments();
-
-            projectCollections.forEach(application -> {
-                ApplicationAdminView applicationAdminView = new ApplicationAdminView();
-                try {
-                    DocumentReference ApplicationsUser = db.collection("applications")
-                            .document(application.getId());
-                    ApiFuture<DocumentSnapshot> userFuture = ApplicationsUser.get();
-                    DocumentSnapshot userDocument = userFuture.get();
-                    UserPublicView user = userService
-                            .getUserPublicObject(userDocument.getData().get("userId").toString());
-
-                    applicationAdminView.setUser(user);
-                    applicationSet.add(applicationAdminView);
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                        UserPublicView user = userService.getUserPublicObject(applicationDocument.getString("user"));
+                        applicationView.setUser(user);
+                        
+                        applicationSet.add(applicationView);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+                if(applicationSet.isEmpty()) {
+                    resp = HttpStatus.NO_CONTENT;
+                } else {
+                    resp = HttpStatus.OK;
                 }
-            });
-            cr.data = applicationSet;
-            response.addHeader("Location", "/projects/" + projectId + "/applications");
-            cr.message = "Successfully retrieved all pending applications for project: " + projectId;
+                cr.data = applicationSet;
+                cr.message = "Successfully retrieved all pending applications for project: " + projectName;
+            } else {
+                resp = HttpStatus.NOT_FOUND;
+                cr.message = "Project not found";
+            }
         } else {
-            cr.data = null;
             resp = HttpStatus.UNAUTHORIZED;
             cr.message = "Not authorized to retrieve this data";
         }
@@ -85,80 +84,131 @@ public class ApplicationService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> createApplication(HttpServletRequest request, HttpServletResponse response,
-            String projectId, String Authorization, ObjectNode motivation) {
+    public ResponseEntity<CommonResponse> createApplication(HttpServletRequest request, String owner, String projectName, String Authorization, ObjectNode motivation) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
+        HttpStatus resp;
 
-        if (authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
-            var db = FirestoreClient.getFirestore();
+        try {
+            String projectId = projectService.getProjectId(owner, projectName);
+            if(projectId != null) {
+                
+                String userId = authService.getUserIdFromToken(Authorization);
+                if (userId != null) {
 
-            DocumentReference userReference = db.collection("users").document(authService.getUserIdFromToken(Authorization));
-            DocumentReference projectReference = db.collection("projects").document(projectId);
-
-            ApplicationProfileView applicationProfileView = new ApplicationProfileView();
-            applicationProfileView.setProjectId(projectId);
-            applicationProfileView.setMotivation(motivation.get("motivation").asText());
-
-            var ref = db.collection("applications").document(projectId).collection("applications").document();
-            db.collection("applications").document(ref.getId()).set(applicationProfileView);
-            userReference.collection("appliedTo").document(ref.getId()).set(new HashMap<>());
-            projectReference.collection("applications").document(ref.getId()).set(new HashMap<>());
-
-            response.addHeader("Location", "/projects/" + projectId + "/application/");
-            cr.data = "your motivation: " + motivation.get("motivation").asText();
-            cr.message = "Application successfully submitted to project: " + projectId;
+                    if(!authService.isPartOfProjectStaff(owner, projectName, Authorization)) {                       
+                        var db = FirestoreClient.getFirestore();
+                        ApplicationProfileView applicationProfileView = new ApplicationProfileView();
+                        applicationProfileView.setProject(projectId);
+                        applicationProfileView.setMotivation(motivation.get("motivation").asText());
+                        applicationProfileView.setUser(userId);
+                    
+                        var applicationRecord = db.collection("pendingApplicationRecords").document(projectId).collection("users").document(userId);
+                        if(!applicationRecord.get().get().exists()) {
+                            
+                            applicationRecord.set(new HashMap<>());
+                            var applicationDocRef = db.collection("applications").document();
+                            applicationDocRef.set(applicationProfileView);
+                            userService.getUserDocument(userId).collection("appliedTo").document(applicationDocRef.getId()).set(new HashMap<>());
+                            projectService.getProjectDocumentReference(projectId).collection("activeApplications").document(applicationDocRef.getId()).set(new HashMap<>());
+                            
+                            cr.data = "Your motivation: " + motivation.get("motivation").asText();
+                            cr.message = "Application successfully submitted to project: " + projectId;
+                            resp = HttpStatus.OK;
+                        } else {
+                            cr.message = "You already have a pending application to this project";
+                            resp = HttpStatus.CONFLICT;
+                        }
+                    } else {
+                        cr.message = "You are already a member of this project";
+                        resp = HttpStatus.CONFLICT;
+                    }
+                } else {
+                    cr.message = "You are not logged in";
+                    resp = HttpStatus.UNAUTHORIZED;
+                }
+            } else {
+                cr.message = "Project not found";
+                resp = HttpStatus.NOT_FOUND;
+            }
+        } catch(Exception e) {
+            cr.message = "Server error";
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
-
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateApplication(HttpServletRequest request, HttpServletResponse response,
-            String projectId, ObjectNode application, String Authorization)
-            throws ExecutionException, InterruptedException {
+
+    public ResponseEntity<CommonResponse> answerApplication(HttpServletRequest request, String owner, String projectName, String applicationId, ObjectNode requestBody,
+    String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
-        HttpStatus resp = null;
+        HttpStatus resp;
+        String projectId = projectService.getProjectId(owner, projectName);
+        String incomingStatusString = requestBody.get("status").asText();
+        
+        try {
+            if(EnumUtils.isValidEnum(ApplicationStatus.class, incomingStatusString)) {
+                var db = FirestoreClient.getFirestore();
+                ApplicationStatus incomingStatus = ApplicationStatus.valueOf(incomingStatusString);
+                
+                var projectDocumentReference = projectService.getProjectDocumentReference(projectId);
+                var projectApplicationReference = projectDocumentReference.collection("activeApplications").document(applicationId);
+                if (projectApplicationReference.get().get().exists()) {
+                    DocumentSnapshot applicationDocument = getApplicationDocumentReference(applicationId).get().get();
 
-        String applicationId = application.get("applicationId").asText();
-        String message = application.get("message").asText();
-        ApplicationStatus status = ApplicationStatus.valueOf(application.get("status").asText());
+                    if(ApplicationStatus.valueOf(applicationDocument.getString("status")) == ApplicationStatus.PENDING) {
 
-        var db = FirestoreClient.getFirestore();
-
-        DocumentReference applicationReference = db.collection("applications").document(applicationId);
-        ApiFuture<DocumentSnapshot> future = applicationReference.get();
-        DocumentSnapshot document = future.get();
-
-        if (document.exists()) {
-            if (authService.belongsToUser(authService.getUserIdFromToken(Authorization), Authorization)) {
-                ApplicationProfileView updatedApplication = new ApplicationProfileView();
-                if (EnumUtils.isValidEnum(ApplicationStatus.class, status.toString())) {
-                    System.out.println("Valid enum");
-                    updatedApplication.setStatus(status);
+                        if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+                            ApplicationProfileView updatedApplication = new ApplicationProfileView();
+                            updatedApplication.setStatus(incomingStatus);
+                            
+                            updatedApplication.setFeedback(requestBody.get("message").asText());
+                            updatedApplication.setMotivation(applicationDocument.getString("motivation"));
+                            updatedApplication.setProject(projectId);
+                            String applicantId = applicationDocument.getString("user");
+                            updatedApplication.setUser(applicantId);
+                            
+                            if(incomingStatus == ApplicationStatus.APPROVED || incomingStatus == ApplicationStatus.REJECTED) {
+                                if(incomingStatus == ApplicationStatus.APPROVED) {
+                                    db.collection("users").document(applicantId).collection("memberOf").document(projectId).set(new HashMap<>());
+                                    projectDocumentReference.collection("members").document(applicantId).set(new HashMap<>());
+                                }
+                                projectDocumentReference.collection("archivedApplications").document(applicationId).set(new HashMap<>());
+                                projectApplicationReference.delete();
+                            }
+                            
+                            getApplicationDocumentReference(applicationId).set(updatedApplication);
+                            db.collection("pendingApplicationRecords").document(projectId).collection("users").document(applicantId).delete();
+                            cr.message = "Application updated";
+                            resp = HttpStatus.OK;
+                            
+                        } else {
+                            cr.message = "Not authorized to edit application";
+                            resp = HttpStatus.UNAUTHORIZED;
+                        }
+                    } else {
+                        cr.message = "Application has already been answered";
+                        resp = HttpStatus.BAD_REQUEST;
+                    }
+                } else {
+                    cr.message = "Application not found";
+                    resp = HttpStatus.NOT_FOUND;
                 }
-                updatedApplication.setFeedback(message);
-                updatedApplication.setMotivation(document.getData().get("motivation").toString());
-                updatedApplication.setUserId(document.getData().get("userId").toString());
-                updatedApplication.setProjectId(projectId);
-
-                ApiFuture<WriteResult> applicationApiFuture = db.collection("applications")
-                        .document(applicationId).set(updatedApplication);
-                response.addHeader("Location", "/projects/" + projectId + "/application/");
-                cr.message = "Application with id: " + applicationId + "for project with id: " + projectId
-                        + " successfully Updated";
-                cr.data = applicationApiFuture.get().getUpdateTime().toDate().toString();
-                resp = HttpStatus.OK;
             } else {
-                cr.message = "Not authorized to edit application with id: " + applicationId;
-                resp = HttpStatus.UNAUTHORIZED;
+                cr.message = "Invalid request body";
+                resp = HttpStatus.BAD_REQUEST;
             }
-        } else {
-            cr.message = "Application with id: " + applicationId + " not found";
+        } catch(Exception e) {
+            e.printStackTrace();
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
+    }
+
+    private DocumentReference getApplicationDocumentReference(String applicationId) {
+        return FirestoreClient.getFirestore().collection("applications").document(applicationId);
     }
 }

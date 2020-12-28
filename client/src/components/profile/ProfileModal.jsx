@@ -1,48 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Modal, Button, Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from '../form/TextInput';
 import SelectInput from '../form/SelectInput';
 import MultiSelectInput from '../form/MultiSelectInput';
 import { editProfileSchema } from '../../utils/form/FormUtils';
-const ProfileModal = (props) => {
-  const { showModal, handleCloseModal, handleSaveChanges, user } = props;
+import { getAllTags } from '../../utils/api/industry';
+import { editUserProfile } from '../../utils/api/user';
+import { mapOptions } from '../../utils/MapOptions';
 
-  const currentSkills = user.skills.map((skill) => ({
-    value: skill,
-    label: skill,
-  }));
+const ProfileModal = (props) => {
+  const { showModal, handleCloseModal, handleSaveChanges, user, loggedInUserId } = props;
+  const [tagOptions, setTagOptions] = useState();
+
+  const currentTags = mapOptions([], user.tags);
 
   const initialValues = {
     name: user.name,
     description: user.description,
-    skills: currentSkills,
+    tags: currentTags,
     email: user.email,
     hidden: user.hidden,
   };
 
   const currentStatus = { value: user.hidden, label: user.hidden ? 'Hidden' : 'Public' };
 
-  const options = [
-    { value: 'DRUMMER', label: 'Drummer' },
-    { value: 'WEB_DEV', label: 'WEB_DEV' },
-    { value: 'REACT', label: 'REACT' },
-    { value: 'SECURITY', label: 'SECURITY' },
-    { value: 'ANGULAR', label: 'ANGULAR' },
-  ];
-
   const profileStatusOptions = [
     { value: true, label: 'Hidden' },
     { value: false, label: 'Public' },
   ];
+
+  const fetchTags = useCallback(async () => {
+    await getAllTags().then((response) => {
+      const temp = mapOptions([], response.data);
+      setTagOptions(temp);
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
   const onFormSubmit = (values) => {
+    const { tags } = values;
     const updatedUser = {
       ...user,
       ...values,
       hidden: values.hidden.label ? values.hidden.value : values.hidden,
-      skills: values.skills.map((skill) => skill.value),
+      tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
     };
-    console.log(updatedUser);
+    editUserProfile(updatedUser, loggedInUserId);
     handleSaveChanges(updatedUser);
   };
 
@@ -85,12 +92,12 @@ const ProfileModal = (props) => {
 
                   <MultiSelectInput
                     label="Select Skills*"
-                    name="skills"
-                    options={options}
+                    name="tags"
+                    options={tagOptions}
                     values={values}
                     touched={touched}
                     errors={errors}
-                    defaultValue={currentSkills}
+                    defaultValue={currentTags}
                     setFieldTouched={setFieldTouched}
                     setFieldValue={setFieldValue}
                     isMulti={true}

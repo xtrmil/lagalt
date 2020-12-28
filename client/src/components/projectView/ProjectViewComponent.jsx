@@ -4,11 +4,12 @@ import ProjectUpdatesComponent from './ProjectUpdatesComponent';
 import ProjectViewMainSection from './ProjectViewMainSection';
 import ProjectSettingsModal from '../project/ProjectSettingsModal';
 import JoinProjectModal from './JoinProjectModal';
-
+import { createApplication } from '../../utils/api/application';
 const ProjectViewComponent = (props) => {
-  const { project, setProject, isAdmin, loggedIn, memberOf } = props;
+  const { project, setProject, isAdmin, loggedIn, memberOf, loggedInUser } = props;
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showProjectSettingsModal, setShowProjectSettingsModal] = useState(false);
+  const user = { username: 'eric' };
 
   const onJoinClick = () => {
     setShowJoinModal(true);
@@ -22,9 +23,19 @@ const ProjectViewComponent = (props) => {
   const hideProjectSettingsModal = () => {
     setShowProjectSettingsModal(false);
   };
+  const handleJoinProject = (motivation) => {
+    const { owner, title } = project;
+    createApplication(owner, title, motivation, user.username).then((response) => {
+      console.log(response);
+    });
+  };
   return (
     <>
-      <JoinProjectModal showJoinModal={showJoinModal} hideJoinModal={hideJoinModal} />
+      <JoinProjectModal
+        showJoinModal={showJoinModal}
+        hideJoinModal={hideJoinModal}
+        handleJoinProject={handleJoinProject}
+      />
       <ProjectSettingsModal
         project={project}
         setProject={setProject}

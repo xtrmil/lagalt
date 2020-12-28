@@ -1,3 +1,21 @@
+.filter-tabs {
+    margin-top: 15px;
+    margin-left: 155px;
+}
+
+.search {
+    margin-left: 570px;
+}
+
+.filter-function {
+    margin-top: 40px;   
+}
+
+.filter-text {
+    margin-top: 50px;
+    margin-left: 160px;
+}
+
 .homePageCard {
     margin: 0 auto;
     float: none;
@@ -23,13 +41,24 @@
     margin-left: 425px;
 }
 
-.stretched-button {
+.btn-viewAll {
+    margin-left: 1025px;
+    margin-top: 15px;
+}
+
+.stretched-button-mb {
     z-index:4;
     position:relative;
+    width: 189px;
 }
 
 .homePageHeading {
     margin-top: 30px;
+}
+
+.matchedNotMatched {
+    margin-left: 170px;
+    color: #51AA3A;
 }
 
 .stretched-button-join {
@@ -44,8 +73,18 @@
     width: 187px;
 }
 
-h4, h6 {
+.stretched-button-admin {
+    z-index:4;
+    position:relative;
+    width: 187px;
+}
+
+h4, h5, h6 {
     color: #184A73;
+}
+
+p {
+    margin-left: 165px;
 }
 
 
