@@ -1,0 +1,38 @@
+#chatBox {
+  border: 1px solid grey;
+  overflow-y: scroll;
+  height: 500px;
+  padding: 10px;
+}
+
+input,
+#chatBox {
+  width: 800px;
+}
+
+.post {
+  margin-bottom: 5px;
+}
+
+.post.self {
+  text-align: right;
+}
+
+.post.self .msg {
+  color: white;
+  background-color: #7777ff;
+}
+
+.msg {
+  display: inline-block;
+  width: 70%;
+  padding: 5px;
+  border-radius: 10px;
+  background-color: #e5e5e5;
+  word-wrap: break-word;
+}
+
+.post .user {
+  font-size: 12px;
+  margin: 0 10px;
+}
