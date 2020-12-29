@@ -7,22 +7,47 @@ import './ChatTest.css';
 export default class ChatTest extends React.Component {
   state = { chatData: null, isLoading: true, endOfHistory: false };
 
+  hasLoadedInitially = false;
   subscription;
   loggedInUser = null;
   chatDataArr = [];
   chatBox = React.createRef();
   chatMsgRef = React.createRef();
+  emojis = new Map([
+    [':)', '🙂'],
+    [';)', '😉'],
+    [':D', '😀'],
+    [':(', '🙁'],
+    [':P', '😛'],
+    [':p', '😛'],
+    [':/', '😕'],
+    [':|', '😐'],
+    ['xD', '😄'],
+    ['XD', '😄'],
+    ["x'D", '😂'],
+    ["X'D", '😂'],
+    [';P', '😜'],
+    [';p', '😜'],
+    [':o', '😮'],
+    [':O', '😮'],
+    ['>(', '😠'],
+    ['><', '😣'],
+    ['o.O', '🤨'],
+    ['oO', '🤨'],
+  ]);
 
   scrollCallback = async (e) => {
     if (e.target.scrollTop === 0 && !this.state.isLoading && !this.state.endOfHistory) {
       this.setState({ isLoading: true });
-      const lastNewElement = e.target.firstElementChild;
+      const lastNewElement = e.target.firstElementChild.nextElementSibling;
       const msgs = await Chat.getEarlierMessages(this.state.chatData[0]);
       if (msgs.length === 0) {
         this.setState({ isLoading: false, endOfHistory: true });
       } else {
         this.chatDataArr.unshift(...msgs);
         this.setState({ chatData: this.chatDataArr, isLoading: false });
+        console.log('scrolling to ', lastNewElement);
+
         lastNewElement.scrollIntoView(true);
       }
     }
@@ -30,12 +55,13 @@ export default class ChatTest extends React.Component {
 
   componentDidMount = () => {
     Chat.chatData(this.props.match.params.owner, this.props.match.params.projectName).then(
-      (observable) =>
-        (this.subscription = observable.subscribe((docs) => {
+      (observable) => {
+        this.subscription = observable.subscribe((docs) => {
           this.chatDataArr.push(...docs);
           this.setState({ chatData: this.chatDataArr, isLoading: false });
           this.scrollToBottom();
-        })),
+        });
+      },
     );
     this.chatBox.current.addEventListener('scroll', this.scrollCallback);
     Auth.loggedInUser().subscribe((user) => (this.loggedInUser = user.username));
@@ -74,6 +100,15 @@ export default class ChatTest extends React.Component {
     return date.toUTCString();
   };
 
+  handleSmileyFormatting = (e) => {
+    if (e.nativeEvent.data === ' ') {
+      this.chatMsgRef.current.value = this.chatMsgRef.current.value
+        .split(' ')
+        .map((item) => this.emojis.get(item) || item)
+        .join(' ');
+    }
+  };
+
   render = () => {
     let chat = [];
     if (this.state.chatData) {
@@ -102,7 +137,13 @@ export default class ChatTest extends React.Component {
             {chat.length ? chat : 'Chat is empty'}
           </div>
           <div className="input">
-            <input className="form-control" type="text" ref={this.chatMsgRef} autoFocus />
+            <input
+              className="form-control"
+              type="text"
+              ref={this.chatMsgRef}
+              onChange={this.handleSmileyFormatting}
+              autoFocus
+            />
             <button className="btn btn-primary" type="submit">
               Submit
             </button>
