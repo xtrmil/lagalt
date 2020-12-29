@@ -10,27 +10,29 @@ export default class ChatTest extends React.Component {
   chatDataArr = [];
   chatBox = React.createRef();
   chatMsgRef = React.createRef();
-  chatSubscription = null;
 
-  async componentDidMount() {
-    if (this.chatSubscription) {
-      console.log('unsubbed');
-      this.chatSubscription.unsubscribe();
-    }
-    this.chatSubscription = Chat.chatData(
-      this.props.match.params.owner,
-      this.props.match.params.projectName,
-    ).subscribe((data) => {
-      data.forEach((doc) => this.chatDataArr.push(doc));
-      this.setState({ chatData: this.chatDataArr });
-      this.scrollToBottom();
+  componentDidMount = () => {
+    Chat.chatData(this.props.match.params.owner, this.props.match.params.projectName).then((smt) =>
+      smt.subscribe((docs) => {
+        this.chatDataArr.push(...docs);
+
+        this.setState({ chatData: this.chatDataArr });
+        this.scrollToBottom();
+      }),
+    );
+
+    this.chatBox.current.addEventListener('scroll', async (e) => {
+      if (e.target.scrollTop === 0) {
+        const lastNewElement = e.target.firstElementChild;
+        const msgs = await Chat.getEarlierMessages(this.state.chatData[0]);
+        this.chatDataArr.unshift(...msgs);
+        this.setState({ chatData: this.chatDataArr });
+        console.log(lastNewElement);
+        lastNewElement.scrollIntoView(true);
+      }
     });
-    Auth.loggedInUser().subscribe((user) => (this.loggedInUser = 'bumpfel')); // user.username // TODO temp
-  }
-
-  componentWillUnmount() {
-    this.chatSubscription.unsubscribe();
-  }
+    Auth.loggedInUser().subscribe((user) => (this.loggedInUser = user.username));
+  };
 
   scrollToBottom = () => {
     const el = this.chatBox.current;
@@ -46,7 +48,10 @@ export default class ChatTest extends React.Component {
     }
   };
 
-  getDate(timestamp) {
+  getDate = (timestamp) => {
+    if (!timestamp) {
+      return;
+    }
     let date;
     if (typeof timestamp === 'number') {
       date = new Date(timestamp);
@@ -54,10 +59,10 @@ export default class ChatTest extends React.Component {
       date = timestamp.toDate();
     }
     return date.toUTCString();
-  }
+  };
 
   render = () => {
-    let chat;
+    let chat = [];
     if (this.state.chatData) {
       chat = this.state.chatData.map((post) => {
         const fromSelf = post.user === this.loggedInUser;
@@ -76,7 +81,7 @@ export default class ChatTest extends React.Component {
     return (
       <form onSubmit={this.handleSubmit}>
         <div ref={this.chatBox} id="chatBox">
-          {chat}
+          {chat.length ? chat : 'Chat is empty'}
         </div>
         <input type="text" ref={this.chatMsgRef} autoFocus />
       </form>

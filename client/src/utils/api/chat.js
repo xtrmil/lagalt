@@ -1,7 +1,7 @@
 import baseUrl from './baseUrl';
 import * as Auth from '../Auth';
 
-export const getDBPath = async (owner, title) => {
+export const getDbPath = async (owner, title) => {
   return (
     await baseUrl.get(`/projects/${owner}/${title}/chat/`, {
       headers: { Authorization: await Auth.getToken() },

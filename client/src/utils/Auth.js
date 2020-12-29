@@ -2,11 +2,12 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import { Observable } from 'rxjs';
 import { EventEmitter } from 'events';
+import { baseURLString } from './api/baseUrl';
 
 const loginStatusEmitter = new EventEmitter();
 const loginStatusEvent = 'change';
 
-const host = 'http://localhost:8080/api/v1';
+const host = baseURLString;
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBvGQf08nkANAW5Vb1BNq6P0FUS-a2GsNw',
@@ -62,8 +63,6 @@ export const AuthState = {
 
 // global variables
 let gUsername;
-// let gResolver
-// let gVerificationId
 
 export const loggedInUser = () => {
   return new Observable((observer) => {
