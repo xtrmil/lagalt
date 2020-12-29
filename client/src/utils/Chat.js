@@ -21,7 +21,7 @@ if (!firebase.apps.find((app) => app.name === 'chat')) {
 const fetchLimit = 10;
 const db = firebase.firestore();
 let cached = {};
-let unsub;
+let unsubs = {};
 
 const getDbPath = (owner, title) => {
   if (!cached.dbPath) {
@@ -30,14 +30,18 @@ const getDbPath = (owner, title) => {
   return cached.dbPath;
 };
 
+export const unsubscribeAll = () => {
+  for (const key in unsubs) {
+    unsubs[key]();
+  }
+};
+
 export const chatData = async (owner, title) => {
   const dbPath = await getDbPath(owner, title);
 
-  if (unsub) {
-    unsub();
-  }
+  unsubscribeAll();
   return new Observable((observer) => {
-    unsub = db
+    unsubs.chat = db
       .collection(dbPath)
       .orderBy('timestamp')
       .limitToLast(fetchLimit)

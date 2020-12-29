@@ -1,3 +1,7 @@
+form *:not(.input) {
+  margin-bottom: 5px;
+}
+
 #chatBox {
   border: 1px solid grey;
   overflow-y: scroll;
@@ -5,9 +9,10 @@
   padding: 10px;
 }
 
-input,
+.input,
 #chatBox {
   width: 800px;
+  /* border: 1px solid red; */
 }
 
 .post {
@@ -35,4 +40,9 @@ input,
 .post .user {
   font-size: 12px;
   margin: 0 10px;
+}
+
+small {
+  text-align: center;
+  display: block;
 }
