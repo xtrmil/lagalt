@@ -22,11 +22,13 @@ public class ProjectNonMemberView {
     private String title;
     private String description;
     private String owner;
-    private Timestamp createdAt;
+    private Timestamp createdAt = Timestamp.now();
     private ProjectStatus status = ProjectStatus.FOUNDING;
 
     @JsonProperty(access = Access.WRITE_ONLY)
     private Industry industryKey;
+
+    @JsonProperty(access = Access.WRITE_ONLY)
 
     @Exclude
     private Map<Industry, String> industry;

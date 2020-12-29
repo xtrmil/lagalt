@@ -9,11 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.google.api.core.ApiFutures;
+import com.google.cloud.Date;
 import com.google.cloud.Timestamp;
-import com.google.cloud.firestore.CollectionReference;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.apache.commons.lang3.EnumUtils;
@@ -137,23 +135,21 @@ public class ProjectService {
         HttpStatus resp;
         Command cmd = new Command(request);
         String userId = authService.getUserIdFromToken(Authorization);
-
+        Map<String, DocumentReference> filteredProjectsMap = new HashMap<>();
         try {
             String favourite = getFavouriteIndustry(userId);
             var db = FirestoreClient.getFirestore();
-            var filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
+            var filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt").limitToLast(3).get().get().getDocuments();
 
-            Map<String, DocumentReference> filteredProjectsMap = new HashMap<>();
             filteredProjects.forEach(document -> {
                 filteredProjectsMap.put(document.getId(), document.getReference());
             });
 
             int startPosition = 0;
-            int desiredMapLength = filteredProjectsMap.size() + 2;
-
+            int desiredMapLength = 5;
+            List<QueryDocumentSnapshot> randomProjects;
             while (filteredProjectsMap.size() < desiredMapLength) {
-                var randomProjects = db.collection("projects").orderBy("title").limit(desiredMapLength).startAt(startPosition).get().get().getDocuments();
-                System.out.println(randomProjects.size());
+                randomProjects = db.collection("projects").orderBy("createdAt").limit(desiredMapLength).startAt(startPosition).get().get().getDocuments();
 
                 randomProjects.forEach(p -> {
                     if(filteredProjectsMap.size() < desiredMapLength) {
@@ -161,7 +157,7 @@ public class ProjectService {
                     }
                 });
                 startPosition += desiredMapLength;
-
+                
             }
             List<DocumentReference> filteredProjectsList = new ArrayList<>(filteredProjectsMap.values());
 
@@ -169,6 +165,7 @@ public class ProjectService {
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
         } catch (Exception e) {
+            e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         cmd.setResult(resp);
