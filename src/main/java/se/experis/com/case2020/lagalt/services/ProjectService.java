@@ -8,20 +8,18 @@ import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.core.ApiFutures;
-import com.google.cloud.Date;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 
 import org.apache.commons.lang3.EnumUtils;
-import org.apache.tomcat.util.http.parser.Authorization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import org.springframework.web.method.support.HandlerMethodReturnValueHandler;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Industry;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
@@ -85,7 +83,7 @@ public class ProjectService {
         }
     }
 
-    public ResponseEntity<CommonResponse> getProjectsSearch(HttpServletRequest request, String search, String Authorization) {
+    public ResponseEntity<CommonResponse> getProjectsSearch(HttpServletRequest request, String search) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Command cmd = new Command(request);
@@ -96,12 +94,7 @@ public class ProjectService {
             var documents = db.collection("projects").orderBy("title").startAt(search).endAt(search + "\uf8ff")
                     .get().get().getDocuments();
 
-            List<DocumentReference> projects = new ArrayList<>();
-            for (var document : documents) {
-                projects.add(document.getReference());
-            }
-
-            cr.data = getFormattedProjects(projects, Authorization);
+            cr.data = getFormattedProjects(snapshotsToDocumentsList(documents), null);
             cr.message = "Search result for " + search;
             resp = HttpStatus.OK;
         } catch (Exception e) {
@@ -111,59 +104,83 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getProjects(HttpServletRequest request, HttpServletResponse response, String Authorization) {
+    private Timestamp checkTimestamp(ObjectNode timestamp){
+        if(timestamp == null){
+            return Timestamp.MIN_VALUE;
+        }else{
+            return getCreatedAt(timestamp);
+        }
+    }
+
+    public ResponseEntity<CommonResponse> getProjects(HttpServletRequest request, HttpServletResponse response, ObjectNode timestamp){
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Command cmd = new Command(request);
+        int limit = 6;
 
         try {
-            var db = FirestoreClient.getFirestore();
-
-            var projects = db.collection("projects").listDocuments();
-            var formattedProjects = getFormattedProjects(projects, Authorization);
+            var projects = FirestoreClient.getFirestore().collection("projects").orderBy("createdAt", Query.Direction.ASCENDING).startAt(checkTimestamp(timestamp)).limit(limit).get().get().getDocuments();
+            var formattedProjects = getFormattedProjects(snapshotsToDocumentsList(projects), null);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
-        } catch (Exception e) {
+
+        }catch (ExecutionException | InterruptedException e){
+            e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request, HttpServletResponse response, String Authorization) {
+    public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request, HttpServletResponse response, String Authorization,ObjectNode timestamp){
         CommonResponse cr = new CommonResponse();
-        HttpStatus resp;
+        HttpStatus resp = null;
         Command cmd = new Command(request);
-        String userId = authService.getUserIdFromToken(Authorization);
+        Timestamp time;
         Map<String, DocumentReference> filteredProjectsMap = new HashMap<>();
         try {
-            String favourite = getFavouriteIndustry(userId);
-            var db = FirestoreClient.getFirestore();
-            var filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt").limitToLast(3).get().get().getDocuments();
+            if(authService.getUserIdFromToken(Authorization) != null) {
 
-            filteredProjects.forEach(document -> {
-                filteredProjectsMap.put(document.getId(), document.getReference());
-            });
+                String userId = authService.getUserIdFromToken(Authorization);
+                String favourite = getFavouriteIndustry(userId);
+                var db = FirestoreClient.getFirestore();
+                if(timestamp != null){
+                    time = getCreatedAt(timestamp);
+                }
+                else{
+                    time = Timestamp.MIN_VALUE;
+                }
+                var filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).whereEqualTo("industryKey", favourite).startAfter(time).limit(3).get().get().getDocuments();
 
-            int startPosition = 0;
-            int desiredMapLength = 5;
-            List<QueryDocumentSnapshot> randomProjects;
-            while (filteredProjectsMap.size() < desiredMapLength) {
-                randomProjects = db.collection("projects").orderBy("createdAt").limit(desiredMapLength).startAt(startPosition).get().get().getDocuments();
-
-                randomProjects.forEach(p -> {
-                    if(filteredProjectsMap.size() < desiredMapLength) {
-                        filteredProjectsMap.put(p.getId(), p.getReference());
-                    }
+                filteredProjects.forEach(document -> {
+                    filteredProjectsMap.put(document.getId(), document.getReference());
                 });
-                startPosition += desiredMapLength;
-                
-            }
-            List<DocumentReference> filteredProjectsList = new ArrayList<>(filteredProjectsMap.values());
 
-            var formattedProjects = getFormattedProjects(filteredProjectsList, Authorization);
-            cr.data = formattedProjects;
-            resp = HttpStatus.OK;
+                int startPosition = 0;
+                int desiredMapLength = 5;
+                List<QueryDocumentSnapshot> randomProjects;
+                while (filteredProjectsMap.size() < desiredMapLength) {
+                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition).limit(desiredMapLength).get().get().getDocuments();
+
+                    randomProjects.forEach(p -> {
+                        if (filteredProjectsMap.size() < desiredMapLength) {
+                            filteredProjectsMap.put(p.getId(), p.getReference());
+                        }
+                    });
+                    startPosition += desiredMapLength;
+                }
+                List<DocumentReference> filteredProjectsList = new ArrayList<>(filteredProjectsMap.values());
+
+                var formattedProjects = getFormattedProjects(filteredProjectsList, Authorization);
+                cr.data = formattedProjects;
+                resp = HttpStatus.OK;
+
+            }else{
+                resp = HttpStatus.UNAUTHORIZED;
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
         } catch (Exception e) {
             e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -612,10 +629,16 @@ public class ProjectService {
 
     private Stream<Map.Entry<String, Integer>> mapToStreamSortedByValue(HashMap<String, Integer> map) {
 
-        Stream<Map.Entry<String, Integer>> stream = map.entrySet()
-                .stream()
-                .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+        return map.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+    }
 
-        return stream;
+    private List<DocumentReference> snapshotsToDocumentsList(List<QueryDocumentSnapshot> snapshots){
+
+        return snapshots.stream().map(QueryDocumentSnapshot::getReference).collect(Collectors.toList());
+    }
+
+    private Timestamp getCreatedAt(ObjectNode timestamp){
+
+        return Timestamp.ofTimeSecondsAndNanos(timestamp.get("createdAt").get("seconds").asLong(), timestamp.get("createdAt").get("nanos").asInt());
     }
 }

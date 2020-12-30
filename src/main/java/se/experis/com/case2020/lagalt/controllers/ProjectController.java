@@ -1,5 +1,8 @@
 package se.experis.com.case2020.lagalt.controllers;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.cloud.Timestamp;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +14,9 @@ import se.experis.com.case2020.lagalt.services.ProjectService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(value = "/api/v1/projects", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -20,14 +26,15 @@ public class ProjectController {
     private ProjectService projectService;
 
     @GetMapping("")
-    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search, @RequestHeader(required = false) String Authorization) {
+    public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response, @RequestParam(required = false) String search,
+                                                           @RequestHeader(required = false) String Authorization, @RequestBody(required = false) ObjectNode timestamp){
         if(search != null ) {
-            return projectService.getProjectsSearch(request, search, Authorization);
+            return projectService.getProjectsSearch(request, search);
         }else {
             if (Authorization != null) {
-                return projectService.getProjectsBasedOnHistory(request, response, Authorization);
+                return projectService.getProjectsBasedOnHistory(request, response, Authorization, timestamp);
             }
-            return projectService.getProjects(request, response, null);
+            return projectService.getProjects(request, response, timestamp);
         }
     }
 
