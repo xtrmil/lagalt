@@ -9,10 +9,17 @@ form *:not(.input) {
   padding: 10px;
 }
 
-.input,
+.inputs,
 #chatBox {
   width: 800px;
-  /* border: 1px solid red; */
+}
+
+.inputs input {
+  width: calc(100% - 85px);
+}
+
+.inputs button {
+  float: right;
 }
 
 .post {

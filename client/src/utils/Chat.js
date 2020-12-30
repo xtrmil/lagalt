@@ -24,10 +24,20 @@ let cached = {};
 let unsubs = {};
 
 const getDbPath = (owner, title) => {
-  if (!cached.dbPath) {
+  if (
+    !cached.dbPath ||
+    (owner != null && owner != cached.owner) ||
+    (title != null && title != cached.title)
+  ) {
+    cached.owner = owner;
+    cached.title = title;
     cached.dbPath = chatAPI.getDbPath(owner, title);
   }
   return cached.dbPath;
+};
+
+export const shouldTriggerUpdate = (owner, title) => {
+  return owner != cached.owner || title != cached.title;
 };
 
 export const unsubscribeAll = () => {
@@ -38,8 +48,8 @@ export const unsubscribeAll = () => {
 
 export const chatData = async (owner, title) => {
   const dbPath = await getDbPath(owner, title);
-
   unsubscribeAll();
+
   return new Observable((observer) => {
     unsubs.chat = db
       .collection(dbPath)
@@ -50,7 +60,7 @@ export const chatData = async (owner, title) => {
         collection.docChanges().forEach((change) => {
           const docData = change.doc.data();
           if (change.type === 'added') {
-            arr.push(new ChatMessage(change.doc.id, docData.timestamp, docData.user, docData.text));
+            arr.push(new ChatMessage(docData.timestamp, docData.user, docData.text));
           }
         });
         observer.next(arr);
@@ -65,9 +75,10 @@ export const getEarlierMessages = async (lastMsg) => {
     .endBefore(lastMsg.timestamp)
     .limitToLast(fetchLimit)
     .get();
-  return response.docs.map(
-    (doc) => new ChatMessage(doc.id, doc.data().timestamp, doc.data().user, doc.data().text),
-  );
+  return response.docs.map((doc) => {
+    const docData = doc.data();
+    return new ChatMessage(docData.timestamp, docData.user, docData.text);
+  });
 };
 
 export const sendMsg = async (text, owner, title) => {
@@ -75,8 +86,7 @@ export const sendMsg = async (text, owner, title) => {
 };
 
 class ChatMessage {
-  constructor(id, timestamp, user, text) {
-    this.id = id;
+  constructor(timestamp, user, text) {
     this.timestamp = timestamp;
     this.user = user;
     this.text = text;
