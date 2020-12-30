@@ -7,7 +7,7 @@ import './ChatPage.css';
 export default class ChatTest extends React.Component {
   state = { chatData: null, isLoading: true, endOfHistory: false };
 
-  subscription;
+  subscriptions = {};
   loggedInUser = null;
   chatDataArr = [];
   chatBox = React.createRef();
@@ -64,7 +64,9 @@ export default class ChatTest extends React.Component {
   componentDidMount = () => {
     this.subscribeToChat();
     this.chatBox.current.addEventListener('scroll', this.scrollCallback);
-    Auth.loggedInUser().subscribe((user) => (this.loggedInUser = user.username));
+    this.subscriptions.auth = Auth.loggedInUser().subscribe(
+      (user) => (this.loggedInUser = user.username),
+    );
   };
 
   componentDidUpdate = () => {
@@ -83,11 +85,14 @@ export default class ChatTest extends React.Component {
       this.props.match.params.projectName,
     );
     if (observable) {
-      this.subscription = observable.subscribe(
+      this.subscriptions.chat = observable.subscribe(
         (docs) => {
+          const isMaxScrolled =
+            this.chatBox.current.scrollTop ===
+            this.chatBox.current.scrollHeight - this.chatBox.current.clientHeight;
           this.chatDataArr.push(...docs);
           this.setState({ chatData: this.chatDataArr, isLoading: false });
-          this.scrollToBottom();
+          this.scrollToBottom(isMaxScrolled);
         },
         (err) => console.log(err),
         () => console.log('observable disposed'),
@@ -96,16 +101,21 @@ export default class ChatTest extends React.Component {
   };
 
   componentWillUnmount = () => {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
+    for (const key in this.subscriptions) {
+      this.subscriptions[key].unsubscribe();
     }
     Chat.unsubscribeAll();
     this.chatBox.current.removeEventListener('scroll', this.scrollCallback);
   };
 
-  scrollToBottom = () => {
+  scrollToBottom = (wasMaxScrolled) => {
     const el = this.chatBox.current;
-    el.scrollTop = el.scrollHeight - el.clientHeight;
+    const maxScroll = this.chatBox.current.scrollHeight - this.chatBox.current.clientHeight;
+    if ((el.scrollTop === 0 && !this.state.endOfHistory) || wasMaxScrolled) {
+      el.scrollTop = maxScroll;
+    } else {
+      console.log('you have new messages');
+    }
   };
 
   handleSubmit = (e) => {
