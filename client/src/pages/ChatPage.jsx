@@ -68,7 +68,6 @@ export default class ChatTest extends React.Component {
   };
 
   componentDidUpdate = () => {
-    // console.log('didUpdate');
     if (
       Chat.shouldTriggerUpdate(this.props.match.params.owner, this.props.match.params.projectName)
     ) {
@@ -84,16 +83,19 @@ export default class ChatTest extends React.Component {
       this.props.match.params.projectName,
     );
     if (observable) {
-      this.subscription = observable.subscribe((docs) => {
-        this.chatDataArr.push(...docs);
-        this.setState({ chatData: this.chatDataArr, isLoading: false });
-        this.scrollToBottom();
-      });
+      this.subscription = observable.subscribe(
+        (docs) => {
+          this.chatDataArr.push(...docs);
+          this.setState({ chatData: this.chatDataArr, isLoading: false });
+          this.scrollToBottom();
+        },
+        (err) => console.log(err),
+        () => console.log('observable disposed'),
+      );
     }
   };
 
   componentWillUnmount = () => {
-    // console.log('willUnmount');
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -145,7 +147,7 @@ export default class ChatTest extends React.Component {
 
         return (
           <div key={index} className={'post' + (fromSelf ? ' self' : '')}>
-            <div className="user">{index}</div>
+            <div className="user">{post.user}</div>
             <div className="msg" title={this.getDate(post.timestamp)}>
               {post.text}
             </div>
