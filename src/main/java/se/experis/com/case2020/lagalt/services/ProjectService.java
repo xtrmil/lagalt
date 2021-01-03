@@ -116,10 +116,16 @@ public class ProjectService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Command cmd = new Command(request);
-        int limit = 6;
-
+        int fetchLimit = 6;
+            List<QueryDocumentSnapshot> projects;
+            Firestore db = FirestoreClient.getFirestore();
         try {
-            var projects = FirestoreClient.getFirestore().collection("projects").orderBy("createdAt", Query.Direction.ASCENDING).startAt(checkTimestamp(timestamp)).limit(limit).get().get().getDocuments();
+            if(timestamp == null){
+               projects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).limitToLast(fetchLimit).get().get().getDocuments();
+            }else{
+               projects =  db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).startAfter(checkTimestamp(timestamp)).limitToLast(fetchLimit).get().get().getDocuments();
+            }
+
             var formattedProjects = getFormattedProjects(snapshotsToDocumentsList(projects), null);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
@@ -144,13 +150,13 @@ public class ProjectService {
                 String userId = authService.getUserIdFromToken(Authorization);
                 String favourite = getFavouriteIndustry(userId);
                 var db = FirestoreClient.getFirestore();
+                List<QueryDocumentSnapshot> filteredProjects;
                 if(timestamp != null){
-                    time = getCreatedAt(timestamp);
+                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(3).get().get().getDocuments();
                 }
                 else{
-                    time = Timestamp.MIN_VALUE;
+                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
                 }
-                var filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).whereEqualTo("industryKey", favourite).startAfter(time).limit(3).get().get().getDocuments();
 
                 filteredProjects.forEach(document -> {
                     filteredProjectsMap.put(document.getId(), document.getReference());
