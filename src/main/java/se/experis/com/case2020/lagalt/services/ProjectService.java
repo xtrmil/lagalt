@@ -100,7 +100,6 @@ public class ProjectService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
         Command cmd = new Command(request);
-        Timestamp time;
         LinkedHashMap<String, DocumentReference> filteredProjectsMap = new LinkedHashMap<>();
         try {
             if (authService.getUserIdFromToken(Authorization) != null) {
@@ -281,7 +280,15 @@ public class ProjectService {
                     cr.data = project;
 
                 } else {
+
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
+                    Map<String, String> tagsMap = new HashMap<>();
+                    tags.listDocuments().forEach(tag -> {
+                        tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
+                    });
+                    project.setTags(tagsMap);
+                    Industry industryKey = project.getIndustryKey();
+                    project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     project.setOwner(authService.getUsername(project.getOwner()));
                     project = addDataToResponseProject(project, projectInfo, projectName,
                             projectDocument.getCreateTime());
