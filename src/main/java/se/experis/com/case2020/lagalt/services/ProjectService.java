@@ -30,7 +30,7 @@ import se.experis.com.case2020.lagalt.utils.Command;
 
 @Service
 public class ProjectService {
-
+    static boolean endLoop;
     @Autowired
     private AuthService authService;
 
@@ -101,17 +101,18 @@ public class ProjectService {
         HttpStatus resp = null;
         Command cmd = new Command(request);
         Timestamp time;
-        Map<String, DocumentReference> filteredProjectsMap = new HashMap<>();
+        LinkedHashMap<String, DocumentReference> filteredProjectsMap = new LinkedHashMap<>();
         try {
             if (authService.getUserIdFromToken(Authorization) != null) {
 
                 String userId = authService.getUserIdFromToken(Authorization);
                 String favourite = getFavouriteIndustry(userId);
+                int favouriteLimit = 6;
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
                 if (timestamp != null) {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
-                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(3).get()
+                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(favouriteLimit).get()
                             .get().getDocuments();
                 } else {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
@@ -123,18 +124,25 @@ public class ProjectService {
                 });
 
                 int startPosition = 0;
-                int desiredMapLength = 5;
+                int fetchLimit = 10;
                 List<QueryDocumentSnapshot> randomProjects;
-                while (filteredProjectsMap.size() < desiredMapLength) {
-                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition)
-                            .limit(desiredMapLength).get().get().getDocuments();
+                var lastProject = db.collection("projects").orderBy("createdAt", Query.Direction.ASCENDING).startAfter(Timestamp.MIN_VALUE).limit(1).get().get().getDocuments();
+                Timestamp last = lastProject.get(0).getTimestamp("createdAt");
+
+                endLoop = false;
+                while (!endLoop && filteredProjectsMap.size() < fetchLimit ) {
+                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition).limit(fetchLimit).get().get().getDocuments();
 
                     randomProjects.forEach(p -> {
-                        if (filteredProjectsMap.size() < desiredMapLength) {
+                        if (filteredProjectsMap.size() < fetchLimit) {
                             filteredProjectsMap.put(p.getId(), p.getReference());
+                            System.out.println(p.getTimestamp("createdAt"));
+                        }
+                        if(p.getTimestamp("createdAt").equals(last)){
+                            endLoop = true;
                         }
                     });
-                    startPosition += desiredMapLength;
+                    startPosition += fetchLimit;
                 }
                 List<DocumentReference> filteredProjectsList = new ArrayList<>(filteredProjectsMap.values());
 
@@ -164,8 +172,6 @@ public class ProjectService {
             String industryKey = document.get().get().get("industryKey").toString();
             if (!projects.containsKey(industryKey)) {
                 projects.put(industryKey, 1);
-                System.out.println("first entry");
-                System.out.println(industryKey);
             } else {
                 int count = projects.get(industryKey);
                 projects.put(industryKey, count + 1);
