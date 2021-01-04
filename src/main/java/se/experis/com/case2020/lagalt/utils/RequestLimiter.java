@@ -17,7 +17,7 @@ import se.experis.com.case2020.lagalt.models.CommonResponse;
 public class RequestLimiter {
 
     private long expireTime = minutesToMs(1);
-    private int maxAttempts = 3;
+    private int maxAttempts = 10;
 
     private Map<String, Queue<Long>> failedAuthentications = new HashMap<>();
 
