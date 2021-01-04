@@ -4,9 +4,10 @@ import './ProfileComponent.css';
 import { Button } from 'react-bootstrap';
 import ProfileModal from './ProfileModal';
 const ProfileComponent = (props) => {
-  const { loggedInUserId, mockLoggedInUser } = props;
+  const { loggedInUserId, loggedInUser } = props;
   const [user, setUser] = useState(props.user);
-  const profileOwner = loggedInUserId === user.username ? true : false;
+
+  const profileOwner = loggedInUserId.toUpperCase() === user.username.toUpperCase() ? true : false;
   const skillsList =
     user.tags != null ? (
       Object.values(user.tags).map((value, index) => {
@@ -46,7 +47,7 @@ const ProfileComponent = (props) => {
         handleCloseModal={handleCloseModal}
         handleSaveChanges={handleSaveChanges}
         user={user}
-        loggedInUserId={mockLoggedInUser}
+        loggedInUserId={loggedInUser}
       ></ProfileModal>
 
       <div className="card">

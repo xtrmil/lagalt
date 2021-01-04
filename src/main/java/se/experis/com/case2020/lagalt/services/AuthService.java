@@ -157,7 +157,7 @@ public class AuthService {
 
         try {
             var userId = getUserIdFromToken(jwtToken);
-            if (userId == null) {
+            if (userId != null) {
                 var db = FirestoreClient.getFirestore();
                 var userRef = db.collection("users").document(userId);
                 var userDocument = userRef.get().get();
