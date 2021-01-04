@@ -34,6 +34,9 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class UserService {
 
     @Autowired
+    private DatabaseService databaseService;
+
+    @Autowired
     private AuthService authService;
 
     @Autowired
@@ -170,7 +173,6 @@ public class UserService {
                     user.setName(partialUser.getName());
                 }
                 if (partialUser.getTags() != null) {
-                    DatabaseService databaseService = new DatabaseService();
                     var futures = databaseService.emptyCollection(documentReference.collection("tags"));
 
                     ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't

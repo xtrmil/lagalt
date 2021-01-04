@@ -37,53 +37,6 @@ public class ProjectService {
     @Autowired
     private UserService userService;
 
-    // @PostConstruct
-    public void testSearchQuery() {
-        try {
-            var db = FirestoreClient.getFirestore();
-            var list = new ArrayList<String>();
-            String searchString = "project";
-            var searchList = Arrays.asList(searchString.split(" "));
-
-            // var result =
-            // db.collection("projects").orderBy("title").startAt(searchString).endAt(searchString
-            // + "\uf8ff").get().get().getDocuments();
-            var result = db.collection("projects").whereArrayContains("searchArr", searchString).get().get()
-                    .getDocuments();
-
-            System.out.println(result.size());
-            for (var document : result) {
-                String title = document.getString("title");
-                list.add(document.getId().substring(0, 3) + " " + title);
-            }
-            list.forEach(System.out::println);
-
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-    }
-
-    public void javaSearch() {
-        try {
-            var db = FirestoreClient.getFirestore();
-
-            var list = new ArrayList<String>();
-            String searchString = "proj";
-            var result = db.collection("projects").get().get().getDocuments();
-
-            for (var document : result) {
-                String title = document.getString("title");
-                if (title.contains(searchString)) {
-                    list.add(document.getId().substring(0, 3) + " " + title);
-                }
-            }
-            list.forEach(System.out::println);
-
-        } catch (Exception e) {
-            System.err.println(e.getMessage());
-        }
-    }
-
     public ResponseEntity<CommonResponse> getProjectsSearch(HttpServletRequest request, String search) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -206,7 +159,7 @@ public class ProjectService {
     private String getFavouriteIndustry(String userId) throws ExecutionException, InterruptedException {
         var db = FirestoreClient.getFirestore();
         var documents = db.collection("users").document(userId).collection("visited").listDocuments();
-        HashMap<String, Integer> projects = new HashMap();
+        HashMap<String, Integer> projects = new HashMap<>();
         for (var document : documents) {
             String industryKey = document.get().get().get("industryKey").toString();
             if (!projects.containsKey(industryKey)) {
@@ -579,7 +532,7 @@ public class ProjectService {
 
     public String getProjectId(String owner, String projectName) {
         var docRef = getProjectDocumentReference(owner, projectName);
-        if(docRef != null) {
+        if (docRef != null) {
             return docRef.getId();
         }
         return null;
