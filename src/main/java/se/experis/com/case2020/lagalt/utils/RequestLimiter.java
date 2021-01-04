@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 
 @Component
-public class AuthLimiter {
+public class RequestLimiter {
 
     private long expireTime = msInMinutes(10);
     private int maxAttempts = 10;
@@ -28,23 +28,23 @@ public class AuthLimiter {
     public boolean addFailedAttempt(HttpServletRequest request) {
         String key = request.getRemoteAddr();
         var timestamps = failedAuthentications.get(key);
-        if(timestamps == null) {
+        if (timestamps == null) {
             timestamps = new LinkedList<>();
         }
         timestamps.add(System.currentTimeMillis());
         failedAuthentications.put(key, timestamps);
-        
+
         return failedAuthentications.size() >= maxAttempts;
     }
-    
+
     public boolean isRequestBlocked(HttpServletRequest request) {
         String key = request.getRemoteAddr();
         var timestamps = failedAuthentications.get(key);
-        if(timestamps == null) {
+        if (timestamps == null) {
             return false;
         }
 
-        while(!timestamps.isEmpty() && hasExpired(timestamps.peek())) {
+        while (!timestamps.isEmpty() && hasExpired(timestamps.peek())) {
             timestamps.poll();
         }
         return timestamps.size() >= maxAttempts;
