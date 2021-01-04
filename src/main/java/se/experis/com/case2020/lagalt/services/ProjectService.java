@@ -32,7 +32,7 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class ProjectService {
 
     @Autowired
-    private MockAuthService authService;
+    private AuthService authService;
 
     @Autowired
     private UserService userService;
@@ -48,7 +48,8 @@ public class ProjectService {
             // var result =
             // db.collection("projects").orderBy("title").startAt(searchString).endAt(searchString
             // + "\uf8ff").get().get().getDocuments();
-            var result = db.collection("projects").whereArrayContains("searchArr", searchString).get().get().getDocuments();
+            var result = db.collection("projects").whereArrayContains("searchArr", searchString).get().get()
+                    .getDocuments();
 
             System.out.println(result.size());
             for (var document : result) {
@@ -91,8 +92,8 @@ public class ProjectService {
         try {
             var db = FirestoreClient.getFirestore();
 
-            var documents = db.collection("projects").orderBy("title").startAt(search).endAt(search + "\uf8ff")
-                    .get().get().getDocuments();
+            var documents = db.collection("projects").orderBy("title").startAt(search).endAt(search + "\uf8ff").get()
+                    .get().getDocuments();
 
             cr.data = getFormattedProjects(snapshotsToDocumentsList(documents), null);
             cr.message = "Search result for " + search;
@@ -104,33 +105,36 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    private Timestamp checkTimestamp(ObjectNode timestamp){
-        if(timestamp == null){
+    private Timestamp checkTimestamp(ObjectNode timestamp) {
+        if (timestamp == null) {
             return Timestamp.MIN_VALUE;
-        }else{
+        } else {
             return getCreatedAt(timestamp);
         }
     }
 
-    public ResponseEntity<CommonResponse> getProjects(HttpServletRequest request, HttpServletResponse response, ObjectNode timestamp){
+    public ResponseEntity<CommonResponse> getProjects(HttpServletRequest request, HttpServletResponse response,
+            ObjectNode timestamp) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Command cmd = new Command(request);
         int fetchLimit = 6;
-            List<QueryDocumentSnapshot> projects;
-            Firestore db = FirestoreClient.getFirestore();
+        List<QueryDocumentSnapshot> projects;
+        Firestore db = FirestoreClient.getFirestore();
         try {
-            if(timestamp == null){
-               projects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).limitToLast(fetchLimit).get().get().getDocuments();
-            }else{
-               projects =  db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).startAfter(checkTimestamp(timestamp)).limitToLast(fetchLimit).get().get().getDocuments();
+            if (timestamp == null) {
+                projects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                        .limitToLast(fetchLimit).get().get().getDocuments();
+            } else {
+                projects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                        .startAfter(checkTimestamp(timestamp)).limitToLast(fetchLimit).get().get().getDocuments();
             }
 
             var formattedProjects = getFormattedProjects(snapshotsToDocumentsList(projects), null);
             cr.data = formattedProjects;
             resp = HttpStatus.OK;
 
-        }catch (ExecutionException | InterruptedException e){
+        } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
@@ -138,24 +142,27 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request, HttpServletResponse response, String Authorization,ObjectNode timestamp){
+    public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request,
+            HttpServletResponse response, String Authorization, ObjectNode timestamp) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
         Command cmd = new Command(request);
         Timestamp time;
         Map<String, DocumentReference> filteredProjectsMap = new HashMap<>();
         try {
-            if(authService.getUserIdFromToken(Authorization) != null) {
+            if (authService.getUserIdFromToken(Authorization) != null) {
 
                 String userId = authService.getUserIdFromToken(Authorization);
                 String favourite = getFavouriteIndustry(userId);
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
-                if(timestamp != null){
-                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(3).get().get().getDocuments();
-                }
-                else{
-                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING).whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
+                if (timestamp != null) {
+                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(3).get()
+                            .get().getDocuments();
+                } else {
+                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                            .whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
                 }
 
                 filteredProjects.forEach(document -> {
@@ -166,7 +173,8 @@ public class ProjectService {
                 int desiredMapLength = 5;
                 List<QueryDocumentSnapshot> randomProjects;
                 while (filteredProjectsMap.size() < desiredMapLength) {
-                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition).limit(desiredMapLength).get().get().getDocuments();
+                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition)
+                            .limit(desiredMapLength).get().get().getDocuments();
 
                     randomProjects.forEach(p -> {
                         if (filteredProjectsMap.size() < desiredMapLength) {
@@ -181,7 +189,7 @@ public class ProjectService {
                 cr.data = formattedProjects;
                 resp = HttpStatus.OK;
 
-            }else{
+            } else {
                 resp = HttpStatus.UNAUTHORIZED;
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -215,7 +223,8 @@ public class ProjectService {
         return favourite;
     }
 
-    private List<ProjectSummarizedView> getFormattedProjects(Iterable<DocumentReference> projects, String Authorization) {
+    private List<ProjectSummarizedView> getFormattedProjects(Iterable<DocumentReference> projects,
+            String Authorization) {
         List<ProjectSummarizedView> allProjects = new ArrayList<>();
 
         projects.forEach(p -> {
@@ -256,7 +265,8 @@ public class ProjectService {
         return allProjects;
     }
 
-    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, String owner, String projectName, String Authorization) {
+    public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, String owner,
+            String projectName, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -304,7 +314,8 @@ public class ProjectService {
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
 
-                    project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName, projectDocument.getCreateTime());
+                    project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName,
+                            projectDocument.getCreateTime());
                     project.setLinks(linksMap);
                     project.setMessageBoards(projectInfo.get("messageBoards"));
 
@@ -313,12 +324,14 @@ public class ProjectService {
                 } else {
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
                     project.setOwner(authService.getUsername(project.getOwner()));
-                    project = addDataToResponseProject(project, projectInfo, projectName, projectDocument.getCreateTime());
+                    project = addDataToResponseProject(project, projectInfo, projectName,
+                            projectDocument.getCreateTime());
 
                     cr.data = project;
                 }
 
-                DocumentReference userReference = userService.getUserDocument(authService.getUserIdFromToken(Authorization));
+                DocumentReference userReference = userService
+                        .getUserDocument(authService.getUserIdFromToken(Authorization));
                 var visited = userReference.collection("visited").document(projectReference.getId());
                 visited.set(new HashMap<>());
                 visited.update("industryKey", projectDocument.get("industryKey"));
@@ -338,7 +351,8 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project, String Authorization) {
+    public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project,
+            String Authorization) {
         CommonResponse cr = new CommonResponse();
         Command cmd = new Command(request);
         HttpStatus resp = HttpStatus.CREATED;
@@ -357,7 +371,6 @@ public class ProjectService {
 
                     String industryKey = project.getIndustry().keySet().iterator().next().toString();
                     project.setIndustryKey(Industry.valueOf(industryKey));
-
 
                     var docRef = db.collection("projects").document();
 
@@ -389,7 +402,8 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, String owner, String projectName, ProjectMemberView partialProject, String Authorization) {
+    public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, String owner,
+            String projectName, ProjectMemberView partialProject, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -471,7 +485,8 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project, Map<String, Set<String>> projectInfo, String projectId, Timestamp createdAt) {
+    private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project,
+            Map<String, Set<String>> projectInfo, String projectId, Timestamp createdAt) {
         var admins = projectInfo.get("admins");
         if (admins != null) {
             Set<String> adminNames = new HashSet<>();
@@ -546,7 +561,8 @@ public class ProjectService {
     public DocumentReference getProjectDocumentReference(String owner, String projectName) {
         try {
             var db = FirestoreClient.getFirestore();
-            var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get().get();
+            var projectRecord = db.collection("projectRecords").document(getProjectNameId(owner, projectName)).get()
+                    .get();
             if (projectRecord.exists()) {
                 var projectId = projectRecord.getString("pid");
                 return getProjectDocumentReference(projectId);
@@ -638,13 +654,14 @@ public class ProjectService {
         return map.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
     }
 
-    private List<DocumentReference> snapshotsToDocumentsList(List<QueryDocumentSnapshot> snapshots){
+    private List<DocumentReference> snapshotsToDocumentsList(List<QueryDocumentSnapshot> snapshots) {
 
         return snapshots.stream().map(QueryDocumentSnapshot::getReference).collect(Collectors.toList());
     }
 
-    private Timestamp getCreatedAt(ObjectNode timestamp){
+    private Timestamp getCreatedAt(ObjectNode timestamp) {
 
-        return Timestamp.ofTimeSecondsAndNanos(timestamp.get("createdAt").get("seconds").asLong(), timestamp.get("createdAt").get("nanos").asInt());
+        return Timestamp.ofTimeSecondsAndNanos(timestamp.get("createdAt").get("seconds").asLong(),
+                timestamp.get("createdAt").get("nanos").asInt());
     }
 }

@@ -27,25 +27,26 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class MessageBoardService {
 
     @Autowired
-    private MockAuthService authService;
-    
+    private AuthService authService;
+
     @Autowired
     private ProjectService projectService;
 
-    public ResponseEntity<CommonResponse> getAllThreads(HttpServletRequest request, String projectOwner, String projectName, String Authorization) {
+    public ResponseEntity<CommonResponse> getAllThreads(HttpServletRequest request, String projectOwner,
+            String projectName, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         try {
-            if(authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
+            if (authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
                 String projectId = projectService.getProjectId(projectOwner, projectName);
 
                 var defaultMessageBoardDocument = getDefaultMessageBoardReference(projectId);
                 var threadCollections = defaultMessageBoardDocument.listCollections();
-                
-                if(!defaultMessageBoardDocument.get().get().exists()) {
-                    
+
+                if (!defaultMessageBoardDocument.get().get().exists()) {
+
                     List<MessageBoardThread> threads = new ArrayList<>();
                     threadCollections.forEach(t -> {
                         try {
@@ -53,13 +54,14 @@ public class MessageBoardService {
                             var initialPost = t.document("0").get().get();
                             String title = initialPost.getString("title");
                             String creator = authService.getUsername(initialPost.getString("user"));
-                            
-                            thread.setLink("/api/v1/projects/" + projectOwner + "/" + projectName + "/messageboard/" + t.getId());
+
+                            thread.setLink("/api/v1/projects/" + projectOwner + "/" + projectName + "/messageboard/"
+                                    + t.getId());
                             thread.setTitle(title);
                             thread.setNrOfMessages(t.get().get().getDocuments().size());
                             thread.setCreatedBy(creator);
                             threads.add(thread);
-                        } catch(Exception e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     });
@@ -73,7 +75,7 @@ public class MessageBoardService {
                 cr.message = "You are not authorized to view this message board";
                 resp = HttpStatus.UNAUTHORIZED;
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
             cr.message = "Server error";
@@ -82,19 +84,21 @@ public class MessageBoardService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getPosts(HttpServletRequest request, String projectOwner, String projectName, String threadId, String Authorization) {
+    public ResponseEntity<CommonResponse> getPosts(HttpServletRequest request, String projectOwner, String projectName,
+            String threadId, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         try {
-            if(authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
+            if (authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
                 String projectId = projectService.getProjectId(projectOwner, projectName);
-                var threadCollection = getDefaultMessageBoardReference(projectId).collection(threadId).whereEqualTo("deleted", false).get().get();
-                
-                if(!threadCollection.isEmpty()) {
+                var threadCollection = getDefaultMessageBoardReference(projectId).collection(threadId)
+                        .whereEqualTo("deleted", false).get().get();
+
+                if (!threadCollection.isEmpty()) {
                     Set<MessageBoardPost> posts = new HashSet<>();
-                    
+
                     var postDocuments = threadCollection.getDocuments();
                     postDocuments.forEach(p -> {
                         try {
@@ -116,7 +120,7 @@ public class MessageBoardService {
                 cr.message = "You are not authorized to post messages on this message board";
                 resp = HttpStatus.UNAUTHORIZED;
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
             cr.message = "Server error";
@@ -125,51 +129,56 @@ public class MessageBoardService {
         return new ResponseEntity<>(cr, resp);
     }
 
-
-    public ResponseEntity<CommonResponse> createThread(HttpServletRequest request, HttpServletResponse response, String projectOwner, String projectName, ObjectNode requestBody, 
-    String Authorization) {
-        return createMessageBoardContent(request, response, projectOwner, projectName, requestBody.get("title").asText(), requestBody.get("text").asText(), Authorization, true);
-    }
-    
-    public ResponseEntity<CommonResponse> createPost(HttpServletRequest request, HttpServletResponse response, String projectOwner, String projectName, String threadId,
-    ObjectNode requestBody, String Authorization) {
-        return createMessageBoardContent(request, response, projectOwner, projectName, threadId, requestBody.get("text").asText(), Authorization, false);
+    public ResponseEntity<CommonResponse> createThread(HttpServletRequest request, HttpServletResponse response,
+            String projectOwner, String projectName, ObjectNode requestBody, String Authorization) {
+        return createMessageBoardContent(request, response, projectOwner, projectName,
+                requestBody.get("title").asText(), requestBody.get("text").asText(), Authorization, true);
     }
 
-    private ResponseEntity<CommonResponse> createMessageBoardContent(HttpServletRequest request, HttpServletResponse response, String projectOwner, String projectName,
-    String threadName, String text, String Authorization, boolean createNewThread) {
+    public ResponseEntity<CommonResponse> createPost(HttpServletRequest request, HttpServletResponse response,
+            String projectOwner, String projectName, String threadId, ObjectNode requestBody, String Authorization) {
+        return createMessageBoardContent(request, response, projectOwner, projectName, threadId,
+                requestBody.get("text").asText(), Authorization, false);
+    }
+
+    private ResponseEntity<CommonResponse> createMessageBoardContent(HttpServletRequest request,
+            HttpServletResponse response, String projectOwner, String projectName, String threadName, String text,
+            String Authorization, boolean createNewThread) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         String threadId = getSafeTitle(threadName);
-        
+
         try {
             var projectId = projectService.getProjectId(projectOwner, projectName);
-            
-            if(projectId != null) {
-                
+
+            if (projectId != null) {
+
                 String userId = authService.getUserIdFromToken(Authorization);
-                if(userId != null && authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
-                    CollectionReference threadReference = getDefaultMessageBoardReference(projectId).collection(threadId);
-                    
-                    if((createNewThread && threadReference.get().get().isEmpty()) || (!createNewThread && !threadReference.get().get().isEmpty())) {
-                        
+                if (userId != null && authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
+                    CollectionReference threadReference = getDefaultMessageBoardReference(projectId)
+                            .collection(threadId);
+
+                    if ((createNewThread && threadReference.get().get().isEmpty())
+                            || (!createNewThread && !threadReference.get().get().isEmpty())) {
+
                         MessageBoardPost post = new MessageBoardPost();
                         post.setText(text);
                         post.setUser(userId);
-                        
+
                         String postId = "" + threadReference.get().get().getDocuments().size();
                         threadReference.document(postId).set(post);
-                        
-                        if(createNewThread) {
+
+                        if (createNewThread) {
                             threadReference.document(postId).update("title", threadName);
                             cr.message = "New thread created " + threadId + "'";
                         } else {
                             cr.message = "Message posted";
                         }
-                        
+
                         resp = HttpStatus.OK;
-                        response.addHeader("Location", "/" + projectOwner + "/" + projectName + "/messageboard/" + threadId);
+                        response.addHeader("Location",
+                                "/" + projectOwner + "/" + projectName + "/messageboard/" + threadId);
                     } else {
                         resp = HttpStatus.BAD_REQUEST;
                         cr.message = "Invalid parameters";
@@ -191,7 +200,8 @@ public class MessageBoardService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> deletePost(HttpServletRequest request, String projectOwner, String projectName, String threadId, String messageId, String Authorization) {
+    public ResponseEntity<CommonResponse> deletePost(HttpServletRequest request, String projectOwner,
+            String projectName, String threadId, String messageId, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -199,14 +209,15 @@ public class MessageBoardService {
         String userId = authService.getUserIdFromToken(Authorization);
 
         try {
-            DocumentReference messageDocument = getDefaultMessageBoardReference(projectId).collection(threadId).document(messageId);
+            DocumentReference messageDocument = getDefaultMessageBoardReference(projectId).collection(threadId)
+                    .document(messageId);
             System.out.println(messageId);
             System.out.println(messageDocument);
             DocumentSnapshot post = messageDocument.get().get();
 
             if (post.exists()) {
-                
-                if(userId != null && userId.equals(post.getString("user"))) {
+
+                if (userId != null && userId.equals(post.getString("user"))) {
                     messageDocument.update("deleted", true);
                     cr.message = "Successfully deleted message with id: " + messageId;
                     resp = HttpStatus.OK;
@@ -220,7 +231,7 @@ public class MessageBoardService {
                 resp = HttpStatus.NOT_FOUND;
             }
 
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
             cr.message = "Server error";
@@ -232,7 +243,7 @@ public class MessageBoardService {
     private DocumentReference getDefaultMessageBoardReference(String projectId) {
         return projectService.getProjectDocumentReference(projectId).collection("messageBoards").document("general");
     }
-    
+
     private String getSafeTitle(String original) {
         return original.toLowerCase().replaceAll(" ", "-").replaceAll("[^-a-zA-Z0-9]", "");
     }
