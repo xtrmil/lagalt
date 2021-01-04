@@ -61,7 +61,7 @@ export const editProjectSchema = yup.object({
 
 export const editProfileSchema = yup.object({
   name: yup.string().required('Name is a required field'),
-  skills: yup
+  tags: yup
     .array()
     .of(
       yup.object().shape({
@@ -71,7 +71,7 @@ export const editProfileSchema = yup.object({
     )
     .nullable()
     .required('Select at least one skill'),
-  description: yup.string().required('Description is a required field'),
+  description: yup.string().nullable().required('Description is a required field'),
 });
 
 export const updateProjectSchema = yup.object({
@@ -113,4 +113,27 @@ export const registerSchema = yup.object({
   name: yup.string().required('Name is required'),
   email: yup.string().required('Email is required'),
   password: yup.string().required('Password is required'),
+});
+
+export const loginSchema = yup.object({
+  email: yup.string().required('Email is required'),
+  password: yup.string().required('Password is required'),
+});
+
+export const createPostSchema = yup.object({
+  topicHeading: yup.string().required('Topic heading is required'),
+  topicText: yup.string().required('Topic text is required'),
+});
+
+export const replyPostSchema = yup.object({
+  replyPost: yup.string().required('Text is required'),
+});
+
+export const editPostSchema = yup.object({
+  topicHeading: yup.string().required('Topic heading is required'),
+  topicText: yup.string().required('Topic text is required'),
+});
+
+export const deletePostSchema = yup.object({
+  deletePost: yup.string().required('Text is required'),
 });

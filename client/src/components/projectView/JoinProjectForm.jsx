@@ -4,13 +4,13 @@ import { Form, Button } from 'react-bootstrap';
 import TextInput from '../form/TextInput';
 import CheckboxInput from '../form/CheckboxInput';
 import { joinProjectSchema } from '../../utils/form/FormUtils';
-const JoinProjectForm = () => {
+const JoinProjectForm = (props) => {
+  const { handleJoinProject } = props;
   const initialValues = { motivation: '', acceptTerms: false };
 
   const onFormSubmit = (values) => {
-    console.log('Values from the form: ', values);
-    const application = { motivation: values.motivation };
-    console.log('This should be the application', application);
+    const motivation = values.motivation;
+    handleJoinProject(motivation);
   };
 
   return (

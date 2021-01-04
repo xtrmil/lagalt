@@ -4,17 +4,26 @@ import './ProfileComponent.css';
 import { Button } from 'react-bootstrap';
 import ProfileModal from './ProfileModal';
 const ProfileComponent = (props) => {
-  const { loggedInUserId } = props;
+  const { loggedInUserId, mockLoggedInUser } = props;
   const [user, setUser] = useState(props.user);
-  const profileOwner = loggedInUserId === user.uid ? true : false;
-
-  const skillsList = user.skills.map((skill, index) => {
-    return (
-      <div className={index % 2 == 0 ? 'mr-1 mt-1 skill odd' : 'mr-1 mt-1 skill'} key={index}>
-        {skill}
-      </div>
+  const profileOwner = loggedInUserId === user.username ? true : false;
+  const skillsList =
+    user.tags != null ? (
+      Object.values(user.tags).map((value, index) => {
+        return (
+          <div
+            className={
+              index % 2 == 0 ? 'col-sm-12 mr-1 mt-1 skill odd' : 'col-sm-12 mr-1 mt-1 skill'
+            }
+            key={index}
+          >
+            {value}
+          </div>
+        );
+      })
+    ) : (
+      <div>No skills</div>
     );
-  });
   const [showModal, setShowModal] = useState(false);
 
   const onEditClick = () => {
@@ -37,6 +46,7 @@ const ProfileComponent = (props) => {
         handleCloseModal={handleCloseModal}
         handleSaveChanges={handleSaveChanges}
         user={user}
+        loggedInUserId={mockLoggedInUser}
       ></ProfileModal>
 
       <div className="card">
@@ -46,20 +56,24 @@ const ProfileComponent = (props) => {
               <div className="imgplaceholder mb-2">IMAGE</div>
               <h3 className="mb-1 text-center">Skills</h3>
               <div className="mb-2 text-center">{skillsList}</div>
-
               <h3 className="mb-1 text-center">Portfolio</h3>
               <div className="text-center">
-                <div>there should be a list of projects here</div>
-                <div>there should be a list of projects here</div>
-                <div>there should be a list of projects here</div>
-                <div>there should be a list of projects here</div>
-                <div>there should be a list of projects here</div>
+                {user.portfolio ? user.portfolio : 'No portfolio available'}
+              </div>
+              <h3 className="mb-1 text-center">Working on</h3>
+              <div className="text-center">
+                {user.memberOf
+                  ? user.memberOf.map((project, index) => {
+                      return <div key={index}>{project}</div>;
+                    })
+                  : 'Not working on anything'}
               </div>
             </div>
             <div className="col-sm-8 pl-0">
               <div className="row no-gutters">
                 <div className="col-sm-8">
-                  <h2>{user.name}</h2>
+                  <h2>{user.username}</h2>
+                  <div className="mb-2">{user.name}</div>
                   <div className="mb-2">{user.email}</div>
                 </div>
                 <div className="col-sm-4">

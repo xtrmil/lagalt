@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -12,10 +14,6 @@ import com.google.api.core.ApiFutures;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.EventListener;
-import com.google.cloud.firestore.FirestoreException;
-import com.google.cloud.firestore.ListenerRegistration;
-import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.WriteResult;
 import com.google.firebase.cloud.FirestoreClient;
 
@@ -26,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
+import se.experis.com.case2020.lagalt.models.application.ApplicationProfileView;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.user.UserProfileView;
 import se.experis.com.case2020.lagalt.models.user.UserPublicView;
@@ -35,7 +34,13 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class UserService {
 
     @Autowired
-    private MockAuthService authService;
+    private DatabaseService databaseService;
+
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private ProjectService projectService;
 
     public ResponseEntity<CommonResponse> getUserProfile(HttpServletRequest request, String Authorization) {
         Command cmd = new Command(request);
@@ -62,21 +67,36 @@ public class UserService {
                             userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(doc.getId());
                         });
                     });
-                    Set<String> applications = new HashSet<>();
-                    if (userInfo.get("appliedTo") != null) {
 
+                    if (userInfo.get("appliedTo") != null) {
+                        Set<ApplicationProfileView> applications = new HashSet<>();
                         userInfo.get("appliedTo").forEach(application -> {
                             try {
-                                applications.add(db.collection("applications").document(application).get().get()
-                                        .get("projectId").toString());
+                                ApplicationProfileView apv = db.collection("applications").document(application).get()
+                                        .get().toObject(ApplicationProfileView.class);
+                                apv.setProject(projectService.getProjectTitle(apv.getProject()));
+                                applications.add(apv);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         });
-                        user.setAppliedTo(userInfo.get("appliedTo"));
+                        user.setAppliedTo(applications);
                     }
-                    user.setContributedTo(userInfo.get("contributedTo"));
-                    user.setMemberOf(userInfo.get("memberOf")); // TODO returns projectId. return owner/projectName ?
+
+                    Set<String> contributedProjects = projectService
+                            .translateIdsToProjectNames(userInfo.get("contributedTo"));
+                    user.setContributedTo(contributedProjects);
+                    Set<String> memberOfProjects = projectService.translateIdsToProjectNames(userInfo.get("memberOf"));
+                    user.setMemberOf(memberOfProjects);
+
+                    if (userInfo.get("tags") != null) {
+                        Map<String, String> tagsMap = new HashMap<>();
+
+                        userInfo.get("tags").forEach(tag -> {
+                            tagsMap.put(tag, Tag.valueOf(tag.toString()).DISPLAY_TAG);
+                        });
+                        user.setTags(tagsMap);
+                    }
 
                     cr.message = "Profile user details for: " + user.getUsername();
                     cr.data = user;
@@ -124,7 +144,8 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser, String Authorization) {
+    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser,
+            String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -139,23 +160,23 @@ public class UserService {
                 if (partialUser.getDescription() != null) {
                     user.setDescription(partialUser.getDescription());
                 }
-                if (partialUser.getHidden() == null) {
+                if (partialUser.getHidden() != null) {
                     user.setHidden(partialUser.getHidden());
                 }
-                if (partialUser.getImageURL() == null) {
+                if (partialUser.getImageURL() != null) {
                     user.setImageURL(partialUser.getImageURL());
                 }
-                if (partialUser.getPortfolio() == null) {
+                if (partialUser.getPortfolio() != null) {
                     user.setPortfolio(partialUser.getPortfolio());
                 }
-                if (partialUser.getName() == null) {
+                if (partialUser.getName() != null) {
                     user.setName(partialUser.getName());
                 }
                 if (partialUser.getTags() != null) {
-                    DatabaseService databaseService = new DatabaseService();
                     var futures = databaseService.emptyCollection(documentReference.collection("tags"));
-                    
-                    ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't added before they're deleted 
+
+                    ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't
+                                                         // added before they're deleted
 
                     partialUser.getTags().keySet().forEach(tagKey -> {
                         if (EnumUtils.isValidEnum(Tag.class, tagKey)) {
@@ -224,16 +245,12 @@ public class UserService {
         return user;
     }
 
-    private UserProfileView getUserProfileobject(String userId) {
-        try {
-            return getUserDocument(userId).get().get().toObject(UserProfileView.class);
-        } catch(Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    private UserProfileView getUserProfileobject(String userId)
+            throws InterruptedException, CancellationException, ExecutionException {
+        return getUserDocument(userId).get().get().toObject(UserProfileView.class);
     }
 
-    private DocumentReference getUserDocument(String userId) {
+    public DocumentReference getUserDocument(String userId) {
         return FirestoreClient.getFirestore().collection("users").document(userId);
     }
 
