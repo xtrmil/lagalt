@@ -26,138 +26,6 @@ public class AuthService {
     @Autowired
     private RequestLimiter requestLimiter;
 
-    /**
-     * Checks whether the user name (user id) is available or not. Used when signing
-     * up
-     * 
-     * @param username
-     * @return 200 if available, 409 if username exists, 500 if other error
-     */
-    public HttpStatus getUserNameAvailability(String username) {
-        try {
-            var db = FirestoreClient.getFirestore();
-            var existingUser = db.collection("userRecords").document(username.toLowerCase()).get().get();
-            return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-    }
-
-    /**
-     * Checks whether a user is member of a particular project
-     * 
-     * @param projectId ownerId-projectTitle
-     * @param jwtToken
-     * @return
-     */
-    public boolean isProjectMember(String owner, String projectName, String jwtToken) {
-        return isPartOfProjectCollection(owner, projectName, jwtToken, "members");
-    }
-
-    /**
-     * Checks whether a user is admin of a particular project
-     * 
-     * @param projectId ownerId-projectTitle
-     * @param jwtToken
-     * @return
-     */
-    public boolean isProjectAdmin(String owner, String projectName, String jwtToken) {
-        return isPartOfProjectCollection(owner, projectName, jwtToken, "admins")
-                || isOwner(owner, projectName, jwtToken);
-    }
-
-    private boolean isOwner(String owner, String projectName, String jwtToken) {
-        try {
-            var db = FirestoreClient.getFirestore();
-            String projectId = projectService.getProjectId(owner, projectName);
-            String userId = getUserIdFromToken(jwtToken);
-            var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
-            return ownerId.equals(userId);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    public boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken) {
-        return isOwner(owner, projectName, jwtToken) || isProjectAdmin(owner, projectName, jwtToken)
-                || isProjectMember(owner, projectName, jwtToken);
-    }
-
-    private boolean isPartOfProjectCollection(String owner, String projectName, String jwtToken, String collection) {
-        String userId = getUserIdFromToken(jwtToken);
-
-        if (userId != null) {
-            try {
-                var db = FirestoreClient.getFirestore();
-                String projectId = projectService.getProjectId(owner, projectName);
-                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
-                        .get();
-                return ref.exists();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return false;
-    }
-
-    public String getUserIdFromToken(String jwtToken) {
-        try {
-            var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
-            return fbToken.getUid();
-        } catch (IllegalArgumentException | FirebaseAuthException e) {
-            System.err.println("getUserId: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public String getUserId(String username) {
-        try {
-            var db = FirestoreClient.getFirestore();
-            var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
-            if (userRecord.exists()) {
-                return userRecord.getString("uid");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public String getUsernameFromToken(String jwtToken) {
-        try {
-            var db = FirestoreClient.getFirestore();
-            var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
-            var user = db.collection("users").document(fbToken.getUid()).get().get();
-
-            if (user.exists()) {
-                return user.getString("username").toLowerCase();
-            }
-        } catch (IllegalArgumentException | FirebaseAuthException e) {
-            System.err.println("getUsername: " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public String getUsername(String userId) {
-        try {
-            var db = FirestoreClient.getFirestore();
-            var user = db.collection("users").document(userId).get().get();
-            if (user.exists()) {
-                return user.getString("username").toLowerCase();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     public ResponseEntity<CommonResponse> addUserRecord(String username, String jwtToken) {
         HttpStatus resp;
         var cr = new CommonResponse();
@@ -246,6 +114,138 @@ public class AuthService {
             cr.message = "Could not sign out; an error occured on the server";
             return new ResponseEntity<>(cr, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Checks whether the user name (user id) is available or not. Used when signing
+     * up
+     * 
+     * @param username
+     * @return 200 if available, 409 if username exists, 500 if other error
+     */
+    public HttpStatus getUserNameAvailability(String username) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            var existingUser = db.collection("userRecords").document(username.toLowerCase()).get().get();
+            return existingUser.exists() ? HttpStatus.CONFLICT : HttpStatus.OK;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+    }
+
+    /**
+     * Checks whether a user is member of a particular project
+     * 
+     * @param projectId ownerId-projectTitle
+     * @param jwtToken
+     * @return
+     */
+    public boolean isProjectMember(String owner, String projectName, String jwtToken) {
+        return isPartOfProjectCollection(owner, projectName, jwtToken, "members");
+    }
+
+    /**
+     * Checks whether a user is admin of a particular project
+     * 
+     * @param projectId ownerId-projectTitle
+     * @param jwtToken
+     * @return
+     */
+    public boolean isProjectAdmin(String owner, String projectName, String jwtToken) {
+        return isPartOfProjectCollection(owner, projectName, jwtToken, "admins")
+                || isOwner(owner, projectName, jwtToken);
+    }
+
+    public boolean isOwner(String owner, String projectName, String jwtToken) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            String projectId = projectService.getProjectId(owner, projectName);
+            String userId = getUserIdFromToken(jwtToken);
+            var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
+            return ownerId.equals(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken) {
+        return isOwner(owner, projectName, jwtToken) || isProjectAdmin(owner, projectName, jwtToken)
+                || isProjectMember(owner, projectName, jwtToken);
+    }
+
+    private boolean isPartOfProjectCollection(String owner, String projectName, String jwtToken, String collection) {
+        String userId = getUserIdFromToken(jwtToken);
+
+        if (userId != null) {
+            try {
+                var db = FirestoreClient.getFirestore();
+                String projectId = projectService.getProjectId(owner, projectName);
+                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
+                        .get();
+                return ref.exists();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public String getUserIdFromToken(String jwtToken) {
+        try {
+            var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
+            return fbToken.getUid();
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            System.err.println("getUserId: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getUserId(String username) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            var userRecord = db.collection("userRecords").document(username.toLowerCase()).get().get();
+            if (userRecord.exists()) {
+                return userRecord.getString("uid");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getUsernameFromToken(String jwtToken) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
+            var user = db.collection("users").document(fbToken.getUid()).get().get();
+
+            if (user.exists()) {
+                return user.getString("username").toLowerCase();
+            }
+        } catch (IllegalArgumentException | FirebaseAuthException e) {
+            System.err.println("getUsername: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public String getUsername(String userId) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            var user = db.collection("users").document(userId).get().get();
+            if (user.exists()) {
+                return user.getString("username").toLowerCase();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 }
