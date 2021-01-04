@@ -238,6 +238,7 @@ public class ProjectService {
                 DocumentSnapshot projectDocument = projectReference.get().get();
 
                 Map<String, Set<String>> projectInfo = new HashMap<>();
+
                 projectReference.listCollections().forEach(projectCollection -> {
 
                     projectCollection.listDocuments().forEach(document -> {
@@ -263,12 +264,7 @@ public class ProjectService {
                         }
                     });
 
-                    Map<String, String> tagsMap = new HashMap<>();
-
-                    tags.listDocuments().forEach(tag -> {
-                        tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
-                    });
-                    project.setTags(tagsMap);
+                    project.setTags(tagsToMap(tags));
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
 
@@ -282,11 +278,7 @@ public class ProjectService {
                 } else {
 
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
-                    Map<String, String> tagsMap = new HashMap<>();
-                    tags.listDocuments().forEach(tag -> {
-                        tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
-                    });
-                    project.setTags(tagsMap);
+                    project.setTags(tagsToMap(tags));
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     project.setOwner(authService.getUsername(project.getOwner()));
@@ -317,7 +309,6 @@ public class ProjectService {
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
-
     public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project,
             String Authorization) {
         CommonResponse cr = new CommonResponse();
@@ -633,5 +624,13 @@ public class ProjectService {
 
         return Timestamp.ofTimeSecondsAndNanos(timestamp.get("createdAt").get("seconds").asLong(),
                 timestamp.get("createdAt").get("nanos").asInt());
+    }
+
+    private Map tagsToMap(CollectionReference tags){
+        Map<String, String> tagsMap = new HashMap<>();
+        tags.listDocuments().forEach(tag -> {
+            tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
+        });
+        return tagsMap;
     }
 }
