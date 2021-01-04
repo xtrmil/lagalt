@@ -5,7 +5,7 @@ import * as Auth from '../utils/Auth';
 import './ChatPage.css';
 
 export default class ChatTest extends React.Component {
-  state = { chatData: null, isLoading: true, endOfHistory: false };
+  state = { chatData: null, isLoading: true, endOfHistory: false, hasAccess: true };
 
   subscriptions = {};
   loggedInUser = null;
@@ -80,23 +80,27 @@ export default class ChatTest extends React.Component {
   };
 
   subscribeToChat = async () => {
-    const observable = await Chat.chatData(
-      this.props.match.params.owner,
-      this.props.match.params.projectName,
-    );
-    if (observable) {
-      this.subscriptions.chat = observable.subscribe(
-        (docs) => {
-          const isMaxScrolled =
-            this.chatBox.current.scrollTop ===
-            this.chatBox.current.scrollHeight - this.chatBox.current.clientHeight;
-          this.chatDataArr.push(...docs);
-          this.setState({ chatData: this.chatDataArr, isLoading: false });
-          this.scrollToBottom(isMaxScrolled);
-        },
-        (err) => console.log(err),
-        () => console.log('observable disposed'),
+    try {
+      const observable = await Chat.chatData(
+        this.props.match.params.owner,
+        this.props.match.params.projectName,
       );
+      if (observable) {
+        this.subscriptions.chat = observable.subscribe(
+          (docs) => {
+            const isMaxScrolled =
+              this.chatBox.current.scrollTop ===
+              this.chatBox.current.scrollHeight - this.chatBox.current.clientHeight;
+            this.chatDataArr.push(...docs);
+            this.setState({ chatData: this.chatDataArr, isLoading: false });
+            this.scrollToBottom(isMaxScrolled);
+          },
+          (err) => console.log(err),
+          () => console.log('observable disposed'),
+        );
+      }
+    } catch (err) {
+      this.setState({ hasAccess: false });
     }
   };
 
@@ -105,7 +109,9 @@ export default class ChatTest extends React.Component {
       this.subscriptions[key].unsubscribe();
     }
     Chat.unsubscribeAll();
-    this.chatBox.current.removeEventListener('scroll', this.scrollCallback);
+    if (this.state.hasAccess) {
+      this.chatBox.current.removeEventListener('scroll', this.scrollCallback);
+    }
   };
 
   scrollToBottom = (wasMaxScrolled) => {
@@ -168,27 +174,31 @@ export default class ChatTest extends React.Component {
 
     return (
       <Container className="mt-3">
-        <form onSubmit={this.handleSubmit}>
-          <div ref={this.chatBox} id="chatBox">
-            <small>
-              {this.state.endOfHistory && 'end of history'}
-              {this.state.isLoading && 'loading...'}
-            </small>
-            {chat.length ? chat : 'Chat is empty'}
-          </div>
-          <div className="inputs">
-            <input
-              className="form-control d-inline"
-              type="text"
-              ref={this.chatMsgRef}
-              onChange={this.handleSmileyFormatting}
-              autoFocus
-            />
-            <button className="btn btn-primary" type="submit">
-              Submit
-            </button>
-          </div>
-        </form>
+        {this.state.hasAccess ? (
+          <form onSubmit={this.handleSubmit}>
+            <div ref={this.chatBox} id="chatBox">
+              <small>
+                {this.state.endOfHistory && 'end of history'}
+                {this.state.isLoading && 'loading...'}
+              </small>
+              {chat.length ? chat : 'Chat is empty'}
+            </div>
+            <div className="inputs">
+              <input
+                className="form-control d-inline"
+                type="text"
+                ref={this.chatMsgRef}
+                onChange={this.handleSmileyFormatting}
+                autoFocus
+              />
+              <button className="btn btn-primary" type="submit">
+                Submit
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div>You are not a member of this project</div>
+        )}
       </Container>
     );
   };
