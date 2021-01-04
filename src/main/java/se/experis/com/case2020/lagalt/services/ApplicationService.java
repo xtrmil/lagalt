@@ -31,7 +31,7 @@ public class ApplicationService {
     private UserService userService;
 
     @Autowired
-    private MockAuthService authService;
+    private AuthService authService;
 
     @Autowired
     private ProjectService projectService;
