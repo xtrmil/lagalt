@@ -97,23 +97,27 @@ public class AuthService {
 
     public ResponseEntity<CommonResponse> signOut(String jwtToken) {
         var cr = new CommonResponse();
+        HttpStatus resp;
+
         try {
             var auth = FirebaseAuth.getInstance();
-            var foundToken = auth.verifyIdToken(jwtToken, true);
-            auth.revokeRefreshTokens(foundToken.getUid());
-            cr.message = "You have been signed out";
-            return new ResponseEntity<>(cr, HttpStatus.OK);
+            var userId = getUserIdFromToken(jwtToken);
 
-        } catch (IllegalArgumentException | FirebaseAuthException e) {
-            System.err.println("signOut: " + e.getMessage());
-            cr.message = "Error: You are not authenticated";
-            return new ResponseEntity<>(cr, HttpStatus.UNAUTHORIZED);
+            if (userId != null) {
+                auth.revokeRefreshTokens(userId);
+                cr.message = "You have been signed out";
+                resp = HttpStatus.OK;
+            } else {
+                cr.message = "Error: You are not authenticated";
+                resp = HttpStatus.UNAUTHORIZED;
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
             cr.message = "Could not sign out; an error occured on the server";
-            return new ResponseEntity<>(cr, HttpStatus.INTERNAL_SERVER_ERROR);
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
+        return new ResponseEntity<>(cr, resp);
     }
 
     /**
@@ -198,7 +202,6 @@ public class AuthService {
             var fbToken = FirebaseAuth.getInstance().verifyIdToken(jwtToken);
             return fbToken.getUid();
         } catch (IllegalArgumentException | FirebaseAuthException e) {
-            System.err.println("getUserId: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
         }
