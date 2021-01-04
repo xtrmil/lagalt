@@ -170,7 +170,7 @@ public class AuthService {
      * @param jwtToken
      * @return
      */
-    public boolean isProjectAdmin(String owner, String projectName, String jwtToken) {
+    public boolean hasAdminPrivileges(String owner, String projectName, String jwtToken) {
         return isPartOfProjectCollection(owner, projectName, jwtToken, "admins")
                 || isOwner(owner, projectName, jwtToken);
     }
@@ -178,7 +178,7 @@ public class AuthService {
     /**
      * Checks whether a user is admin/owner of a particular project
      */
-    public boolean isProjectAdmin(String projectId, String jwtToken) {
+    public boolean hasAdminPrivileges(String projectId, String jwtToken) {
         try {
             String userId = getUserIdFromToken(jwtToken);
             var db = FirestoreClient.getFirestore();
@@ -205,7 +205,7 @@ public class AuthService {
     }
 
     public boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken) {
-        return isOwner(owner, projectName, jwtToken) || isProjectAdmin(owner, projectName, jwtToken)
+        return isOwner(owner, projectName, jwtToken) || hasAdminPrivileges(owner, projectName, jwtToken)
                 || isProjectMember(owner, projectName, jwtToken);
     }
 

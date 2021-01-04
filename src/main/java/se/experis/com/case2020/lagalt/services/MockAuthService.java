@@ -65,13 +65,13 @@ public class MockAuthService extends AuthService {
     }
 
     @Override
-    public boolean isProjectAdmin(String owner, String projectName, String invalidToken) {
+    public boolean hasAdminPrivileges(String owner, String projectName, String invalidToken) {
         String userId = getUserIdFromToken(invalidToken);
         return isPartOfProjectCollection(owner, projectName, "admins") || owner.equals(userId);
     }
 
     @Override
-    public boolean isProjectAdmin(String projectId, String jwtToken) {
+    public boolean hasAdminPrivileges(String projectId, String jwtToken) {
         try {
             String userId = getUserIdFromToken(jwtToken);
             var db = FirestoreClient.getFirestore();

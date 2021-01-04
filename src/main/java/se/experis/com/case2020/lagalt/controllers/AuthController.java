@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.services.AuthService;
-import se.experis.com.case2020.lagalt.services.MockAuthService;
 import se.experis.com.case2020.lagalt.utils.RequestLimiter;
 
 @RestController

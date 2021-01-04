@@ -111,8 +111,8 @@ public class ProjectService {
                 List<QueryDocumentSnapshot> filteredProjects;
                 if (timestamp != null) {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
-                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(favouriteLimit).get()
-                            .get().getDocuments();
+                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp))
+                            .limit(favouriteLimit).get().get().getDocuments();
                 } else {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
                             .whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
@@ -125,19 +125,21 @@ public class ProjectService {
                 int startPosition = 0;
                 int fetchLimit = 10;
                 List<QueryDocumentSnapshot> randomProjects;
-                var lastProject = db.collection("projects").orderBy("createdAt", Query.Direction.ASCENDING).startAfter(Timestamp.MIN_VALUE).limit(1).get().get().getDocuments();
+                var lastProject = db.collection("projects").orderBy("createdAt", Query.Direction.ASCENDING)
+                        .startAfter(Timestamp.MIN_VALUE).limit(1).get().get().getDocuments();
                 Timestamp last = lastProject.get(0).getTimestamp("createdAt");
 
                 endLoop = false;
-                while (!endLoop && filteredProjectsMap.size() < fetchLimit ) {
-                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition).limit(fetchLimit).get().get().getDocuments();
+                while (!endLoop && filteredProjectsMap.size() < fetchLimit) {
+                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition)
+                            .limit(fetchLimit).get().get().getDocuments();
 
                     randomProjects.forEach(p -> {
                         if (filteredProjectsMap.size() < fetchLimit) {
                             filteredProjectsMap.put(p.getId(), p.getReference());
                             System.out.println(p.getTimestamp("createdAt"));
                         }
-                        if(p.getTimestamp("createdAt").equals(last)){
+                        if (p.getTimestamp("createdAt").equals(last)) {
                             endLoop = true;
                         }
                     });
@@ -292,7 +294,11 @@ public class ProjectService {
                 if (userId != null) {
                     DocumentReference userReference = userService.getUserDocument(userId);
                     var visited = userReference.collection("visited").document(projectReference.getId());
-                    visited.set(new HashMap<>() {{put("industryKey",projectDocument.get("industryKey"));}});
+                    visited.set(new HashMap<>() {
+                        {
+                            put("industryKey", projectDocument.get("industryKey"));
+                        }
+                    });
                 }
 
                 resp = HttpStatus.OK;
@@ -309,6 +315,7 @@ public class ProjectService {
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
+
     public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project,
             String Authorization) {
         CommonResponse cr = new CommonResponse();
@@ -375,7 +382,7 @@ public class ProjectService {
 
                 String pid = projectRecord.getString("pid");
 
-                if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+                if (authService.hasAdminPrivileges(owner, projectName, Authorization)) {
                     var projectRef = getProjectDocumentReference(pid);
                     var dbProject = projectRef.get().get().toObject(ProjectMemberView.class);
 
@@ -626,7 +633,7 @@ public class ProjectService {
                 timestamp.get("createdAt").get("nanos").asInt());
     }
 
-    private Map tagsToMap(CollectionReference tags){
+    private Map tagsToMap(CollectionReference tags) {
         Map<String, String> tagsMap = new HashMap<>();
         tags.listDocuments().forEach(tag -> {
             tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
