@@ -28,8 +28,6 @@ public class ProjectNonMemberView {
     @JsonProperty(access = Access.WRITE_ONLY)
     private Industry industryKey;
 
-    @JsonProperty(access = Access.WRITE_ONLY)
-
     @Exclude
     private Map<Industry, String> industry;
 

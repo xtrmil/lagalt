@@ -283,11 +283,13 @@ public class ProjectService {
                     cr.data = project;
                 }
 
-                DocumentReference userReference = userService
-                        .getUserDocument(authService.getUserIdFromToken(Authorization));
-                var visited = userReference.collection("visited").document(projectReference.getId());
-                visited.set(new HashMap<>());
-                visited.update("industryKey", projectDocument.get("industryKey"));
+                String userId = authService.getUserIdFromToken(Authorization);
+                if (userId != null) {
+                    DocumentReference userReference = userService.getUserDocument(userId);
+                    var visited = userReference.collection("visited").document(projectReference.getId());
+                    visited.set(new HashMap<>());
+                    visited.update("industryKey", projectDocument.get("industryKey"));
+                }
 
                 resp = HttpStatus.OK;
             } else {
