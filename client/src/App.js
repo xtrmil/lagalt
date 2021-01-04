@@ -13,6 +13,7 @@ import MessageBoardPostPage from './pages/MessageBoardPostPage';
 import { Router, Route, Switch } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserHistory } from 'history';
+import ChatPage from './pages/ChatPage';
 
 const history = createBrowserHistory();
 
@@ -21,6 +22,8 @@ function App() {
     <Router history={history}>
       <Navbar history={history} />
       <Switch>
+        <Route exact path="/projects/:owner/:projectName/chat" component={ChatPage} />
+
         <Route exact path="/home" component={HomePage} />
         <Route exact path="/login" component={LoginPage} />
         <Route exact path="/register" component={RegisterPage} />

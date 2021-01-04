@@ -159,7 +159,7 @@ public class ProjectService {
     private String getFavouriteIndustry(String userId) throws ExecutionException, InterruptedException {
         var db = FirestoreClient.getFirestore();
         var documents = db.collection("users").document(userId).collection("visited").listDocuments();
-        HashMap<String, Integer> projects = new HashMap();
+        HashMap<String, Integer> projects = new HashMap<>();
         for (var document : documents) {
             String industryKey = document.get().get().get("industryKey").toString();
             if (!projects.containsKey(industryKey)) {
@@ -532,7 +532,10 @@ public class ProjectService {
 
     public String getProjectId(String owner, String projectName) {
         var docRef = getProjectDocumentReference(owner, projectName);
-        return docRef.getId();
+        if (docRef != null) {
+            return docRef.getId();
+        }
+        return null;
     }
 
     private Set<String> getLowerCaseSet(Set<String> set) {

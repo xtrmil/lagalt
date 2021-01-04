@@ -19,7 +19,7 @@ public class RequestLimiter {
     private long expireTime = minutesToMs(1);
     private int maxAttempts = 10;
 
-    private Map<String, Queue<Long>> failedAuthentications = new HashMap<>();
+    private Map<String, Queue<Long>> failedAuthentications = new HashMap<>(); // ip => queue<timestamp>
 
     public ResponseEntity<CommonResponse> filter(HttpServletRequest request,
             ResponseEntity<CommonResponse> backendResponse) {
