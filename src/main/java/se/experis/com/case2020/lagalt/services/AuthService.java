@@ -58,36 +58,37 @@ public class AuthService {
      * @return
      */
     public boolean isProjectAdmin(String owner, String projectName, String jwtToken) {
-        return isPartOfProjectCollection(owner, projectName, jwtToken, "admins");
+        return isPartOfProjectCollection(owner, projectName, jwtToken, "admins")
+                || isOwner(owner, projectName, jwtToken);
     }
-    
-    public boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken) {
-        String userId = getUserIdFromToken(jwtToken);
 
-        if(userId != null) {
-            try {
-                var db = FirestoreClient.getFirestore();
-                boolean isAdmin = isProjectAdmin(owner, projectName, jwtToken);
-                boolean isMember = isProjectMember(owner, projectName, jwtToken);
-                String projectId = projectService.getProjectId(owner, projectName);
-                
-                var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
-                return ownerId == userId || isAdmin || isMember;
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
+    private boolean isOwner(String owner, String projectName, String jwtToken) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            String projectId = projectService.getProjectId(owner, projectName);
+            String userId = getUserIdFromToken(jwtToken);
+            var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
+            return ownerId.equals(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        return false;
+    }
+
+    public boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken) {
+        return isOwner(owner, projectName, jwtToken) || isProjectAdmin(owner, projectName, jwtToken)
+                || isProjectMember(owner, projectName, jwtToken);
     }
 
     private boolean isPartOfProjectCollection(String owner, String projectName, String jwtToken, String collection) {
         String userId = getUserIdFromToken(jwtToken);
-        
+
         if (userId != null) {
             try {
                 var db = FirestoreClient.getFirestore();
                 String projectId = projectService.getProjectId(owner, projectName);
-                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get().get();
+                var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
+                        .get();
                 return ref.exists();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -142,10 +143,10 @@ public class AuthService {
         try {
             var db = FirestoreClient.getFirestore();
             var user = db.collection("users").document(userId).get().get();
-            if(user.exists()) {
+            if (user.exists()) {
                 return user.getString("username").toLowerCase();
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
