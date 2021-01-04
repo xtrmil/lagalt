@@ -300,9 +300,7 @@ public class ProjectService {
                 if (userId != null) {
                     DocumentReference userReference = userService.getUserDocument(userId);
                     var visited = userReference.collection("visited").document(projectReference.getId());
-                    visited.set(new HashMap<>());
-                    visited.update("industryKey", projectDocument.get("industryKey"));
-                    visited.update("industryKey", projectDocument.get("industryKey"));
+                    visited.set(new HashMap<>() {{put("industryKey",projectDocument.get("industryKey"));}});
                 }
 
                 resp = HttpStatus.OK;
