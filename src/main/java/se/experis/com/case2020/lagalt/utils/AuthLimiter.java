@@ -16,12 +16,12 @@ import se.experis.com.case2020.lagalt.models.CommonResponse;
 @Component
 public class AuthLimiter {
 
-    private long expireTime = msInMinutes(10);
+    private long expireTime = minutesToMs(1);
     private int maxAttempts = 10;
 
-    private Map<String, Queue<Long>> failedAuthentications = new HashMap<>();
+    private Map<String, Queue<Long>> failedAuthentications = new HashMap<>(); // ip => queue<timestamp>
 
-    private long msInMinutes(int minutes) {
+    private long minutesToMs(int minutes) {
         return minutes * 60 * 1000;
     }
 

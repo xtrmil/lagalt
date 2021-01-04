@@ -579,7 +579,10 @@ public class ProjectService {
 
     public String getProjectId(String owner, String projectName) {
         var docRef = getProjectDocumentReference(owner, projectName);
-        return docRef.getId();
+        if(docRef != null) {
+            return docRef.getId();
+        }
+        return null;
     }
 
     private Set<String> getLowerCaseSet(Set<String> set) {

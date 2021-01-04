@@ -24,8 +24,7 @@ import se.experis.com.case2020.lagalt.utils.AuthLimiter;
 @RequestMapping(value = "/api/v1/")
 public class AuthController {
 
-    private final String allowedHost = "http://localhost:3000"; // temp
-    private final String usernameRules = "A username must have between 3 and 20 characters and contain letters (a-z) and numbers. Underline is also permitted";
+    private final String usernameRules = "A username must be between 3 and 20 characters long and contain uppercase and lowercase letters (a-z), and numbers. Underline is also permitted";
     
     @Autowired
     private AuthService authService;
@@ -33,13 +32,11 @@ public class AuthController {
     @Autowired
     private AuthLimiter authLimiter;
 
-    @CrossOrigin(origins = allowedHost)
     @GetMapping("/loggedInUser")
-    public ResponseEntity<String> loggedInUser(@RequestHeader(required = false) String Authorization) {      
+    public ResponseEntity<String> loggedInUser(@RequestHeader(required = false) String Authorization) {
         return new ResponseEntity<>(authService.getUsernameFromToken(Authorization), HttpStatus.OK);
     }
 
-    @CrossOrigin(origins = allowedHost)
     @GetMapping("/isUsernameAvailable/{username}")
     public ResponseEntity<Boolean> isUserIdAvailable(@PathVariable String username) {
         HttpStatus status = authService.getUserNameAvailability(username);
@@ -49,7 +46,6 @@ public class AuthController {
         return new ResponseEntity<>(status == HttpStatus.OK, HttpStatus.OK);
     }
 
-    @CrossOrigin(origins = allowedHost)
     @GetMapping("/signin")
     public ResponseEntity<CommonResponse> signin(@RequestHeader String Authorization, HttpServletRequest request) {
         if(!authLimiter.isRequestBlocked(request)) {
@@ -67,7 +63,6 @@ public class AuthController {
         return authLimiter.getBlockedResponse();
     }
 
-    @CrossOrigin(origins = allowedHost)
     @PostMapping("/signup")
     public ResponseEntity<CommonResponse> signup(@RequestHeader String Authorization, @RequestBody ObjectNode user, HttpServletRequest request) {
         if(!authLimiter.isRequestBlocked(request)) {
@@ -88,7 +83,6 @@ public class AuthController {
         return authLimiter.getBlockedResponse();
     }
 
-    @CrossOrigin(origins = allowedHost)
     @GetMapping("/logout")
     public ResponseEntity<CommonResponse> logout(@RequestHeader String Authorization, HttpServletRequest request) {
         if(!authLimiter.isRequestBlocked(request)) {
