@@ -48,16 +48,7 @@ public class AuthController {
     @GetMapping("/signin")
     public ResponseEntity<CommonResponse> signin(@RequestHeader String Authorization, HttpServletRequest request) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var cr = new CommonResponse();
-            var username = authService.getUsernameFromToken(Authorization);
-            if (username == null) {
-                requestLimiter.addCustomFailedAttempt(request);
-                cr.message = "User does not exist";
-                return new ResponseEntity<>(cr, HttpStatus.UNAUTHORIZED);
-            } else {
-                cr.data = username;
-                return new ResponseEntity<>(cr, HttpStatus.OK);
-            }
+            return authService.signIn(request, Authorization);
         }
         return requestLimiter.getBlockedResponse();
     }

@@ -2,6 +2,8 @@ package se.experis.com.case2020.lagalt.services;
 
 import java.util.HashMap;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.cloud.FirestoreClient;
@@ -13,12 +15,16 @@ import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.user.UserProfileView;
+import se.experis.com.case2020.lagalt.utils.RequestLimiter;
 
 @Service
 public class AuthService {
 
     @Autowired
     private ProjectService projectService;
+
+    @Autowired
+    private RequestLimiter requestLimiter;
 
     /**
      * Checks whether the user name (user id) is available or not. Used when signing
@@ -158,7 +164,7 @@ public class AuthService {
 
         try {
             var userId = getUserIdFromToken(jwtToken);
-            if (userId == null) {
+            if (userId != null) {
                 var db = FirestoreClient.getFirestore();
                 var userRef = db.collection("users").document(userId);
                 var userDocument = userRef.get().get();
@@ -200,6 +206,23 @@ public class AuthService {
             cr.message = "An error occured on the server";
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
             e.printStackTrace();
+        }
+        return new ResponseEntity<>(cr, resp);
+    }
+
+    public ResponseEntity<CommonResponse> signIn(HttpServletRequest request, String jwtToken) {
+        var cr = new CommonResponse();
+        HttpStatus resp;
+
+        var username = getUsernameFromToken(jwtToken);
+        if (username != null) {
+            cr.data = username;
+            cr.message = "Successful login as " + username;
+            resp = HttpStatus.OK;
+        } else {
+            requestLimiter.addCustomFailedAttempt(request);
+            cr.message = "Invalid authentication token";
+            resp = HttpStatus.UNAUTHORIZED;
         }
         return new ResponseEntity<>(cr, resp);
     }
