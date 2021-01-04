@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import se.experis.com.case2020.lagalt.controllers.AuthController;
+import se.experis.com.case2020.lagalt.services.AuthService;
 
 @SpringBootTest
 class LagaltApplicationTests {
@@ -16,7 +16,7 @@ class LagaltApplicationTests {
 
 	@Test
 	void testUsernameValidation() {
-		var sut = new AuthController();
+		var sut = new AuthService();
 
 		assertEquals(false, sut.isValidUsername(""));
 		assertEquals(false, sut.isValidUsername("  "));

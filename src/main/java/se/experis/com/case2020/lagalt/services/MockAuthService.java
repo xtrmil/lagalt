@@ -10,17 +10,6 @@ public class MockAuthService extends AuthService {
 
     @Autowired
     private ProjectService projectService;
-    
-    @Override
-    public boolean isProjectAdmin(String owner, String projectName, String invalidToken) {
-        return true;
-    }
-
-    @Override
-    public boolean isProjectMember(String owner, String projectName, String invalidToken) {
-        return true;
-    }
-
 
     @Override
     public String getUserIdFromToken(String invalidToken) {
@@ -46,10 +35,10 @@ public class MockAuthService extends AuthService {
             boolean isAdmin = isPartOfProjectCollection(owner, projectName, "members");
             boolean isMember = isPartOfProjectCollection(owner, projectName, "admins");
             String projectId = projectService.getProjectId(owner, projectName);
-            
+
             var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
             return ownerId == userId || isAdmin || isMember;
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -68,5 +57,30 @@ public class MockAuthService extends AuthService {
             e.printStackTrace();
         }
         return false;
+    }
+
+    @Override
+    public boolean isProjectMember(String owner, String projectName, String invalidToken) {
+        return isPartOfProjectCollection(owner, projectName, "members");
+    }
+
+    @Override
+    public boolean isProjectAdmin(String owner, String projectName, String invalidToken) {
+        String userId = getUserIdFromToken(invalidToken);
+        return isPartOfProjectCollection(owner, projectName, "admins") || owner.equals(userId);
+    }
+
+    @Override
+    public boolean isProjectAdmin(String projectId, String jwtToken) {
+        try {
+            String userId = getUserIdFromToken(jwtToken);
+            var db = FirestoreClient.getFirestore();
+            var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
+            var admin = db.collection("projects").document(projectId).collection("admins").document(userId).get().get();
+            return admin.exists() || ownerId.equals(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
