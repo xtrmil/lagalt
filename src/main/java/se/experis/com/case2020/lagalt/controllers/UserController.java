@@ -32,12 +32,7 @@ public class UserController {
     public ResponseEntity<CommonResponse> getProfileUser(HttpServletRequest request,
             @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = userService.getUserProfile(request, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, userService.getUserProfile(request, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -45,12 +40,7 @@ public class UserController {
     @GetMapping("/users/{username}")
     public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, @PathVariable String username) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = userService.getPublicUserDetails(request, username);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, userService.getPublicUserDetails(request, username));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -59,12 +49,7 @@ public class UserController {
     public ResponseEntity<CommonResponse> updateUser(HttpServletRequest request, @RequestBody UserProfileView user,
             @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = userService.updateUserDetails(request, user, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, userService.updateUserDetails(request, user, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }

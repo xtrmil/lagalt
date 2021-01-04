@@ -59,12 +59,7 @@ public class ProjectController {
             HttpServletResponse servletResponse, @RequestBody ProjectNonMemberView project,
             @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = projectService.createNewProject(request, project, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, projectService.createNewProject(request, project, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -74,12 +69,8 @@ public class ProjectController {
             HttpServletResponse servletResponse, @RequestHeader String Authorization, @PathVariable String owner,
             @PathVariable String projectName, @RequestBody ProjectMemberView project) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = projectService.updateProjectDetails(request, owner, projectName, project, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request,
+                    projectService.updateProjectDetails(request, owner, projectName, project, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }

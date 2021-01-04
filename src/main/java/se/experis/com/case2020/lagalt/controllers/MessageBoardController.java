@@ -35,12 +35,8 @@ public class MessageBoardController {
     public ResponseEntity<CommonResponse> getAllThreads(HttpServletRequest request, @PathVariable String projectOwner,
             @PathVariable String projectName, @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = messageBoardService.getAllThreads(request, projectOwner, projectName, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request,
+                    messageBoardService.getAllThreads(request, projectOwner, projectName, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -50,13 +46,8 @@ public class MessageBoardController {
             @PathVariable String projectOwner, @PathVariable String projectName, @RequestBody ObjectNode thread,
             @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = messageBoardService.createThread(request, servletResponse, projectOwner, projectName, thread,
-                    Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, messageBoardService.createThread(request, servletResponse,
+                    projectOwner, projectName, thread, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -66,13 +57,8 @@ public class MessageBoardController {
             @PathVariable String projectOwner, @PathVariable String projectName, @PathVariable String threadId,
             @RequestBody ObjectNode post, @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = messageBoardService.createPost(request, servletResponse, projectOwner, projectName, threadId,
-                    post, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, messageBoardService.createPost(request, servletResponse, projectOwner,
+                    projectName, threadId, post, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -81,12 +67,8 @@ public class MessageBoardController {
     public ResponseEntity<CommonResponse> getPosts(HttpServletRequest request, @PathVariable String projectOwner,
             @PathVariable String projectName, @PathVariable String threadId, @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = messageBoardService.getPosts(request, projectOwner, projectName, threadId, Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request,
+                    messageBoardService.getPosts(request, projectOwner, projectName, threadId, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -96,13 +78,8 @@ public class MessageBoardController {
             @PathVariable String projectName, @PathVariable String threadId, @PathVariable String messageId,
             @RequestHeader String Authorization) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = messageBoardService.deletePost(request, projectOwner, projectName, threadId, messageId,
-                    Authorization);
-
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, messageBoardService.deletePost(request, projectOwner, projectName,
+                    threadId, messageId, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }

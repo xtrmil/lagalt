@@ -56,7 +56,7 @@ public class AuthController {
             var cr = new CommonResponse();
             var username = authService.getUsernameFromToken(Authorization);
             if (username == null) {
-                requestLimiter.addFailedAttempt(request);
+                requestLimiter.addCustomFailedAttempt(request);
                 cr.message = "User does not exist";
                 return new ResponseEntity<>(cr, HttpStatus.UNAUTHORIZED);
             } else {
@@ -74,17 +74,13 @@ public class AuthController {
         if (!requestLimiter.isRequestBlocked(request)) {
             String username = user.get("username").asText();
             if (!isValidUsername(username)) {
-                requestLimiter.addFailedAttempt(request);
+                requestLimiter.addCustomFailedAttempt(request);
                 var cr = new CommonResponse();
                 cr.message = "Invalid user name. " + usernameRules;
                 return new ResponseEntity<>(cr, HttpStatus.BAD_REQUEST);
             }
 
-            var response = authService.addUserRecord(username.trim(), Authorization);
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, authService.addUserRecord(username.trim(), Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -95,7 +91,7 @@ public class AuthController {
         if (!requestLimiter.isRequestBlocked(request)) {
             var response = authService.signOut(Authorization);
             if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addFailedAttempt(request);
+                requestLimiter.addCustomFailedAttempt(request);
             }
             return response;
         }

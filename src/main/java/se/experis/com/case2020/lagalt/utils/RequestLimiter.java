@@ -16,25 +16,17 @@ import se.experis.com.case2020.lagalt.models.CommonResponse;
 @Component
 public class RequestLimiter {
 
-    private long expireTime = msInMinutes(10);
-    private int maxAttempts = 10;
+    private long expireTime = minutesToMs(1);
+    private int maxAttempts = 3;
 
     private Map<String, Queue<Long>> failedAuthentications = new HashMap<>();
 
-    private long msInMinutes(int minutes) {
-        return minutes * 60 * 1000;
-    }
-
-    public boolean addFailedAttempt(HttpServletRequest request) {
-        String key = request.getRemoteAddr();
-        var timestamps = failedAuthentications.get(key);
-        if (timestamps == null) {
-            timestamps = new LinkedList<>();
+    public ResponseEntity<CommonResponse> filter(HttpServletRequest request,
+            ResponseEntity<CommonResponse> backendResponse) {
+        if (backendResponse.getStatusCode().is4xxClientError()) {
+            addCustomFailedAttempt(request);
         }
-        timestamps.add(System.currentTimeMillis());
-        failedAuthentications.put(key, timestamps);
-
-        return failedAuthentications.size() >= maxAttempts;
+        return backendResponse;
     }
 
     public boolean isRequestBlocked(HttpServletRequest request) {
@@ -50,14 +42,35 @@ public class RequestLimiter {
         return timestamps.size() >= maxAttempts;
     }
 
-    private boolean hasExpired(Long timestamp) {
-        return timestamp + expireTime < System.currentTimeMillis();
-    }
-
     public ResponseEntity<CommonResponse> getBlockedResponse() {
         var cr = new CommonResponse();
         cr.message = "You have made too many requests recently";
         return new ResponseEntity<>(cr, HttpStatus.TOO_MANY_REQUESTS);
     }
 
+    /**
+     * This should only be used when using custom failed attempt rules
+     * 
+     * @param request
+     * @return
+     */
+    public boolean addCustomFailedAttempt(HttpServletRequest request) {
+        String key = request.getRemoteAddr();
+        var timestamps = failedAuthentications.get(key);
+        if (timestamps == null) {
+            timestamps = new LinkedList<>();
+        }
+        timestamps.add(System.currentTimeMillis());
+        failedAuthentications.put(key, timestamps);
+
+        return failedAuthentications.size() >= maxAttempts;
+    }
+
+    private long minutesToMs(int minutes) {
+        return minutes * 60 * 1000;
+    }
+
+    private boolean hasExpired(Long timestamp) {
+        return timestamp + expireTime < System.currentTimeMillis();
+    }
 }
