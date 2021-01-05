@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.user.UserProfileView;
-import se.experis.com.case2020.lagalt.utils.RequestLimiter;
 
 @Service
 public class AuthService {
@@ -24,9 +23,6 @@ public class AuthService {
 
     @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private RequestLimiter requestLimiter;
 
     public ResponseEntity<CommonResponse> signIn(HttpServletRequest request, String jwtToken) {
         var cr = new CommonResponse();
@@ -38,8 +34,7 @@ public class AuthService {
             cr.message = "Successfully logged in as " + username;
             resp = HttpStatus.OK;
         } else {
-            requestLimiter.addCustomFailedAttempt(request);
-            cr.message = "Invalid authentication token";
+            cr.message = "User not found";
             resp = HttpStatus.UNAUTHORIZED;
         }
         return new ResponseEntity<>(cr, resp);
@@ -50,9 +45,7 @@ public class AuthService {
         HttpStatus resp;
 
         try {
-            System.out.println(jwtToken);
             var userId = getUserIdFromToken(jwtToken);
-            System.out.println(userId);
             if (userId != null) {
                 var db = FirestoreClient.getFirestore();
                 var userRef = db.collection("users").document(userId);
@@ -65,7 +58,7 @@ public class AuthService {
 
                 } else if (!isValidUsername(username)) {
                     cr.message = "Invalid username. " + usernameRules;
-                    resp = HttpStatus.BAD_REQUEST;
+                    resp = HttpStatus.NOT_ACCEPTABLE;
                 } else {
                     var usernameAvailabilityStatus = getUserNameAvailability(username);
                     if (!usernameAvailabilityStatus.is2xxSuccessful()) {

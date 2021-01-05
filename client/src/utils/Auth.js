@@ -266,16 +266,12 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
 
 export const createUser = async (username) => {
   gUsername = null;
-  const token = await getToken();
-  if (!token) {
-    return `Error: Can't create user. You are not authenticated`;
-  }
 
   const response = await fetch(host + '/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token,
+      Authorization: await getToken(),
     },
     body: JSON.stringify({ username: username }),
   });
@@ -288,8 +284,8 @@ export const createUser = async (username) => {
       username: responseBody.data,
     });
     return 'You are now signed in as ' + responseBody.data;
-  } else if (response.status === 409) {
-    // user exists with the given credentials
+  } else if (response.status === 409 || response.status === 406) {
+    // user exists with the given credentials or username is invalid
     loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.chooseUsername });
   } else if (response.status === 403) {
     const answer = window.confirm(responseBody.message + '. Do you want to log in instead?');
@@ -300,21 +296,18 @@ export const createUser = async (username) => {
     return 'Login aborted';
   } else {
     await firebase.auth().signOut();
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.none });
   }
   return responseBody.message;
 };
 
 const authUser = async () => {
   gUsername = null;
-  const token = await getToken();
-  if (!token) {
-    return 'You are not authenticated';
-  }
 
   const response = await fetch(host + '/signin', {
     method: 'GET',
     headers: {
-      Authorization: token,
+      Authorization: await getToken(),
     },
   });
 
