@@ -1,13 +1,14 @@
 import React from 'react';
+import './CreateProjectPage.css';
 import { Container, Card } from 'react-bootstrap';
 import ProjectForm from '../components/ProjectForm';
 
 const CreateProjectPage = (props) => {
   return (
-    <Container className="justify-content-center">
+    <Container>
+      <h1 className="createProjectHeading">Create a new project</h1>
       <Card>
         <Card.Body>
-          <h1 className="text-center">Create a new project!</h1>
           <ProjectForm />
         </Card.Body>
       </Card>
