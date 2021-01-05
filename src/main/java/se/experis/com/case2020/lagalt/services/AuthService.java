@@ -273,9 +273,56 @@ public class AuthService {
         return null;
     }
 
-    // public for unit test
-    public boolean isValidUsername(String username) {
-        String regex = "[_0-9a-zA-Z]{3,20}";
-        return username.matches(regex);
+
+    public ResponseEntity<CommonResponse> addUserRecord(String username, String jwtToken) {
+        HttpStatus resp;
+        var cr = new CommonResponse();
+
+        try {
+            var userId = getUserIdFromToken(jwtToken);
+            if (userId != null) {
+                var db = FirestoreClient.getFirestore();
+                var userRef = db.collection("users").document(userId);
+                var userDocument = userRef.get().get();
+
+                if (userDocument.exists()) {
+                    // auth user is alredy tied to a db user
+                    cr.message = "There is already an account tied to this email";
+                    return new ResponseEntity<>(cr, HttpStatus.FORBIDDEN);
+
+                } else {
+                    var usernameAvailabilityStatus = getUserNameAvailability(username);
+                    if (!usernameAvailabilityStatus.is2xxSuccessful()) {
+                        cr.message = "That username is not available";
+                        return new ResponseEntity<>(cr, usernameAvailabilityStatus);
+                    }
+                    var auth = FirebaseAuth.getInstance();
+
+                    var authUser = auth.getUser(userId);
+                    var userProfile = new UserProfileView();
+                    userProfile.setUsername(username);
+                    userProfile.setEmail(authUser.getEmail());
+                    userProfile.setName(authUser.getDisplayName());
+
+                    userRef.set(userProfile);
+                    var userRecord = new HashMap<String, String>();
+                    userRecord.put("uid", userId);
+
+                    // put userRecord that ties username to a uid
+                    db.collection("userRecords").document(username.toLowerCase()).set(userRecord);
+
+                    cr.data = username;
+                    resp = HttpStatus.CREATED;
+                }
+            } else {
+                cr.message = "Error: You are not authenticated";
+                resp = HttpStatus.UNAUTHORIZED;
+            }
+        } catch (Exception e) {
+            cr.message = "An error occured on the server";
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(cr, resp);
     }
 }
