@@ -10,7 +10,7 @@ import { editUserProfile } from '../../utils/api/user';
 import { mapOptions } from '../../utils/MapOptions';
 
 const ProfileModal = (props) => {
-  const { showModal, handleCloseModal, handleSaveChanges, user, loggedInUserId } = props;
+  const { showModal, handleCloseModal, handleSaveChanges, user } = props;
   const [tagOptions, setTagOptions] = useState();
 
   const currentTags = mapOptions([], user.tags);
@@ -46,15 +46,19 @@ const ProfileModal = (props) => {
     const updatedUser = {
       ...user,
       ...values,
-      hidden: values.hidden.label ? values.hidden.value : values.hidden,
+      hidden: values.hidden.value,
       tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
     };
-    editUserProfile(updatedUser, loggedInUserId);
+    editUserProfile(updatedUser);
     handleSaveChanges(updatedUser);
   };
 
   const onHideModal = () => {
     handleCloseModal();
+  };
+  const onStatusChange = (value, setFieldValue) => {
+    console.log(value);
+    setFieldValue('hidden', value);
   };
 
   return (
@@ -114,6 +118,7 @@ const ProfileModal = (props) => {
                     setFieldTouched={setFieldTouched}
                     setFieldValue={setFieldValue}
                     isMulti={false}
+                    onChange={(value) => onStatusChange(value, setFieldValue)}
                   ></SelectInput>
 
                   <TextInput

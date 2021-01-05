@@ -13,9 +13,10 @@ const ProjectSettingsForm = (props) => {
   const { project, setProject, hideModal } = props;
   const [industryOptions, setIndustryOptions] = useState();
   const [tagOptions, setTagOptions] = useState();
-
   const initialTags = mapOptions([], project.tags);
   const initialIndustry = mapOptions([], project.industry);
+  const initialTagSelect = initialIndustry[0].label.split(' ')[0];
+
   const [initialValues] = useState({
     industry: initialIndustry,
     tags: initialTags,
@@ -39,22 +40,21 @@ const ProjectSettingsForm = (props) => {
   }, []);
 
   useEffect(() => {
-    fetchTagOptions('Game');
+    fetchTagOptions(initialTagSelect);
     fetchIndustries();
-  }, [fetchIndustries, fetchTagOptions]);
+  }, [fetchIndustries, fetchTagOptions, initialTagSelect]);
 
   const onFormSubmit = (values) => {
     const { industry, tags, description } = values;
-
+    const { owner, title } = project;
     const newProject = {
-      ...project,
       industry: industry.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
       tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
       description,
     };
     setProject(newProject);
     console.log(JSON.stringify(newProject, null, 2));
-    updateProject(newProject);
+    updateProject(newProject, owner, title);
     hideModal();
   };
 

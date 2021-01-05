@@ -1,17 +1,18 @@
 import baseUrl from './baseUrl';
-
-export async function getUserByUserId(userId) {
+import { getToken } from '../Auth';
+export async function getUserByUserId() {
+  console.log(await getToken());
   const fetchData = await baseUrl
-    .get('/profile', { headers: { Authorization: userId } })
+    .get('/profile', { headers: { Authorization: await getToken() } })
     .then((response) => {
       return response.data;
     });
   return fetchData;
 }
 
-export async function editUserProfile(profile, userId) {
+export async function editUserProfile(profile) {
   const sendData = await baseUrl
-    .put('/profile', profile, { headers: { Authorization: userId } })
+    .put('/profile', profile, { headers: { Authorization: await getToken() } })
     .then((response) => {
       return response.data;
     });
