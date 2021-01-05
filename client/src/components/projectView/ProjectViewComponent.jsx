@@ -6,8 +6,17 @@ import ProjectSettingsModal from '../project/ProjectSettingsModal';
 import JoinProjectModal from './JoinProjectModal';
 import { createApplication } from '../../utils/api/application';
 const ProjectViewComponent = (props) => {
-  const { project, setProject, isAdmin, loggedIn, memberOf, loggedInUser } = props;
-  console.log(loggedInUser);
+  const {
+    project,
+    setProject,
+    isAdmin,
+    loggedIn,
+    memberOf,
+    loggedInUser,
+    hasApplied,
+    setHasApplied,
+  } = props;
+
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showProjectSettingsModal, setShowProjectSettingsModal] = useState(false);
 
@@ -26,7 +35,8 @@ const ProjectViewComponent = (props) => {
   const handleJoinProject = (motivation) => {
     const { owner, title } = project;
     createApplication(owner, title, motivation, loggedInUser.username).then((response) => {
-      console.log(response);
+      hideJoinModal();
+      setHasApplied(true);
     });
   };
   return (
@@ -51,6 +61,7 @@ const ProjectViewComponent = (props) => {
             memberOf={memberOf}
             onJoinClick={onJoinClick}
             onSettingsClick={onSettingsClick}
+            hasApplied={hasApplied}
           />
           <ProjectUpdatesComponent />
         </Card.Body>

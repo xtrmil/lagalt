@@ -3,13 +3,12 @@ import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
 
 const ProjectViewMainSection = (props) => {
-  const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick } = props;
+  const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick, hasApplied } = props;
   const industry = {
     value: Object.keys(project.industry)[0],
     label: Object.values(project.industry)[0],
   };
   const tagsArray = Object.values(project.tags);
-
   const membersList =
     project.members != null ? (
       project.members.map((member, index) => {
@@ -56,8 +55,8 @@ const ProjectViewMainSection = (props) => {
           <Col sm={4}>
             <div className="mr-4 text-right">
               {loggedIn && !memberOf && (
-                <Button variant="success" onClick={onJoinClick}>
-                  Join
+                <Button disabled={hasApplied} variant="success" onClick={onJoinClick}>
+                  {hasApplied ? 'Applied' : 'Join'}
                 </Button>
               )}
               {loggedIn && isAdmin && (
