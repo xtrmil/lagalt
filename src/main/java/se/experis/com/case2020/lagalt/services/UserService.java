@@ -118,20 +118,39 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, String username) {
+    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, String username, String Authorization, String applicationId) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         try {
             String userId = authService.getUserId(username);
-
+            DocumentReference isApplying = null;
+            boolean isPartOfStaff = false;
             if (userId != null) {
-                UserPublicView user = getUserPublicObject(userId);
+                var db = FirestoreClient.getFirestore();
+                boolean isHidden = db.collection("users").document(userId).get().get().getBoolean("hidden");
 
-                cr.message = "Profile user details for: " + username;
-                cr.data = user;
-                resp = HttpStatus.OK;
+                if (isHidden) {
+                    if (applicationId != null && !applicationId.equals("")) {
+
+                        isApplying = db.collection("pendingApplicationsRecords").document(applicationId).collection("users").document(userId);
+                        isPartOfStaff = authService.hasAdminPrivileges(applicationId, Authorization);
+                    }
+                }
+                if (!isHidden || (isApplying != null && isPartOfStaff)) {
+
+                    UserPublicView user = getUserPublicObject(userId);
+                    cr.message = "Profile user details for: " + username;
+                    cr.data = user;
+                    resp = HttpStatus.OK;
+
+                } else {
+
+                    cr.message = "Profile is hidden";
+                    resp = HttpStatus.FORBIDDEN;
+                }
+
             } else {
                 cr.message = "No user named " + username + " found";
                 resp = HttpStatus.NOT_FOUND;
@@ -145,7 +164,7 @@ public class UserService {
     }
 
     public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser,
-            String Authorization) {
+                                                            String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -176,7 +195,7 @@ public class UserService {
                     var futures = databaseService.emptyCollection(documentReference.collection("tags"));
 
                     ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't
-                                                         // added before they're deleted
+                    // added before they're deleted
 
                     partialUser.getTags().keySet().forEach(tagKey -> {
                         if (EnumUtils.isValidEnum(Tag.class, tagKey)) {
