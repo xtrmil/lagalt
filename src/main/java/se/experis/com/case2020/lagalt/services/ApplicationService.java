@@ -43,7 +43,7 @@ public class ApplicationService {
         HttpStatus resp;
         Set<ApplicationAdminView> applicationSet = new HashSet<>();
 
-        if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+        if (authService.hasAdminPrivileges(owner, projectName, Authorization)) {
             String projectId = projectService.getProjectId(owner, projectName);
 
             if (projectId != null) {
@@ -168,7 +168,7 @@ public class ApplicationService {
                     if (ApplicationStatus
                             .valueOf(applicationDocument.getString("status")) == ApplicationStatus.PENDING) {
 
-                        if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+                        if (authService.hasAdminPrivileges(owner, projectName, Authorization)) {
                             ApplicationProfileView updatedApplication = new ApplicationProfileView();
                             updatedApplication.setStatus(incomingStatus);
 
