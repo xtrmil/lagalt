@@ -23,8 +23,6 @@ import se.experis.com.case2020.lagalt.utils.RequestLimiter;
 @RequestMapping(value = "/api/v1/")
 public class AuthController {
 
-    private final String usernameRules = "A username must be between 3 and 20 characters long and contain uppercase and lowercase letters (a-z), and numbers. Underline is also permitted";
-
     @Autowired
     private AuthService authService;
 
@@ -37,27 +35,14 @@ public class AuthController {
     }
 
     @GetMapping("/isUsernameAvailable/{username}")
-    public ResponseEntity<Boolean> isUserIdAvailable(@PathVariable String username) {
-        HttpStatus status = authService.getUserNameAvailability(username);
-        if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
-            return new ResponseEntity<>(status);
-        }
-        return new ResponseEntity<>(status == HttpStatus.OK, HttpStatus.OK);
+    public ResponseEntity<Boolean> isUsernameAvailable(@PathVariable String username) {
+        return new ResponseEntity<>(authService.getUserNameAvailability(username).is2xxSuccessful(), HttpStatus.OK);
     }
 
     @GetMapping("/signin")
     public ResponseEntity<CommonResponse> signin(@RequestHeader String Authorization, HttpServletRequest request) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var cr = new CommonResponse();
-            var username = authService.getUsernameFromToken(Authorization);
-            if (username == null) {
-                requestLimiter.addCustomFailedAttempt(request);
-                cr.message = "User does not exist";
-                return new ResponseEntity<>(cr, HttpStatus.UNAUTHORIZED);
-            } else {
-                cr.data = username;
-                return new ResponseEntity<>(cr, HttpStatus.OK);
-            }
+            return requestLimiter.filter(request, authService.signIn(request, Authorization));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -67,14 +52,7 @@ public class AuthController {
             HttpServletRequest request) {
         if (!requestLimiter.isRequestBlocked(request)) {
             String username = user.get("username").asText();
-            if (!isValidUsername(username)) {
-                requestLimiter.addCustomFailedAttempt(request);
-                var cr = new CommonResponse();
-                cr.message = "Invalid user name. " + usernameRules;
-                return new ResponseEntity<>(cr, HttpStatus.BAD_REQUEST);
-            }
-
-            return requestLimiter.filter(request, authService.addUserRecord(username.trim(), Authorization));
+            return requestLimiter.filter(request, authService.signUp(Authorization, username));
         }
         return requestLimiter.getBlockedResponse();
     }
@@ -82,18 +60,8 @@ public class AuthController {
     @GetMapping("/logout")
     public ResponseEntity<CommonResponse> logout(@RequestHeader String Authorization, HttpServletRequest request) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            var response = authService.signOut(Authorization);
-            if (response.getStatusCode().is4xxClientError()) {
-                requestLimiter.addCustomFailedAttempt(request);
-            }
-            return response;
+            return requestLimiter.filter(request, authService.signOut(Authorization));
         }
         return requestLimiter.getBlockedResponse();
-    }
-
-    // public for unit test
-    public boolean isValidUsername(String username) {
-        String regex = "[_0-9a-zA-Z]{3,20}";
-        return username.matches(regex);
     }
 }

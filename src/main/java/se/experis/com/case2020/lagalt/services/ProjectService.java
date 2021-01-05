@@ -100,7 +100,6 @@ public class ProjectService {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
         Command cmd = new Command(request);
-        Timestamp time;
         LinkedHashMap<String, DocumentReference> filteredProjectsMap = new LinkedHashMap<>();
         try {
             if (authService.getUserIdFromToken(Authorization) != null) {
@@ -112,8 +111,8 @@ public class ProjectService {
                 List<QueryDocumentSnapshot> filteredProjects;
                 if (timestamp != null) {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
-                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp)).limit(favouriteLimit).get()
-                            .get().getDocuments();
+                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp))
+                            .limit(favouriteLimit).get().get().getDocuments();
                 } else {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
                             .whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
@@ -126,19 +125,21 @@ public class ProjectService {
                 int startPosition = 0;
                 int fetchLimit = 10;
                 List<QueryDocumentSnapshot> randomProjects;
-                var lastProject = db.collection("projects").orderBy("createdAt", Query.Direction.ASCENDING).startAfter(Timestamp.MIN_VALUE).limit(1).get().get().getDocuments();
+                var lastProject = db.collection("projects").orderBy("createdAt", Query.Direction.ASCENDING)
+                        .startAfter(Timestamp.MIN_VALUE).limit(1).get().get().getDocuments();
                 Timestamp last = lastProject.get(0).getTimestamp("createdAt");
 
                 endLoop = false;
-                while (!endLoop && filteredProjectsMap.size() < fetchLimit ) {
-                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition).limit(fetchLimit).get().get().getDocuments();
+                while (!endLoop && filteredProjectsMap.size() < fetchLimit) {
+                    randomProjects = db.collection("projects").orderBy("createdAt").startAfter(startPosition)
+                            .limit(fetchLimit).get().get().getDocuments();
 
                     randomProjects.forEach(p -> {
                         if (filteredProjectsMap.size() < fetchLimit) {
                             filteredProjectsMap.put(p.getId(), p.getReference());
                             System.out.println(p.getTimestamp("createdAt"));
                         }
-                        if(p.getTimestamp("createdAt").equals(last)){
+                        if (p.getTimestamp("createdAt").equals(last)) {
                             endLoop = true;
                         }
                     });
@@ -239,6 +240,7 @@ public class ProjectService {
                 DocumentSnapshot projectDocument = projectReference.get().get();
 
                 Map<String, Set<String>> projectInfo = new HashMap<>();
+
                 projectReference.listCollections().forEach(projectCollection -> {
 
                     projectCollection.listDocuments().forEach(document -> {
@@ -264,12 +266,7 @@ public class ProjectService {
                         }
                     });
 
-                    Map<String, String> tagsMap = new HashMap<>();
-
-                    tags.listDocuments().forEach(tag -> {
-                        tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
-                    });
-                    project.setTags(tagsMap);
+                    project.setTags(tagsToMap(tags));
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
 
@@ -281,7 +278,11 @@ public class ProjectService {
                     cr.data = project;
 
                 } else {
+
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
+                    project.setTags(tagsToMap(tags));
+                    Industry industryKey = project.getIndustryKey();
+                    project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     project.setOwner(authService.getUsername(project.getOwner()));
                     project = addDataToResponseProject(project, projectInfo, projectName,
                             projectDocument.getCreateTime());
@@ -293,8 +294,11 @@ public class ProjectService {
                 if (userId != null) {
                     DocumentReference userReference = userService.getUserDocument(userId);
                     var visited = userReference.collection("visited").document(projectReference.getId());
-                    visited.set("industryKey");
-                    visited.update("industryKey", projectDocument.get("industryKey"));
+                    visited.set(new HashMap<>() {
+                        {
+                            put("industryKey", projectDocument.get("industryKey"));
+                        }
+                    });
                 }
 
                 resp = HttpStatus.OK;
@@ -378,7 +382,7 @@ public class ProjectService {
 
                 String pid = projectRecord.getString("pid");
 
-                if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+                if (authService.hasAdminPrivileges(owner, projectName, Authorization)) {
                     var projectRef = getProjectDocumentReference(pid);
                     var dbProject = projectRef.get().get().toObject(ProjectMemberView.class);
 
@@ -627,5 +631,13 @@ public class ProjectService {
 
         return Timestamp.ofTimeSecondsAndNanos(timestamp.get("createdAt").get("seconds").asLong(),
                 timestamp.get("createdAt").get("nanos").asInt());
+    }
+
+    private Map tagsToMap(CollectionReference tags) {
+        Map<String, String> tagsMap = new HashMap<>();
+        tags.listDocuments().forEach(tag -> {
+            tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
+        });
+        return tagsMap;
     }
 }

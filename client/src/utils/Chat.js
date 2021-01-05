@@ -1,6 +1,6 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
-import { Observable } from 'rxjs';
+import { iif, Observable } from 'rxjs';
 import * as chatAPI from './api/chat';
 
 const firebaseConfig = {
@@ -50,6 +50,10 @@ export const chatData = async (owner, title) => {
   const dbPath = await getDbPath(owner, title);
   unsubscribeAll();
 
+  if (!(await checkAccess(dbPath))) {
+    throw new Error();
+  }
+
   return new Observable((observer) => {
     unsubs.chat = db
       .collection(dbPath)
@@ -66,6 +70,14 @@ export const chatData = async (owner, title) => {
         observer.next(arr);
       });
   });
+};
+
+const checkAccess = async (dbPath) => {
+  return db
+    .collection(dbPath)
+    .get()
+    .then(() => true)
+    .catch((err) => false);
 };
 
 export const getEarlierMessages = async (lastMsg) => {
