@@ -34,8 +34,11 @@ import se.experis.com.case2020.lagalt.utils.Command;
 public class UserService {
 
     @Autowired
-    private MockAuthService authService;
-    
+    private DatabaseService databaseService;
+
+    @Autowired
+    private AuthService authService;
+
     @Autowired
     private ProjectService projectService;
 
@@ -65,12 +68,12 @@ public class UserService {
                         });
                     });
 
-                    
                     if (userInfo.get("appliedTo") != null) {
                         Set<ApplicationProfileView> applications = new HashSet<>();
                         userInfo.get("appliedTo").forEach(application -> {
                             try {
-                                ApplicationProfileView apv = db.collection("applications").document(application).get().get().toObject(ApplicationProfileView.class);
+                                ApplicationProfileView apv = db.collection("applications").document(application).get()
+                                        .get().toObject(ApplicationProfileView.class);
                                 apv.setProject(projectService.getProjectTitle(apv.getProject()));
                                 applications.add(apv);
                             } catch (Exception e) {
@@ -79,15 +82,16 @@ public class UserService {
                         });
                         user.setAppliedTo(applications);
                     }
-                    
-                    Set<String> contributedProjects = projectService.translateIdsToProjectNames(userInfo.get("contributedTo"));
+
+                    Set<String> contributedProjects = projectService
+                            .translateIdsToProjectNames(userInfo.get("contributedTo"));
                     user.setContributedTo(contributedProjects);
                     Set<String> memberOfProjects = projectService.translateIdsToProjectNames(userInfo.get("memberOf"));
                     user.setMemberOf(memberOfProjects);
-                    
-                    if(userInfo.get("tags") != null) {
+
+                    if (userInfo.get("tags") != null) {
                         Map<String, String> tagsMap = new HashMap<>();
-                        
+
                         userInfo.get("tags").forEach(tag -> {
                             tagsMap.put(tag, Tag.valueOf(tag.toString()).DISPLAY_TAG);
                         });
@@ -114,20 +118,39 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, String username) {
+    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, String username, String Authorization, String projectId) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         try {
             String userId = authService.getUserId(username);
-
+            DocumentReference isApplying = null;
+            boolean isPartOfStaff = false;
             if (userId != null) {
-                UserPublicView user = getUserPublicObject(userId);
+                var db = FirestoreClient.getFirestore();
+                boolean isHidden = db.collection("users").document(userId).get().get().getBoolean("hidden");
 
-                cr.message = "Profile user details for: " + username;
-                cr.data = user;
-                resp = HttpStatus.OK;
+                if (isHidden) {
+                    if (projectId != null && !projectId.equals("")) {
+
+                        isApplying = db.collection("pendingApplicationsRecords").document(projectId).collection("users").document(userId);
+                        isPartOfStaff = authService.hasAdminPrivileges(projectId, Authorization);
+                    }
+                }
+                if (!isHidden || (isApplying != null && isPartOfStaff)) {
+
+                    UserPublicView user = getUserPublicObject(userId);
+                    cr.message = "Profile user details for: " + username;
+                    cr.data = user;
+                    resp = HttpStatus.OK;
+
+                } else {
+
+                    cr.message = "Profile is hidden";
+                    resp = HttpStatus.FORBIDDEN;
+                }
+
             } else {
                 cr.message = "No user named " + username + " found";
                 resp = HttpStatus.NOT_FOUND;
@@ -140,7 +163,8 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser, String Authorization) {
+    public ResponseEntity<CommonResponse> updateUserDetails(HttpServletRequest request, UserProfileView partialUser,
+                                                            String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -168,10 +192,10 @@ public class UserService {
                     user.setName(partialUser.getName());
                 }
                 if (partialUser.getTags() != null) {
-                    DatabaseService databaseService = new DatabaseService();
                     var futures = databaseService.emptyCollection(documentReference.collection("tags"));
-                    
-                    ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't added before they're deleted 
+
+                    ApiFutures.allAsList(futures).get(); // blocks thread until deletion is done so that tags aren't
+                    // added before they're deleted
 
                     partialUser.getTags().keySet().forEach(tagKey -> {
                         if (EnumUtils.isValidEnum(Tag.class, tagKey)) {
@@ -240,7 +264,8 @@ public class UserService {
         return user;
     }
 
-    private UserProfileView getUserProfileobject(String userId) throws InterruptedException, CancellationException, ExecutionException {
+    private UserProfileView getUserProfileobject(String userId)
+            throws InterruptedException, CancellationException, ExecutionException {
         return getUserDocument(userId).get().get().toObject(UserProfileView.class);
     }
 

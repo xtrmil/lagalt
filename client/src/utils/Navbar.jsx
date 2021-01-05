@@ -1,12 +1,18 @@
 import React from 'react';
 import { Navbar as BootstrapNavbar, Nav, Button, NavDropdown } from 'react-bootstrap';
+import * as Auth from '../utils/Auth';
 
 const Navbar = (props) => {
+  const { loggedInUser } = props;
+
   const onLoginClick = () => {
     props.history.push('/login');
   };
-  const onRegisterClick = () => {
-    props.history.push('/register');
+
+  const onLogoutClick = async () => {
+    await Auth.logout().then(() => {
+      props.history.push('/login');
+    });
   };
 
   return (
@@ -27,13 +33,17 @@ const Navbar = (props) => {
           <NavDropdown.Item href="/admin">Project admin</NavDropdown.Item>
         </NavDropdown>
       </Nav>
-
-      <Button onClick={onLoginClick} variant="dark">
-        Login
-      </Button>
-      <Button onClick={onRegisterClick} variant="primary">
-        Sign up
-      </Button>
+      {loggedInUser ? (
+        <>
+          <Button onClick={onLogoutClick}>Logout</Button>
+        </>
+      ) : (
+        <>
+          <Button onClick={onLoginClick} variant="dark">
+            Login
+          </Button>
+        </>
+      )}
     </BootstrapNavbar>
   );
 };

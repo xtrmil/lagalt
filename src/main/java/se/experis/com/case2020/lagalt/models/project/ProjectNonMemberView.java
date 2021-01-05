@@ -22,7 +22,7 @@ public class ProjectNonMemberView {
     private String title;
     private String description;
     private String owner;
-    private Timestamp createdAt;
+    private Timestamp createdAt = Timestamp.now();
     private ProjectStatus status = ProjectStatus.FOUNDING;
 
     @JsonProperty(access = Access.WRITE_ONLY)

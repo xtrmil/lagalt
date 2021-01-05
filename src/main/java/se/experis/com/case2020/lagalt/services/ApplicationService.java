@@ -26,31 +26,34 @@ import se.experis.com.case2020.lagalt.utils.Command;
 
 @Service
 public class ApplicationService {
-    
+
     @Autowired
     private UserService userService;
 
     @Autowired
-    private MockAuthService authService;
+    private AuthService authService;
 
     @Autowired
     private ProjectService projectService;
-    
-    public ResponseEntity<CommonResponse> getApplications(HttpServletRequest request, String owner, String projectName, String Authorization) {
+
+    public ResponseEntity<CommonResponse> getApplications(HttpServletRequest request, String owner, String projectName,
+            String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Set<ApplicationAdminView> applicationSet = new HashSet<>();
-        
-        if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+
+        if (authService.hasAdminPrivileges(owner, projectName, Authorization)) {
             String projectId = projectService.getProjectId(owner, projectName);
-            
-            if(projectId != null) {
-                var projectCollections = projectService.getProjectDocumentReference(projectId).collection("activeApplications").listDocuments();
-                
+
+            if (projectId != null) {
+                var projectCollections = projectService.getProjectDocumentReference(projectId)
+                        .collection("activeApplications").listDocuments();
+
                 projectCollections.forEach(application -> {
                     try {
-                        DocumentSnapshot applicationDocument = getApplicationDocumentReference(application.getId()).get().get();
+                        DocumentSnapshot applicationDocument = getApplicationDocumentReference(application.getId())
+                                .get().get();
                         var applicationView = new ApplicationAdminView();
                         applicationView.setApplicationId(applicationDocument.getId());
                         applicationView.setMotivation(applicationDocument.getString("motivation"));
@@ -58,13 +61,13 @@ public class ApplicationService {
 
                         UserPublicView user = userService.getUserPublicObject(applicationDocument.getString("user"));
                         applicationView.setUser(user);
-                        
+
                         applicationSet.add(applicationView);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 });
-                if(applicationSet.isEmpty()) {
+                if (applicationSet.isEmpty()) {
                     resp = HttpStatus.NO_CONTENT;
                 } else {
                     resp = HttpStatus.OK;
@@ -84,34 +87,38 @@ public class ApplicationService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> createApplication(HttpServletRequest request, String owner, String projectName, String Authorization, ObjectNode motivation) {
+    public ResponseEntity<CommonResponse> createApplication(HttpServletRequest request, String owner,
+            String projectName, String Authorization, ObjectNode motivation) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
 
         try {
             String projectId = projectService.getProjectId(owner, projectName);
-            if(projectId != null) {
-                
+            if (projectId != null) {
+
                 String userId = authService.getUserIdFromToken(Authorization);
                 if (userId != null) {
 
-                    if(!authService.isPartOfProjectStaff(owner, projectName, Authorization)) {                       
+                    if (!authService.isPartOfProjectStaff(owner, projectName, Authorization)) {
                         var db = FirestoreClient.getFirestore();
                         ApplicationProfileView applicationProfileView = new ApplicationProfileView();
                         applicationProfileView.setProject(projectId);
                         applicationProfileView.setMotivation(motivation.get("motivation").asText());
                         applicationProfileView.setUser(userId);
-                    
-                        var applicationRecord = db.collection("pendingApplicationRecords").document(projectId).collection("users").document(userId);
-                        if(!applicationRecord.get().get().exists()) {
-                            
+
+                        var applicationRecord = db.collection("pendingApplicationRecords").document(projectId)
+                                .collection("users").document(userId);
+                        if (!applicationRecord.get().get().exists()) {
+
                             applicationRecord.set(new HashMap<>());
                             var applicationDocRef = db.collection("applications").document();
                             applicationDocRef.set(applicationProfileView);
-                            userService.getUserDocument(userId).collection("appliedTo").document(applicationDocRef.getId()).set(new HashMap<>());
-                            projectService.getProjectDocumentReference(projectId).collection("activeApplications").document(applicationDocRef.getId()).set(new HashMap<>());
-                            
+                            userService.getUserDocument(userId).collection("appliedTo")
+                                    .document(applicationDocRef.getId()).set(new HashMap<>());
+                            projectService.getProjectDocumentReference(projectId).collection("activeApplications")
+                                    .document(applicationDocRef.getId()).set(new HashMap<>());
+
                             cr.data = "Your motivation: " + motivation.get("motivation").asText();
                             cr.message = "Application successfully submitted to project: " + projectId;
                             resp = HttpStatus.OK;
@@ -131,7 +138,7 @@ public class ApplicationService {
                 cr.message = "Project not found";
                 resp = HttpStatus.NOT_FOUND;
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             cr.message = "Server error";
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
@@ -139,51 +146,58 @@ public class ApplicationService {
         return new ResponseEntity<>(cr, resp);
     }
 
-
-    public ResponseEntity<CommonResponse> answerApplication(HttpServletRequest request, String owner, String projectName, String applicationId, ObjectNode requestBody,
-    String Authorization) {
+    public ResponseEntity<CommonResponse> answerApplication(HttpServletRequest request, String owner,
+            String projectName, String applicationId, ObjectNode requestBody, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         String projectId = projectService.getProjectId(owner, projectName);
         String incomingStatusString = requestBody.get("status").asText();
-        
+
         try {
-            if(EnumUtils.isValidEnum(ApplicationStatus.class, incomingStatusString)) {
+            if (EnumUtils.isValidEnum(ApplicationStatus.class, incomingStatusString)) {
                 var db = FirestoreClient.getFirestore();
                 ApplicationStatus incomingStatus = ApplicationStatus.valueOf(incomingStatusString);
-                
+
                 var projectDocumentReference = projectService.getProjectDocumentReference(projectId);
-                var projectApplicationReference = projectDocumentReference.collection("activeApplications").document(applicationId);
+                var projectApplicationReference = projectDocumentReference.collection("activeApplications")
+                        .document(applicationId);
                 if (projectApplicationReference.get().get().exists()) {
                     DocumentSnapshot applicationDocument = getApplicationDocumentReference(applicationId).get().get();
 
-                    if(ApplicationStatus.valueOf(applicationDocument.getString("status")) == ApplicationStatus.PENDING) {
+                    if (ApplicationStatus
+                            .valueOf(applicationDocument.getString("status")) == ApplicationStatus.PENDING) {
 
-                        if (authService.isProjectAdmin(owner, projectName, Authorization)) {
+                        if (authService.hasAdminPrivileges(owner, projectName, Authorization)) {
                             ApplicationProfileView updatedApplication = new ApplicationProfileView();
                             updatedApplication.setStatus(incomingStatus);
-                            
+
                             updatedApplication.setFeedback(requestBody.get("message").asText());
                             updatedApplication.setMotivation(applicationDocument.getString("motivation"));
                             updatedApplication.setProject(projectId);
                             String applicantId = applicationDocument.getString("user");
                             updatedApplication.setUser(applicantId);
-                            
-                            if(incomingStatus == ApplicationStatus.APPROVED || incomingStatus == ApplicationStatus.REJECTED) {
-                                if(incomingStatus == ApplicationStatus.APPROVED) {
-                                    db.collection("users").document(applicantId).collection("memberOf").document(projectId).set(new HashMap<>());
-                                    projectDocumentReference.collection("members").document(applicantId).set(new HashMap<>());
+
+                            if (incomingStatus == ApplicationStatus.APPROVED
+                                    || incomingStatus == ApplicationStatus.REJECTED) {
+                                if (incomingStatus == ApplicationStatus.APPROVED) {
+                                    var newMember = db.collection("users").document(applicantId);
+                                    newMember.collection("memberOf").document(projectId).set(new HashMap<>());
+                                    newMember.collection("contributedTo").document(projectId).set(new HashMap<>());
+                                    projectDocumentReference.collection("members").document(applicantId)
+                                            .set(new HashMap<>());
                                 }
-                                projectDocumentReference.collection("archivedApplications").document(applicationId).set(new HashMap<>());
+                                projectDocumentReference.collection("archivedApplications").document(applicationId)
+                                        .set(new HashMap<>());
                                 projectApplicationReference.delete();
                             }
-                            
+
                             getApplicationDocumentReference(applicationId).set(updatedApplication);
-                            db.collection("pendingApplicationRecords").document(projectId).collection("users").document(applicantId).delete();
+                            db.collection("pendingApplicationRecords").document(projectId).collection("users")
+                                    .document(applicantId).delete();
                             cr.message = "Application updated";
                             resp = HttpStatus.OK;
-                            
+
                         } else {
                             cr.message = "Not authorized to edit application";
                             resp = HttpStatus.UNAUTHORIZED;
@@ -200,7 +214,7 @@ public class ApplicationService {
                 cr.message = "Invalid request body";
                 resp = HttpStatus.BAD_REQUEST;
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
         }
