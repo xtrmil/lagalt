@@ -1,36 +1,4 @@
-.loginPageCard {
-    margin: 0 auto;
-    float: none;
-    margin-bottom: 10px;
-    height: 175px;
-}
-
-.loginPageCardBody {
-    margin-left: 10px;
-    margin-top: -35px;
-    }
-
-.loginHeading {
-    margin-left: 575px;
-    margin-top: 30px;
-    }
-
-.registerInvite {
-    margin-left: 400px;
-}
-
-.google-button {
-    margin-bottom: 20px;
-}
-
-.handleSubmit {
-    width: 100px;
-}
-
-.Form {
-    width: 40px;
-}
-
-h1, h4, h6 {
-    color: #184A73;
+.loginCard{
+    width: 400px;
+    height: 300px;
 }

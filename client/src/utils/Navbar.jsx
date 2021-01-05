@@ -8,13 +8,11 @@ const Navbar = (props) => {
   const onLoginClick = () => {
     props.history.push('/login');
   };
-  const onRegisterClick = () => {
-    props.history.push('/register');
-  };
 
-  const onLogoutClick = () => {
-    Auth.logout();
-    props.history.push('/login');
+  const onLogoutClick = async () => {
+    await Auth.logout().then(() => {
+      props.history.push('/login');
+    });
   };
 
   return (
@@ -43,9 +41,6 @@ const Navbar = (props) => {
         <>
           <Button onClick={onLoginClick} variant="dark">
             Login
-          </Button>
-          <Button onClick={onRegisterClick} variant="primary">
-            Sign up
           </Button>
         </>
       )}
