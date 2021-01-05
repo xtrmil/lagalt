@@ -26,7 +26,6 @@ export default class AuthTestComponent extends React.Component {
   };
 
   setFadingMsg = (msg) => {
-    console.log(`setFadingMsg(${msg})`);
     this.setState({ msg, msgColour: 'black' });
     if (this.timeout) {
       clearTimeout(this.timeout);
@@ -37,7 +36,6 @@ export default class AuthTestComponent extends React.Component {
   };
 
   clearMsg = () => {
-    console.log('clearMsg()');
     this.setState({ msg: '' });
   };
 
