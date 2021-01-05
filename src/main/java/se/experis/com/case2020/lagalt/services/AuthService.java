@@ -273,7 +273,6 @@ public class AuthService {
         return null;
     }
 
-
     public ResponseEntity<CommonResponse> addUserRecord(String username, String jwtToken) {
         HttpStatus resp;
         var cr = new CommonResponse();
@@ -324,5 +323,11 @@ public class AuthService {
             e.printStackTrace();
         }
         return new ResponseEntity<>(cr, resp);
+    }
+
+    // public for unit test
+    public boolean isValidUsername(String username) {
+        String regex = "[_0-9a-zA-Z]{3,20}";
+        return username.matches(regex);
     }
 }
