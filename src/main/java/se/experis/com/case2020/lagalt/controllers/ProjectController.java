@@ -1,5 +1,6 @@
 package se.experis.com.case2020.lagalt.controllers;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
