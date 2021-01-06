@@ -123,7 +123,7 @@ public class ProjectService {
     }
 
     public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request,
-            HttpServletResponse response, String Authorization, ObjectNode timestamp) {
+            HttpServletResponse response, String Authorization) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
         Command cmd = new Command(request);
@@ -136,19 +136,14 @@ public class ProjectService {
                 int favouriteLimit = 6;
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
-                if (timestamp == null) {
 
-                    filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt", Query.Direction.DESCENDING)
-                            .limit(6).get().get().getDocuments();
-
-                } else {
-
-                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
-                            .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp))
-                            .limit(favouriteLimit).get().get().getDocuments();
-
-                }
-
+                    if(favourite != null) {
+                        filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt", Query.Direction.DESCENDING)
+                                .limit(6).get().get().getDocuments();
+                    }else{
+                        filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                                .limit(6).get().get().getDocuments();
+                    }
 
                 filteredProjects.forEach(document -> {
                     filteredProjectsMap.put(document.getId(), document.getReference());
@@ -199,6 +194,10 @@ public class ProjectService {
         var db = FirestoreClient.getFirestore();
         var documents = db.collection("users").document(userId).collection("visited").get().get().getDocuments();
         HashMap<String, Integer> projects = new HashMap<>();
+        if(documents == null){
+            return null;
+        }
+
         documents.forEach(p -> {
             String industryKey = p.getString("industryKey");
             if (!projects.containsKey(industryKey)) {
