@@ -1,6 +1,6 @@
 import firebase from 'firebase/app';
 import 'firebase/firestore';
-import { iif, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import * as chatAPI from './api/chat';
 
 const firebaseConfig = {

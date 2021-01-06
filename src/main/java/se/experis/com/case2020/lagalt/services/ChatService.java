@@ -12,7 +12,7 @@ import se.experis.com.case2020.lagalt.models.CommonResponse;
 public class ChatService {
         
     @Autowired
-    private MockAuthService authService;
+    private AuthService authService;
     
     @Autowired
     private ProjectService projectService;
