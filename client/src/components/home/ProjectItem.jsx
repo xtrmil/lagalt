@@ -38,7 +38,10 @@ const ProjectItem = (props) => {
       ) {
         setMemberOf(true);
       }
-      setUserTags(Object.values(loggedInUser.tags));
+
+      if (loggedInUser.tags) {
+        setUserTags(Object.values(loggedInUser.tags));
+      }
 
       if (loggedInUser.appliedTo) {
         loggedInUser.appliedTo.map((application) => {
