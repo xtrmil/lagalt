@@ -12,15 +12,19 @@ const ProjectItem = (props) => {
   const [userTags, setUserTags] = useState([]);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const { project } = props;
-  const tagsArray = Object.values(project.tags);
-  const tagsList = tagsArray.map((tag, index) => {
-    const matched = userTags.includes(tag);
-    return (
-      <span className={matched ? ' mr-2 tag-border matched' : ' mr-2 tag-border'} key={index}>
-        {tag}
-      </span>
-    );
-  });
+
+  let tagsList;
+  if (project.tags) {
+    const tagsArray = Object.values(project.tags);
+    tagsList = tagsArray.map((tag, index) => {
+      const matched = userTags.includes(tag);
+      return (
+        <span className={matched ? ' mr-2 tag-border matched' : ' mr-2 tag-border'} key={index}>
+          {tag}
+        </span>
+      );
+    });
+  }
 
   useEffect(() => {
     loggedInUser && setLoggedIn(true);
