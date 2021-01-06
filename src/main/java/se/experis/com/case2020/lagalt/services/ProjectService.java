@@ -122,28 +122,29 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request,
-            HttpServletResponse response, String Authorization) {
+    public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request, HttpServletResponse response, String Authorization) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp = null;
         Command cmd = new Command(request);
         LinkedHashMap<String, DocumentReference> filteredProjectsMap = new LinkedHashMap<>();
+
         try {
-            if (authService.getUserIdFromToken(Authorization) != null) {
-                String userId = authService.getUserIdFromToken(Authorization);
+            String userId = authService.getUserIdFromToken(Authorization);
+            if (userId != null) {
                 String favourite = getFavouriteIndustry(userId);
 
                 int favouriteLimit = 6;
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
 
-                    if(favourite != null) {
-                        filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt", Query.Direction.DESCENDING)
-                                .limit(6).get().get().getDocuments();
-                    }else{
-                        filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
-                                .limit(6).get().get().getDocuments();
-                    }
+                if(favourite != null) {
+                    filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt", Query.Direction.DESCENDING)
+                            .limit(favouriteLimit).get().get().getDocuments();
+                }else{
+                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                            .limit(favouriteLimit).get().get().getDocuments();
+                }
+
 
                 filteredProjects.forEach(document -> {
                     filteredProjectsMap.put(document.getId(), document.getReference());
@@ -190,25 +191,28 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    private String getFavouriteIndustry(String userId) throws ExecutionException, InterruptedException {
-        var db = FirestoreClient.getFirestore();
-        var documents = db.collection("users").document(userId).collection("visited").get().get().getDocuments();
-        HashMap<String, Integer> projects = new HashMap<>();
-        if(documents == null){
-            return null;
-        }
-
-        documents.forEach(p -> {
-            String industryKey = p.getString("industryKey");
-            if (!projects.containsKey(industryKey)) {
-                projects.put(industryKey, 1);
-            } else {
-                int count = projects.get(industryKey);
-                projects.put(industryKey, count + 1);
+    private String getFavouriteIndustry(String userId) {
+        try {
+            var db = FirestoreClient.getFirestore();
+            var documents = db.collection("users").document(userId).collection("visited").get().get().getDocuments();
+            HashMap<String, Integer> projects = new HashMap<>();
+            if(documents != null) {
+            
+                documents.forEach(p -> {
+                    String industryKey = p.getString("industryKey");
+                    if (!projects.containsKey(industryKey)) {
+                        projects.put(industryKey, 1);
+                    } else {
+                        int count = projects.get(industryKey);
+                        projects.put(industryKey, count + 1);
+                    }
+                });
+                return mapToStreamSortedByValue(projects).findFirst().get().getKey();
             }
-        });
-
-        return mapToStreamSortedByValue(projects).findFirst().get().getKey();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private List<ProjectSummarizedView> getFormattedProjects(Iterable<DocumentReference> projects, String Authorization) {
@@ -308,11 +312,7 @@ public class ProjectService {
                 if (userId != null) {
                     DocumentReference userReference = userService.getUserDocument(userId);
                     var visited = userReference.collection("visited").document(projectReference.getId());
-                    visited.set(new HashMap<>() {
-                        {
-                            put("industryKey", projectDocument.get("industryKey"));
-                        }
-                    });
+                    visited.set(Map.of("industryKey", projectDocument.get("industryKey")));
                 }
 
                 resp = HttpStatus.OK;
@@ -632,8 +632,10 @@ public class ProjectService {
     }
 
     private Stream<Map.Entry<String, Integer>> mapToStreamSortedByValue(HashMap<String, Integer> map) {
-
-        return map.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+        if(map != null) {
+            return map.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
+        }
+        return null;
     }
 
     private List<DocumentReference> snapshotsToDocumentsList(List<QueryDocumentSnapshot> snapshots) {
@@ -647,7 +649,7 @@ public class ProjectService {
                 timestamp.get("createdAt").get("nanos").asInt());
     }
 
-    private Map tagsToMap(CollectionReference tags) {
+    private Map<String, String> tagsToMap(CollectionReference tags) {
         Map<String, String> tagsMap = new HashMap<>();
         tags.listDocuments().forEach(tag -> {
             tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
