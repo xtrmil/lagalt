@@ -178,10 +178,11 @@ public class AuthService {
             var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
             var admin = db.collection("projects").document(projectId).collection("admins").document(userId).get().get();
             return admin.exists() || ownerId.equals(userId);
+        } catch (NullPointerException e) {
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public boolean isOwner(String owner, String projectName, String jwtToken) {
@@ -191,10 +192,11 @@ public class AuthService {
             String userId = getUserIdFromToken(jwtToken);
             var ownerId = db.collection("projects").document(projectId).get().get().getString("owner");
             return ownerId.equals(userId);
+        } catch (NullPointerException e) {
         } catch (Exception e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
     public boolean isPartOfProjectStaff(String owner, String projectName, String jwtToken) {
@@ -212,6 +214,7 @@ public class AuthService {
                 var ref = db.collection("projects").document(projectId).collection(collection).document(userId).get()
                         .get();
                 return ref.exists();
+            } catch (NullPointerException e) {
             } catch (Exception e) {
                 e.printStackTrace();
             }
