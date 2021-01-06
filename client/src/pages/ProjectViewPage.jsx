@@ -40,11 +40,13 @@ const ProjectViewPage = (props) => {
       ) {
         setMemberOf(true);
       }
-      loggedInUser.appliedTo.map((application) => {
-        if (application.project === project.title) {
-          setHasApplied(true);
-        }
-      });
+      if (loggedInUser.appliedTo) {
+        loggedInUser.appliedTo.map((application) => {
+          if (application.project === project.title) {
+            setHasApplied(true);
+          }
+        });
+      }
     }
   }, [loggedInUser, project]);
 
