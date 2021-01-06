@@ -15,7 +15,7 @@ To run the client, the user must have node is installed https://nodejs.org/en/.
 - type "npm start" to start the dev server
 - If the browser does not automatically open a tab, visit http://localhost:3000
 
-To run the server, the user must have java sdk 14+ installed https://www.oracle.com/java/technologies/javase-downloads.html, and an IDE/editor supporting java, maven, and lombok.
+To run the server, the user must have java sdk 14+ installed https://www.oracle.com/java/technologies/javase-downloads.html, and an IDE/editor supporting java, maven, and lombok. The server also needs a firebase service account key file which should be named serviceAccount.json and be put in the root folder. A fresh can be retrieved from the firebase web console (you need access to the Lagalt firebase project) at Project settings > Service account > Generate new private key.
 
 - Run main method in src/main/java/se/experis/com/case2020/lagalt
 
@@ -23,7 +23,7 @@ To run the server, the user must have java sdk 14+ installed https://www.oracle.
 All end points uses the base path: /api/v1/...
 For requests that requires authorization, the jwt token should be sent in the Authorization header. Body data must be sent in json.
 
-`headers: { Host: <host> Content-Type: application/json, _Authorization: <jwtToken>_ }`
+`headers: { Host: <host> Content-Type: application/json, Authorization: <jwtToken> }`
 
 ### Common Responses
 In case there is a server side error, a 500 status code will be returned for all endpoints. In case of bad request format, a 400 is returned. A 405 is returned if the method is unsupported.
@@ -104,6 +104,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **possible error cases:**
   - 401: Not authorized to edit project (must be admin or owner)
   - 404: Project not found
+
 
 ### Project application endpoints
 
@@ -294,8 +295,8 @@ All enum endpoints returns an object with key-value pairs
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of possible tags project industries supported by the site
+- **possible error cases:**
   - 404: Industry does not exist
-- **possible error cases:** none
 
 #### Get available project statuses
 - **method:** GET
@@ -324,32 +325,48 @@ All enum endpoints returns an object with key-value pairs
 - **method:** POST
 - **path:** /projects/:owner/:projectName/messageboard
 - **headers:** Authorization
-- **parameters:** {
+- **body:**
+{
   title: string
   text: string
-  }
+}
 - **expected changes:** added collection and document to project message board
 - **possible responses:**
   - 200: Message board created
-  - 400: There is already a thread with the supplied name
+- **possible error cases:**
   - 401: User is not authenticated
   - 404: Project not found
-- **possible error cases:** none
+  - 409: There is already a thread with the supplied name
 
 #### Create new message board post
 - **method:** POST
 - **path:** /projects/:owner/:projectName/messageboard/:messageBoardId
 - **headers:** Authorization
-- **parameters:** body: {
+- **body:**
+{
   text: string
-  }
+}
 - **expected changes:** added document to project message board
 - **possible responses:**
   - 200: Message board created
-  - 400: There is already a thread with the supplied name
+- **possible error cases:**
+  - 400: There is no thread with the supplied id
   - 401: User is not authenticated
   - 404: Project not found
-- **possible error cases:** none
+
+#### Delete message board post
+- **method:** DELETE
+- **path:** /projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
+- **headers:** Authorization
+- **parameters:** none
+- **expected changes:** message board document belonging to project tagged as deleted (boolean field)
+- **possible responses:**
+  - 200: Message board created
+- **possible error cases:**
+  - 401: User is not the owner of the message or not authenticated
+  - 404: Project not found
+/projects/:owner/:projectName/messageboard/:threadId/:messageId
+
 
 ### Chat endpoints
 
