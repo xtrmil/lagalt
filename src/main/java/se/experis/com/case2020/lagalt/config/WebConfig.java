@@ -9,6 +9,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedMethods("*").allowedOrigins("http://localhost:3000");
+        String origin = System.getenv("origin");
+        if(origin != null) {
+            registry.addMapping("/**").allowedMethods("*").allowedOrigins(origin);
+        } else {
+            System.out.println("No environment variable for cors origin found. Allowing localhost:3000");
+            registry.addMapping("/**").allowedMethods("*").allowedOrigins("http://localhost:3000");
+        }
     }
 }

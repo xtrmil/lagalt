@@ -36,16 +36,22 @@ public class ProjectController {
 
     @GetMapping("")
     public ResponseEntity<CommonResponse> getProjectSearch(HttpServletRequest request, HttpServletResponse response,
-            @RequestParam(required = false) String search, @RequestHeader(required = false) String Authorization,
-            @RequestBody(required = false) ObjectNode timestamp) {
-        if (search != null) {
-            return projectService.getProjectsSearch(request, search);
-        } else {
+                                                           @RequestParam(required = false) String search, @RequestHeader(required = false) String Authorization,
+                                                           @RequestBody(required = false) ObjectNode timestamp, @RequestParam(required = false) String industry) {
+        if (industry != null || search != null || Authorization != null) {
+
+            if (industry != null) {
+                return projectService.getProjectsFilteredOnIndustry(request, response, industry);
+            }
+            if (search != null) {
+                return projectService.getProjectsSearch(request, search);
+            }
             if (Authorization != null) {
                 return projectService.getProjectsBasedOnHistory(request, response, Authorization, timestamp);
             }
-            return projectService.getProjects(request, response, timestamp);
+
         }
+        return projectService.getProjects(request, response, timestamp);
     }
 
     @GetMapping("/{owner}/{projectName}")

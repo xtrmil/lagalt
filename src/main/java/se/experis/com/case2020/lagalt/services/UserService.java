@@ -58,57 +58,52 @@ public class UserService {
                 Map<String, Set<String>> userInfo = new HashMap<>();
                 UserProfileView user = null;
 
-                if (document.exists()) {
-                    user = document.toObject(UserProfileView.class);
+                user = document.toObject(UserProfileView.class);
 
-                    userDocRef.listCollections().forEach(collection -> {
+                userDocRef.listCollections().forEach(collection -> {
 
-                        collection.listDocuments().forEach(doc -> {
-                            userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(doc.getId());
-                        });
+                    collection.listDocuments().forEach(doc -> {
+                        userInfo.computeIfAbsent(collection.getId(), k -> new HashSet<>()).add(doc.getId());
                     });
+                });
 
-                    if (userInfo.get("appliedTo") != null) {
-                        Set<ApplicationProfileView> applications = new HashSet<>();
-                        userInfo.get("appliedTo").forEach(application -> {
-                            try {
-                                ApplicationProfileView apv = db.collection("applications").document(application).get()
-                                        .get().toObject(ApplicationProfileView.class);
-                                apv.setProject(projectService.getProjectTitle(apv.getProject()));
-                                applications.add(apv);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        user.setAppliedTo(applications);
-                    }
-
-                    Set<String> contributedProjects = projectService
-                            .translateIdsToProjectNames(userInfo.get("contributedTo"));
-                    user.setContributedTo(contributedProjects);
-                    Set<String> memberOfProjects = projectService.translateIdsToProjectNames(userInfo.get("memberOf"));
-                    user.setMemberOf(memberOfProjects);
-
-                    if (userInfo.get("tags") != null) {
-                        Map<String, String> tagsMap = new HashMap<>();
-
-                        userInfo.get("tags").forEach(tag -> {
-                            tagsMap.put(tag, Tag.valueOf(tag.toString()).DISPLAY_TAG);
-                        });
-                        user.setTags(tagsMap);
-                    }
-
-                    cr.message = "Profile user details for: " + user.getUsername();
-                    cr.data = user;
-                    resp = HttpStatus.OK;
-                } else {
-                    cr.message = "User not found";
-                    resp = HttpStatus.NOT_FOUND;
+                if (userInfo.get("appliedTo") != null) {
+                    Set<ApplicationProfileView> applications = new HashSet<>();
+                    userInfo.get("appliedTo").forEach(application -> {
+                        try {
+                            ApplicationProfileView apv = db.collection("applications").document(application).get()
+                                    .get().toObject(ApplicationProfileView.class);
+                            apv.setProject(projectService.getProjectTitle(apv.getProject()));
+                            applications.add(apv);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    user.setAppliedTo(applications);
                 }
+
+                Set<String> contributedProjects = projectService
+                        .translateIdsToProjectNames(userInfo.get("contributedTo"));
+                Set<String> memberOfProjects = projectService.translateIdsToProjectNames(userInfo.get("memberOf"));
+                user.setContributedTo(contributedProjects);
+                user.setMemberOf(memberOfProjects);
+
+                if (userInfo.get("tags") != null) {
+                    Map<String, String> tagsMap = new HashMap<>();
+
+                    userInfo.get("tags").forEach(tag -> {
+                        tagsMap.put(tag, Tag.valueOf(tag.toString()).DISPLAY_TAG);
+                    });
+                    user.setTags(tagsMap);
+                }
+
+                cr.message = "Profile user details for: " + user.getUsername();
+                cr.data = user;
+                resp = HttpStatus.OK;
 
             } else {
                 resp = HttpStatus.UNAUTHORIZED;
-                cr.message = "You are not authorized to see private details for this user";
+                cr.message = "You are not authenticated";
             }
         } catch (Exception e) {
             resp = HttpStatus.INTERNAL_SERVER_ERROR;
