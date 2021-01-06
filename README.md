@@ -23,7 +23,7 @@ To run the server, the user must have java sdk 14+ installed https://www.oracle.
 All end points uses the base path: /api/v1/...
 For requests that requires authorization, the jwt token should be sent in the Authorization header. Body data must be sent in json.
 
-`headers: { Host: <host> Content-Type: application/json, Authorization: <jwtToken> }`
+`headers: { Host: <host>, Content-Type: application/json, Authorization: <jwtToken> }`
 
 ### Common Responses
 In case there is a server side error, a 500 status code will be returned for all endpoints. In case of bad request format, a 400 is returned. A 405 is returned if the method is unsupported.
