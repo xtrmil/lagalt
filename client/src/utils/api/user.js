@@ -1,7 +1,6 @@
 import baseUrl from './baseUrl';
 import { getToken } from '../Auth';
 export async function getUserByUserId() {
-  console.log(await getToken());
   const fetchData = await baseUrl
     .get('/profile', { headers: { Authorization: await getToken() } })
     .then((response) => {

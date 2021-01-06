@@ -38,9 +38,9 @@ public class UserController {
     }
 
     @GetMapping("/users/{username}")
-    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, @PathVariable String username, @RequestHeader(required = false) String Authorization, @RequestHeader(required = false) String applicationId) {
+    public ResponseEntity<CommonResponse> getPublicUser(HttpServletRequest request, @PathVariable String username, @RequestHeader(required = false) String Authorization, @RequestHeader(required = false) String projectId) {
         if (!requestLimiter.isRequestBlocked(request)) {
-            return requestLimiter.filter(request, userService.getPublicUserDetails(request, username,Authorization,applicationId));
+            return requestLimiter.filter(request, userService.getPublicUserDetails(request, username,Authorization,projectId));
         }
         return requestLimiter.getBlockedResponse();
     }

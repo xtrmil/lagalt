@@ -120,7 +120,9 @@ const ProjectForm = () => {
               textarea="textarea"
             ></TextInput>
 
-            <Button type="submit"> Submit!</Button>
+            <button type="button" className="btn btn-success">
+              Submit
+            </button>
           </Form>
         </>
       )}

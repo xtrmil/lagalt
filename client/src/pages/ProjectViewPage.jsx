@@ -13,6 +13,8 @@ const ProjectViewPage = (props) => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [memberOf, setMemberOf] = useState(false);
   const { userId, projectId } = useParams();
+  const [hasApplied, setHasApplied] = useState(false);
+
   useEffect(() => {
     const fetchUser = async (userId) => {
       getUserByUserId(userId).then((response) => {
@@ -32,9 +34,17 @@ const ProjectViewPage = (props) => {
       if (loggedInUser.username.toUpperCase() === project.owner.toUpperCase()) {
         setMemberOf(true);
         setIsAdmin(true);
-      } else if (project.members != null && project.members.includes(loggedInUser.toLowerCase())) {
+      } else if (
+        project.members != null &&
+        project.members.includes(loggedInUser.username.toLowerCase())
+      ) {
         setMemberOf(true);
       }
+      loggedInUser.appliedTo.map((application) => {
+        if (application.project === project.title) {
+          setHasApplied(true);
+        }
+      });
     }
   }, [loggedInUser, project]);
 
@@ -59,6 +69,8 @@ const ProjectViewPage = (props) => {
           loggedIn={loggedIn}
           memberOf={memberOf}
           loggedInUser={loggedInUser}
+          hasApplied={hasApplied}
+          setHasApplied={setHasApplied}
         ></ProjectViewComponent>
       )}
     </Container>

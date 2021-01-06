@@ -14,9 +14,9 @@ import { Router, Route, Switch } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { createBrowserHistory } from 'history';
 import ChatPage from './pages/ChatPage';
-import AuthTestComponent from './components/AuthTestComponent';
 import * as Auth from './utils/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
+import LoginRoute from './components/LoginRoute';
 const history = createBrowserHistory();
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
           <Switch>
             <Route exact path="/projects/:owner/:projectName/chat" component={ChatPage} />
             <Route exact path="/home" component={HomePage} />
-            <Route exact path="/login" component={AuthTestComponent} />
+            <LoginRoute exact path="/login" component={LoginPage} loggedInUser={loggedInUser} />
             <Route exact path="/register" component={RegisterPage} />
             <ProtectedRoute
               exact

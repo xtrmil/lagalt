@@ -118,7 +118,7 @@ public class UserService {
         return new ResponseEntity<>(cr, resp);
     }
 
-    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, String username, String Authorization, String applicationId) {
+    public ResponseEntity<CommonResponse> getPublicUserDetails(HttpServletRequest request, String username, String Authorization, String projectId) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -132,10 +132,10 @@ public class UserService {
                 boolean isHidden = db.collection("users").document(userId).get().get().getBoolean("hidden");
 
                 if (isHidden) {
-                    if (applicationId != null && !applicationId.equals("")) {
+                    if (projectId != null && !projectId.equals("")) {
 
-                        isApplying = db.collection("pendingApplicationsRecords").document(applicationId).collection("users").document(userId);
-                        isPartOfStaff = authService.hasAdminPrivileges(applicationId, Authorization);
+                        isApplying = db.collection("pendingApplicationsRecords").document(projectId).collection("users").document(userId);
+                        isPartOfStaff = authService.hasAdminPrivileges(projectId, Authorization);
                     }
                 }
                 if (!isHidden || (isApplying != null && isPartOfStaff)) {
