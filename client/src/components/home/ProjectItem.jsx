@@ -40,11 +40,13 @@ const ProjectItem = (props) => {
       }
       setUserTags(Object.values(loggedInUser.tags));
 
-      loggedInUser.appliedTo.map((application) => {
-        if (application.project === project.title) {
-          setHasApplied(true);
-        }
-      });
+      if (loggedInUser.appliedTo) {
+        loggedInUser.appliedTo.map((application) => {
+          if (application.project === project.title) {
+            setHasApplied(true);
+          }
+        });
+      }
     }
   }, [loggedInUser, project]);
 
