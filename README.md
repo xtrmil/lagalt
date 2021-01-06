@@ -1,5 +1,5 @@
 # Lagalt
-Lagalt is a web site used used to facilitate connecting individuals in creative fields with projects that need their specific skill sets.
+Lagalt is a website used to facilitate connecting individuals in creative fields with projects that need their specific skill sets.
 Requirements as per [instructions](docs/Lagalt-Case.pdf).
 
 # Team Members
