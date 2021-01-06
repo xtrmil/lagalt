@@ -24,7 +24,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.application.ApplicationProfileView;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.user.UserProfileView;
 import se.experis.com.case2020.lagalt.models.user.UserPublicView;
@@ -48,7 +47,6 @@ public class UserService {
         HttpStatus resp;
 
         try {
-            var db = FirestoreClient.getFirestore();
             String userId = authService.getUserIdFromToken(Authorization);
 
             if (userId != null) {
@@ -68,24 +66,6 @@ public class UserService {
                         });
                     });
 
-                    if (userInfo.get("appliedTo") != null) {
-                        Set<ApplicationProfileView> applications = new HashSet<>();
-                        userInfo.get("appliedTo").forEach(application -> {
-                            try {
-                                ApplicationProfileView apv = db.collection("applications").document(application).get()
-                                        .get().toObject(ApplicationProfileView.class);
-                                apv.setProject(projectService.getProjectTitle(apv.getProject()));
-                                applications.add(apv);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        user.setAppliedTo(applications);
-                    }
-
-                    Set<String> contributedProjects = projectService
-                            .translateIdsToProjectNames(userInfo.get("contributedTo"));
-                    user.setContributedTo(contributedProjects);
                     Set<String> memberOfProjects = projectService.translateIdsToProjectNames(userInfo.get("memberOf"));
                     user.setMemberOf(memberOfProjects);
 
