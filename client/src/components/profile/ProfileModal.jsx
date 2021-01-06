@@ -43,13 +43,13 @@ const ProfileModal = (props) => {
 
   const onFormSubmit = (values) => {
     const { tags } = values;
-    const updatedUser = {
-      ...user,
+    const editUser = {
       ...values,
       hidden: values.hidden.value,
       tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
     };
-    editUserProfile(updatedUser);
+    const updatedUser = { ...user, ...editUser };
+    editUserProfile(editUser);
     handleSaveChanges(updatedUser);
   };
 

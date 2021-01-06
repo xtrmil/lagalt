@@ -31,6 +31,8 @@ import se.experis.com.case2020.lagalt.utils.Command;
 @Service
 public class ProjectService {
     static boolean endLoop;
+    private Map<String, String> cachedUsernames = new HashMap<>();
+
     @Autowired
     private AuthService authService;
 
@@ -130,10 +132,11 @@ public class ProjectService {
             String userId = authService.getUserIdFromToken(Authorization);
             if (userId != null) {
                 String favourite = getFavouriteIndustry(userId);
+
                 int favouriteLimit = 6;
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
-                
+
                 if(favourite != null) {
                     filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt", Query.Direction.DESCENDING)
                             .limit(favouriteLimit).get().get().getDocuments();
@@ -141,6 +144,7 @@ public class ProjectService {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
                             .limit(favouriteLimit).get().get().getDocuments();
                 }
+
 
                 filteredProjects.forEach(document -> {
                     filteredProjectsMap.put(document.getId(), document.getReference());
@@ -161,7 +165,6 @@ public class ProjectService {
                     randomProjects.forEach(p -> {
                         if (filteredProjectsMap.size() < fetchLimit) {
                             filteredProjectsMap.put(p.getId(), p.getReference());
-                            System.out.println(p.getTimestamp("createdAt"));
                         }
                         if (p.getTimestamp("createdAt").equals(last)) {
                             endLoop = true;
@@ -170,7 +173,6 @@ public class ProjectService {
                     startPosition += fetchLimit;
                 }
                 List<DocumentReference> filteredProjectsList = new ArrayList<>(filteredProjectsMap.values());
-
                 var formattedProjects = getFormattedProjects(filteredProjectsList, Authorization);
                 cr.data = formattedProjects;
                 resp = HttpStatus.OK;
@@ -213,45 +215,31 @@ public class ProjectService {
         return null;
     }
 
-    private List<ProjectSummarizedView> getFormattedProjects(Iterable<DocumentReference> projects,
-            String Authorization) {
-        List<ProjectSummarizedView> allProjects = new ArrayList<>();
+    private List<ProjectSummarizedView> getFormattedProjects(Iterable<DocumentReference> projects, String Authorization) {
 
+        List<ProjectSummarizedView> allProjects = new ArrayList<>();
+        Firestore db = FirestoreClient.getFirestore();
         projects.forEach(p -> {
             try {
                 var projectDocument = p.get().get();
 
                 ProjectSummarizedView summarizedProject = projectDocument.toObject(ProjectSummarizedView.class);
-                var memberCount = p.collection("members").get().get().getDocuments().size();
-                summarizedProject.setMemberCount(memberCount);
                 allProjects.add(summarizedProject);
-
-                summarizedProject.setOwner(authService.getUsername(summarizedProject.getOwner()));
-
+                if(cachedUsernames.get(summarizedProject.getOwner()) == null) {
+                    cachedUsernames.put(summarizedProject.getOwner(), authService.getUsername(summarizedProject.getOwner()));
+                }
+                summarizedProject.setOwner(cachedUsernames.get(summarizedProject.getOwner()));
                 String industryKey = projectDocument.getString("industryKey");
                 summarizedProject.setIndustry(Map.of(industryKey, Industry.valueOf(industryKey).INDUSTRY_NAME));
-
-                var tags = p.collection("tags").get().get().getDocuments();
-                Map<String, String> tagsMap = new HashMap<>();
-                tags.forEach(tag -> {
-                    tagsMap.put(tag.getId(), Tag.valueOf(tag.getId().toString()).DISPLAY_TAG);
-                });
-
-                summarizedProject.setTags(tagsMap);
-                summarizedProject.setCreatedAt(projectDocument.getCreateTime());
                 if (Authorization != null) {
                     String userId = authService.getUserIdFromToken(Authorization);
-                    var db = FirestoreClient.getFirestore();
                     db.collection("users").document(userId).collection("seen").document(p.getId()).set(new HashMap<>());
 
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         });
-
         return allProjects;
     }
 
