@@ -42,7 +42,7 @@ public class ProjectController {
             return projectService.getProjectsSearch(request, search);
         } else {
             if (Authorization != null) {
-                return projectService.getProjectsBasedOnHistory(request, response, Authorization, timestamp);
+                return projectService.getProjectsBasedOnHistory(request, response, Authorization);
             }
             return projectService.getProjects(request, response, timestamp);
         }
