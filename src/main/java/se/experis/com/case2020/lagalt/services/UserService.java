@@ -73,8 +73,10 @@ public class UserService {
                         try {
                             ApplicationProfileView apv = db.collection("applications").document(application).get()
                                     .get().toObject(ApplicationProfileView.class);
-                            apv.setProject(projectService.getProjectTitle(apv.getProject()));
-                            applications.add(apv);
+                            if(apv != null) {
+                                apv.setProject(projectService.getProjectTitle(apv.getProject()));
+                                applications.add(apv);
+                            }
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

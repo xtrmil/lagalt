@@ -66,8 +66,11 @@ public class MockAuthService extends AuthService {
 
     @Override
     public boolean hasAdminPrivileges(String owner, String projectName, String invalidToken) {
-        String userId = getUserIdFromToken(invalidToken);
-        return isPartOfProjectCollection(owner, projectName, "admins") || owner.equals(userId);
+        if(owner != null) {
+            String userId = getUserIdFromToken(invalidToken);
+            return isPartOfProjectCollection(owner, projectName, "admins") || owner.equals(userId);
+        }
+        return false;
     }
 
     @Override
