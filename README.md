@@ -123,7 +123,7 @@ In case there is a server side error, a 500 status code will be returned for all
  
 #### Apply to a project
 - **method:** POST
-- **path:** /api/v1/projects/:owner/:projectName/applications
+- **path:** /api/v1/projects/:projectOwner/:projectName/applications
 - **required headers:** Authorization
 - **body:**
 {
@@ -139,7 +139,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Reply to application
 - **method:** POST
-- **path:** /api/v1/projects/:owner/:projectName/applications/:applicationId
+- **path:** /api/v1/projects/:projectOwner/:projectName/applications/:applicationId
 - **required headers:** Authorization
 - **body:**
 {
@@ -150,9 +150,9 @@ In case there is a server side error, a 500 status code will be returned for all
 - **possible responses:**
   - 200: Application replied to
 - **possible error cases:**
-  - 400: Application already answered
   - 401: User is not authenticated
   - 404: Project not found
+  - 406: Application already answered
   - 409: User already has a pending application to the given project OR is already a member
 
 
@@ -321,9 +321,33 @@ All enum endpoints returns an object with key-value pairs
 
 ### Message board endpoints
 
+#### Get all project message boards
+- **method:** GET
+- **path:** /api/v1/projects/:projectOwner/:projectName/messageboard
+- **headers:** Authorization
+- **body:** none
+- **expected changes:** none
+- **possible responses:**
+  - 200: A list of possible application statuses an application can have
+  - 204: Project does not have any message boards
+- **possible error cases:** none
+  - 401: User is not a member of the project or not authenticated
+
+#### Get message board posts
+- **method:** GET
+- **path:** /api/v1/projects/:projectOwner/:projectName/messageboard/:messageBoardId
+- **headers:** Authorization
+- **body:** none
+- **expected changes:** none
+- **possible responses:**
+  - 200: A list of possible application statuses an application can have
+  **possible error cases:** none
+  - 401: User is not a member of the project or not authenticated
+  - 404: Project not found
+
 #### Create new message board
 - **method:** POST
-- **path:** /api/v1/projects/:owner/:projectName/messageboard
+- **path:** /api/v1/projects/:projectOwner/:projectName/messageboard
 - **headers:** Authorization
 - **body:**
 {
@@ -340,7 +364,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Create new message board post
 - **method:** POST
-- **path:** /api/v1/projects/:owner/:projectName/messageboard/:messageBoardId
+- **path:** /api/v1/projects/:projectOwner/:projectName/messageboard/:messageBoardId
 - **headers:** Authorization
 - **body:**
 {
@@ -350,13 +374,12 @@ All enum endpoints returns an object with key-value pairs
 - **possible responses:**
   - 200: Message board created
 - **possible error cases:**
-  - 400: There is no thread with the supplied id
   - 401: User is not authenticated
-  - 404: Project not found
+  - 404: Project not found or there is no thread with the supplied id
 
 #### Delete message board post
 - **method:** DELETE
-- **path:** /api/v1/projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
+- **path:** /api/v1/projects/:projectOwner/:projectName/messageboard/:messageBoardId/:messageId
 - **headers:** Authorization
 - **body:** none
 - **expected changes:** message board document belonging to project tagged as deleted (boolean field)
@@ -365,7 +388,7 @@ All enum endpoints returns an object with key-value pairs
 - **possible error cases:**
   - 401: User is not the owner of the message or not authenticated
   - 404: Project not found
-/projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
+/projects/:projectOwner/:projectName/messageboard/:messageBoardId/:messageId
 
 
 ### Chat endpoints
