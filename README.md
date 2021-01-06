@@ -35,7 +35,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/projects
 - **optional headers:** Authorization
-- **optional parameters:** 
+- **optional query string parameters:** 
   - search: string
   - industry: string (enum)
 - **expected changes:** none
@@ -47,7 +47,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/projects/:projectOwner/:projectName
 - **optional headers:** Authorization
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: Project details. If the user is a member of the project, private project data is returned
@@ -56,17 +56,17 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Create new project
 - **method:** POST
-- **path:** /api/v1/projects/
+- **path:** /api/v1/projects
 - **required headers:** Authorization
 - **body:**
 {
   title: string
   industry: {
     key (enum): value
-  }
+  },
   tags: [{
     key(enum): value
-  }]
+  }],
   description: string
 }
 - **expected changes:** new project document w collection. tags, new projectRecord document
@@ -79,22 +79,22 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Edit project
 - **method:** PUT
-- **path:** /api/v1/projects/
+- **path:** /api/v1/projects
 - **required headers:** Authorization
 - **body:** 
 {
-  description: string
+  description: string,
   industry: {
     key (enum): value
-  }
+  },
   tags: [{
     key(enum): value
-  }]
-  admins: string[] (userId’s)
-  members: string[] (userId’s)
-  status: string (enum)
+  }],
+  admins: string[] (userId’s),
+  members: string[] (userId’s),
+  status: string (enum),
   links: [{
-    name: string
+    name: string,
     url: string
   }]
 }
@@ -112,7 +112,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/projects/:projectOwner/:projectName/applications
 - **required headers:** Authorization
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of pending applications to the given project
@@ -143,7 +143,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **required headers:** Authorization
 - **body:**
 {
-  status: string (enum)
+  status: string (enum),
   message: string
 }
 - **expected changes:** project activeApplications document removed, project members document added (if confirmed), pendingApplications document removed, applications document changed 
@@ -162,7 +162,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/signin
 - **required headers:** Authorization
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** firebase auth token. no changes in the database
 - **possible responses:**
   - 200: Signed in successfully
@@ -173,7 +173,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/logout
 - **required headers:** Authorization
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** firebase auth token. no changes in the database
 - **possible responses:**
   - 200: Signed out successfully
@@ -184,7 +184,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/loggedInUser
 - **required headers:** Authorization
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: Username or null
@@ -194,7 +194,7 @@ In case there is a server side error, a 500 status code will be returned for all
 - **method:** GET
 - **path:** /api/v1/isUsernameAvailable/:username
 - **headers:** Authorization
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: Returns a boolean whether the username is available or not
@@ -221,21 +221,21 @@ In case there is a server side error, a 500 status code will be returned for all
 ### User endpoints
 
 #### Profile data for logged in user
-**method:** GET
-**path:** /api/v1/profile
-**required headers:** Authorization
-**optional parameters:** none
-**expected changes:** none
-**possible responses:**
+- **method:** GET
+- **path:** /api/v1/profile
+- **required headers:** Authorization
+- **body:** none
+- **expected changes:** none
+- **possible responses:**
   - 200: Returns user data
-**possible error cases:**
+- **possible error cases:**
   - 401: User not authenticated
 
 #### Public user info
 - **method:** GET
 - **path:** /api/v1/users/:username
 - **headers:** none
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: Returns user data
@@ -249,10 +249,10 @@ In case there is a server side error, a 500 status code will be returned for all
 - **required headers:** Authorization
 - **body:**
 {
-  name: string
-  hidden: boolean
-  description: string
-  portfolio: string
+  name: string,
+  hidden: boolean,
+  description: string,
+  portfolio: string,
   tags: {
     key (enum): value
   }
@@ -271,7 +271,7 @@ All enum endpoints returns an object with key-value pairs
 - **method:** GET
 - **path:** /api/v1/available/industries
 - **headers:** none
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of possible project industries supported by the site
@@ -281,7 +281,7 @@ All enum endpoints returns an object with key-value pairs
 - **method:** GET
 - **path:** /api/v1/available/tags
 - **headers:** none
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of possible skill tags supported by the site
@@ -291,7 +291,7 @@ All enum endpoints returns an object with key-value pairs
 - **method:** GET
 - **path:** /api/v1/available/tags/:industry
 - **headers:** none
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of possible tags project industries supported by the site
@@ -302,7 +302,7 @@ All enum endpoints returns an object with key-value pairs
 - **method:** GET
 - **path:** /api/v1/available/projectstatuses
 - **headers:** none
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of possible project statuses a project can have
@@ -312,7 +312,7 @@ All enum endpoints returns an object with key-value pairs
 - **method:** GET
 - **path:** /api/v1/available/applicationstatuses
 - **headers:** none
-- **optional parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: A list of possible application statuses an application can have
@@ -327,7 +327,7 @@ All enum endpoints returns an object with key-value pairs
 - **headers:** Authorization
 - **body:**
 {
-  title: string
+  title: string,
   text: string
 }
 - **expected changes:** added collection and document to project message board
@@ -358,14 +358,14 @@ All enum endpoints returns an object with key-value pairs
 - **method:** DELETE
 - **path:** /api/v1/projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
 - **headers:** Authorization
-- **parameters:** none
+- **body:** none
 - **expected changes:** message board document belonging to project tagged as deleted (boolean field)
 - **possible responses:**
   - 200: Message board created
 - **possible error cases:**
   - 401: User is not the owner of the message or not authenticated
   - 404: Project not found
-/projects/:owner/:projectName/messageboard/:threadId/:messageId
+/projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
 
 
 ### Chat endpoints
@@ -374,7 +374,7 @@ All enum endpoints returns an object with key-value pairs
 - **method:** GET
 - **path:** /api/v1/projects/{projectOwner}/{projectName}/chat
 - **headers:** Authorization
-- **parameters:** none
+- **body:** none
 - **expected changes:** none
 - **possible responses:**
   - 200: Get successful
@@ -386,9 +386,10 @@ All enum endpoints returns an object with key-value pairs
 - **method:** POST
 - **path:** /api/v1/projects/{projectOwner}/{projectName}/chat
 - **headers:** Authorization
-- **parameters:** body: {
+- **body:**
+{
   text: string
-  }
+}
 - **expected changes:** added document to project chat default channel
 - **possible responses:**
   - 200: Msg sent successfully
