@@ -33,7 +33,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Get summarized projects
 - **method:** GET
-- **path:** /projects
+- **path:** /api/v1/projects
 - **optional headers:** Authorization
 - **optional parameters:** 
   - search: string
@@ -45,7 +45,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Get specific project
 - **method:** GET
-- **path:** /projects/:projectOwner/:projectName
+- **path:** /api/v1/projects/:projectOwner/:projectName
 - **optional headers:** Authorization
 - **optional parameters:** none
 - **expected changes:** none
@@ -56,7 +56,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Create new project
 - **method:** POST
-- **path:** /projects/
+- **path:** /api/v1/projects/
 - **required headers:** Authorization
 - **body:**
 {
@@ -79,7 +79,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Edit project
 - **method:** PUT
-- **path:** /projects/
+- **path:** /api/v1/projects/
 - **required headers:** Authorization
 - **body:** 
 {
@@ -110,7 +110,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Get project applications
 - **method:** GET
-- **path:** /projects/:projectOwner/:projectName/applications
+- **path:** /api/v1/projects/:projectOwner/:projectName/applications
 - **required headers:** Authorization
 - **optional parameters:** none
 - **expected changes:** none
@@ -123,7 +123,7 @@ In case there is a server side error, a 500 status code will be returned for all
  
 #### Apply to a project
 - **method:** POST
-- **path:** projects/:owner/:projectName/applications
+- **path:** /api/v1/projects/:owner/:projectName/applications
 - **required headers:** Authorization
 - **body:**
 {
@@ -139,7 +139,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Reply to application
 - **method:** POST
-- **path:** projects/:owner/:projectName/applications/:applicationId
+- **path:** /api/v1/projects/:owner/:projectName/applications/:applicationId
 - **required headers:** Authorization
 - **body:**
 {
@@ -160,7 +160,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Sign in
 - **method:** GET
-- **path:** /signin
+- **path:** /api/v1/signin
 - **required headers:** Authorization
 - **optional parameters:** none
 - **expected changes:** firebase auth token. no changes in the database
@@ -171,7 +171,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Sign out
 - **method:** GET
-- **path:** /logout
+- **path:** /api/v1/logout
 - **required headers:** Authorization
 - **optional parameters:** none
 - **expected changes:** firebase auth token. no changes in the database
@@ -182,7 +182,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Get username of logged in user
 - **method:** GET
-- **path:** /loggedInUser
+- **path:** /api/v1/loggedInUser
 - **required headers:** Authorization
 - **optional parameters:** none
 - **expected changes:** none
@@ -192,7 +192,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Check if username is available
 - **method:** GET
-- **path:** /isUsernameAvailable/:username
+- **path:** /api/v1/isUsernameAvailable/:username
 - **headers:** Authorization
 - **optional parameters:** none
 - **expected changes:** none
@@ -202,7 +202,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Sign up
 - **method:** POST
-- **path:** /signup
+- **path:** /api/v1/signup
 - **headers:** Authorization
 - **body:**
 {
@@ -222,7 +222,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Profile data for logged in user
 **method:** GET
-**path:** /profile
+**path:** /api/v1/profile
 **required headers:** Authorization
 **optional parameters:** none
 **expected changes:** none
@@ -233,7 +233,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Public user info
 - **method:** GET
-- **path:** /users/:username
+- **path:** /api/v1/users/:username
 - **headers:** none
 - **optional parameters:** none
 - **expected changes:** none
@@ -245,7 +245,7 @@ In case there is a server side error, a 500 status code will be returned for all
 
 #### Edit user profile
 - **method:** PUT
-- **path:** /profile
+- **path:** /api/v1/profile
 - **required headers:** Authorization
 - **body:**
 {
@@ -269,7 +269,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Get available industries
 - **method:** GET
-- **path:** /available/industries
+- **path:** /api/v1/available/industries
 - **headers:** none
 - **optional parameters:** none
 - **expected changes:** none
@@ -279,7 +279,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Get available project/user tags
 - **method:** GET
-- **path:** /available/tags
+- **path:** /api/v1/available/tags
 - **headers:** none
 - **optional parameters:** none
 - **expected changes:** none
@@ -289,7 +289,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Get tags available industries for a certain industry
 - **method:** GET
-- **path:** /available/tags/:industry
+- **path:** /api/v1/available/tags/:industry
 - **headers:** none
 - **optional parameters:** none
 - **expected changes:** none
@@ -300,7 +300,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Get available project statuses
 - **method:** GET
-- **path:** /available/projectstatuses
+- **path:** /api/v1/available/projectstatuses
 - **headers:** none
 - **optional parameters:** none
 - **expected changes:** none
@@ -310,7 +310,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Get available project statuses
 - **method:** GET
-- **path:** /available/applicationstatuses
+- **path:** /api/v1/available/applicationstatuses
 - **headers:** none
 - **optional parameters:** none
 - **expected changes:** none
@@ -323,7 +323,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Create new message board
 - **method:** POST
-- **path:** /projects/:owner/:projectName/messageboard
+- **path:** /api/v1/projects/:owner/:projectName/messageboard
 - **headers:** Authorization
 - **body:**
 {
@@ -340,7 +340,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Create new message board post
 - **method:** POST
-- **path:** /projects/:owner/:projectName/messageboard/:messageBoardId
+- **path:** /api/v1/projects/:owner/:projectName/messageboard/:messageBoardId
 - **headers:** Authorization
 - **body:**
 {
@@ -356,7 +356,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Delete message board post
 - **method:** DELETE
-- **path:** /projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
+- **path:** /api/v1/projects/:owner/:projectName/messageboard/:messageBoardId/:messageId
 - **headers:** Authorization
 - **parameters:** none
 - **expected changes:** message board document belonging to project tagged as deleted (boolean field)
@@ -372,7 +372,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Get project chat DB Path
 - **method:** GET
-- **path:** /projects/{projectOwner}/{projectName}/chat
+- **path:** /api/v1/projects/{projectOwner}/{projectName}/chat
 - **headers:** Authorization
 - **parameters:** none
 - **expected changes:** none
@@ -384,7 +384,7 @@ All enum endpoints returns an object with key-value pairs
 
 #### Send chat message
 - **method:** POST
-- **path:** /projects/{projectOwner}/{projectName}/chat
+- **path:** /api/v1/projects/{projectOwner}/{projectName}/chat
 - **headers:** Authorization
 - **parameters:** body: {
   text: string
