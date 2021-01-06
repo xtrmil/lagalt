@@ -24,7 +24,7 @@ public class RequestLimiter {
     public ResponseEntity<CommonResponse> filter(HttpServletRequest request,
             ResponseEntity<CommonResponse> backendResponse) {
         if (backendResponse.getStatusCode().is4xxClientError()) {
-            addCustomFailedAttempt(request);
+            addFailedAttempt(request);
         }
         return backendResponse;
     }
@@ -48,13 +48,7 @@ public class RequestLimiter {
         return new ResponseEntity<>(cr, HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    /**
-     * This should only be used when using custom failed attempt rules
-     * 
-     * @param request
-     * @return
-     */
-    public boolean addCustomFailedAttempt(HttpServletRequest request) {
+    private boolean addFailedAttempt(HttpServletRequest request) {
         String key = request.getRemoteAddr();
         var timestamps = failedAuthentications.get(key);
         if (timestamps == null) {
