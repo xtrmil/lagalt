@@ -95,6 +95,31 @@ public class ProjectService {
         return new ResponseEntity<>(cr, resp);
     }
 
+    public ResponseEntity<CommonResponse> getProjectsFilteredOnIndustry(HttpServletRequest request, HttpServletResponse response, String industryKey) {
+        CommonResponse cr = new CommonResponse();
+        HttpStatus resp;
+        Command cmd = new Command(request);
+        int fetchLimit = 10;
+
+        Firestore db = FirestoreClient.getFirestore();
+        try {
+
+            List<QueryDocumentSnapshot> filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                    .whereEqualTo("industryKey", industryKey).limit(fetchLimit).get().get().getDocuments();
+
+
+            var formattedProjects = getFormattedProjects(snapshotsToDocumentsList(filteredProjects), null);
+            cr.data = formattedProjects;
+            resp = HttpStatus.OK;
+
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        cmd.setResult(resp);
+        return new ResponseEntity<>(cr, resp);
+    }
+
     public ResponseEntity<CommonResponse> getProjectsBasedOnHistory(HttpServletRequest request,
             HttpServletResponse response, String Authorization, ObjectNode timestamp) {
         CommonResponse cr = new CommonResponse();
@@ -109,13 +134,14 @@ public class ProjectService {
                 int favouriteLimit = 6;
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
-                if (timestamp != null) {
+                if (timestamp == null) {
+                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
+                            .whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
+
+                } else {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
                             .whereEqualTo("industryKey", favourite).startAfter(getCreatedAt(timestamp))
                             .limit(favouriteLimit).get().get().getDocuments();
-                } else {
-                    filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
-                            .whereEqualTo("industryKey", favourite).limit(3).get().get().getDocuments();
                 }
 
                 filteredProjects.forEach(document -> {
@@ -137,7 +163,6 @@ public class ProjectService {
                     randomProjects.forEach(p -> {
                         if (filteredProjectsMap.size() < fetchLimit) {
                             filteredProjectsMap.put(p.getId(), p.getReference());
-                            System.out.println(p.getTimestamp("createdAt"));
                         }
                         if (p.getTimestamp("createdAt").equals(last)) {
                             endLoop = true;
