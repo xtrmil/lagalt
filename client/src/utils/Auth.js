@@ -38,7 +38,7 @@ const recaptchaContainer = 'authContainer'; // id of html element where the reCa
 
 // dev
 export const dev = {
-  _value: DevMode.ignoreAll,
+  _value: DevMode.off,
 
   get mode() {
     return this._value;

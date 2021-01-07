@@ -42,34 +42,40 @@ public class MessageBoardService {
             if (authService.isPartOfProjectStaff(projectOwner, projectName, Authorization)) {
                 String projectId = projectService.getProjectId(projectOwner, projectName);
 
-                var defaultMessageBoardDocument = getDefaultMessageBoardReference(projectId);
-                var threadCollections = defaultMessageBoardDocument.listCollections();
+                if(projectId != null) {
+                    var defaultMessageBoardDocument = getDefaultMessageBoardReference(projectId);
+                    var threadCollections = defaultMessageBoardDocument.listCollections();
 
-                if (!defaultMessageBoardDocument.get().get().exists()) {
+                    if (!defaultMessageBoardDocument.get().get().exists()) {
 
-                    List<MessageBoardThread> threads = new ArrayList<>();
-                    threadCollections.forEach(t -> {
-                        try {
-                            MessageBoardThread thread = new MessageBoardThread();
-                            var initialPost = t.document("0").get().get();
-                            String title = initialPost.getString("title");
-                            String creator = authService.getUsername(initialPost.getString("user"));
+                        List<MessageBoardThread> threads = new ArrayList<>();
+                        threadCollections.forEach(t -> {
+                            try {
+                                MessageBoardThread thread = new MessageBoardThread();
+                                var initialPost = t.document("0").get().get();
+                                String title = initialPost.getString("title");
+                                String creator = authService.getUsername(initialPost.getString("user"));
 
-                            thread.setLink("/api/v1/projects/" + projectOwner + "/" + projectName + "/messageboard/"
-                                    + t.getId());
-                            thread.setTitle(title);
-                            thread.setNrOfMessages(t.get().get().getDocuments().size());
-                            thread.setCreatedBy(creator);
-                            threads.add(thread);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-                    cr.data = threads;
-                    resp = HttpStatus.OK;
+                                thread.setLink("/api/v1/projects/" + projectOwner + "/" + projectName + "/messageboard/"
+                                        + t.getId());
+                                thread.setTitle(title);
+                                thread.setNrOfMessages(t.get().get().getDocuments().size());
+                                thread.setCreatedBy(creator);
+                                threads.add(thread);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        cr.data = threads;
+                        resp = HttpStatus.OK;
+                    } else {
+                        cr.message = "No messageboards found";
+                        resp = HttpStatus.NO_CONTENT;
+                    }
+
                 } else {
-                    cr.message = "No messageboards found";
-                    resp = HttpStatus.NO_CONTENT;
+                    cr.message = "Project not found";
+                    resp = HttpStatus.NOT_FOUND;
                 }
             } else {
                 cr.message = "You are not authorized to view this message board";
@@ -180,8 +186,13 @@ public class MessageBoardService {
                         response.addHeader("Location",
                                 "/" + projectOwner + "/" + projectName + "/messageboard/" + threadId);
                     } else {
-                        resp = HttpStatus.BAD_REQUEST;
-                        cr.message = "Invalid parameters";
+                        if(createNewThread) {
+                            resp = HttpStatus.CONFLICT;
+                            cr.message = "There is already a thread by that name";
+                        } else {
+                            resp = HttpStatus.NOT_FOUND;
+                            cr.message = "There is no thread with that name";
+                        }
                     }
                 } else {
                     resp = HttpStatus.UNAUTHORIZED;

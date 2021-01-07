@@ -204,7 +204,7 @@ public class ApplicationService {
                         }
                     } else {
                         cr.message = "Application has already been answered";
-                        resp = HttpStatus.BAD_REQUEST;
+                        resp = HttpStatus.NOT_ACCEPTABLE;
                     }
                 } else {
                     cr.message = "Application not found";
