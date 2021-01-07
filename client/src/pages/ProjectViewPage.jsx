@@ -6,6 +6,7 @@ import { getProject } from '../utils/api/project';
 import * as Auth from '../utils/Auth';
 import { getUserByUserId } from '../utils/api/user';
 const ProjectViewPage = (props) => {
+  const { history } = props;
   const [project, setProject] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [loggedInUser, setLoggedInUser] = useState();
@@ -73,6 +74,7 @@ const ProjectViewPage = (props) => {
           loggedInUser={loggedInUser}
           hasApplied={hasApplied}
           setHasApplied={setHasApplied}
+          history={history}
         ></ProjectViewComponent>
       )}
     </Container>

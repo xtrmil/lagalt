@@ -15,6 +15,7 @@ const ProjectViewComponent = (props) => {
     loggedInUser,
     hasApplied,
     setHasApplied,
+    history,
   } = props;
 
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -62,6 +63,7 @@ const ProjectViewComponent = (props) => {
             onJoinClick={onJoinClick}
             onSettingsClick={onSettingsClick}
             hasApplied={hasApplied}
+            history={history}
           />
           <ProjectUpdatesComponent />
         </Card.Body>

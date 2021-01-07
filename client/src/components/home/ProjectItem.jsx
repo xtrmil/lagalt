@@ -33,8 +33,8 @@ const ProjectItem = (props) => {
         setMemberOf(true);
         setIsAdmin(true);
       } else if (
-        project.members != null &&
-        project.members.includes(loggedInUser.username.toLowerCase())
+        loggedInUser.memberOf != null &&
+        loggedInUser.memberOf.includes(project.title.toLowerCase())
       ) {
         setMemberOf(true);
       }
@@ -69,7 +69,8 @@ const ProjectItem = (props) => {
   };
 
   const onCardClick = () => {
-    props.history.push(`/project/${project.owner}/${project.title}`);
+    const title = project.title.replace(/ /g, '-');
+    props.history.push(`/project/${project.owner}/${title}`);
   };
   return (
     <>

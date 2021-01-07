@@ -24,13 +24,13 @@ const Navbar = (props) => {
       <Nav className="mr-auto">
         <NavDropdown title="Profile" id="basic-nav-dropdown">
           <NavDropdown.Item href="/profile">Show profile</NavDropdown.Item>
-          <NavDropdown.Item href="/profile">Profile settings</NavDropdown.Item>
+          {/* <NavDropdown.Item href="/profile">Profile settings</NavDropdown.Item> */}
         </NavDropdown>
         <NavDropdown title="Projects" id="basic-nav-dropdown">
           <NavDropdown.Item href="/project/create">New project</NavDropdown.Item>
-          <NavDropdown.Item href="/projects">Users projects</NavDropdown.Item>
+          {/* <NavDropdown.Item href="/projects">Users projects</NavDropdown.Item>
           <NavDropdown.Divider />
-          <NavDropdown.Item href="/admin">Project admin</NavDropdown.Item>
+          <NavDropdown.Item href="/admin">Project admin</NavDropdown.Item> */}
         </NavDropdown>
       </Nav>
       {loggedInUser ? (

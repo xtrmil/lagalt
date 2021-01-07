@@ -3,7 +3,16 @@ import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
 
 const ProjectViewMainSection = (props) => {
-  const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick, hasApplied } = props;
+  const {
+    project,
+    isAdmin,
+    loggedIn,
+    memberOf,
+    onJoinClick,
+    onSettingsClick,
+    hasApplied,
+    history,
+  } = props;
   const industry = {
     value: Object.keys(project.industry)[0],
     label: Object.values(project.industry)[0],
@@ -17,7 +26,6 @@ const ProjectViewMainSection = (props) => {
     ) : (
       <div>No members</div>
     );
-  const onMessageBoardAndChatPageClick = () => {};
 
   const tagsList = tagsArray.map((tag, index) => {
     return (
@@ -65,8 +73,14 @@ const ProjectViewMainSection = (props) => {
                 </Button>
               )}
               {loggedIn && memberOf && (
-                <Button onClick={onMessageBoardAndChatPageClick} variant="info">
-                  Message Board & Chat
+                <Button
+                  onClick={() => {
+                    const title = project.title.replace(/ /g, '-');
+                    history.push(`/projects/${project.owner}/${title}/chat`);
+                  }}
+                  variant="info"
+                >
+                  Chat
                 </Button>
               )}
             </div>
