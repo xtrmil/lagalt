@@ -116,7 +116,9 @@ const ProjectItem = (props) => {
                     variant="info"
                     onClick={(e) => {
                       e.stopPropagation();
-                      props.history.push(`/project/${project.owner}/${project.title}/chat`);
+                      props.history.push(
+                        `/project/${project.owner}/${project.title.replace(/ /g, '-')}/chat`,
+                      );
                     }}
                   >
                     Chat
