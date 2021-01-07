@@ -257,7 +257,8 @@ public class ProjectService {
 
             if (projectReference != null) {
                 CollectionReference links = projectReference.collection("links");
-                CollectionReference tags = projectReference.collection("tags");
+               // CollectionReference tags = projectReference.collection("tags");
+                HashMap<String,String> tags = (HashMap) projectReference.get().get().get("tags");
                 DocumentSnapshot projectDocument = projectReference.get().get();
 
                 Map<String, Set<String>> projectInfo = new HashMap<>();
@@ -287,7 +288,7 @@ public class ProjectService {
                         }
                     });
 
-                    project.setTags(tagsToMap(tags));
+                    project.setTags(tags);
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     String status = projectDocument.getString("status");
@@ -303,7 +304,7 @@ public class ProjectService {
                 } else {
 
                     ProjectNonMemberView project = projectDocument.toObject(ProjectNonMemberView.class);
-                    project.setTags(tagsToMap(tags));
+                    project.setTags(tags);
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     project.setOwner(authService.getUsername(project.getOwner()));
@@ -429,6 +430,8 @@ public class ProjectService {
 
                     if (partialProject.getTags() != null) {
                         projectCollections.put("tags", partialProject.getTags().keySet());
+
+                        dbProject.setTags(partialProject.getTags());
                     }
 
                     addCollectionsToProjectDocument(pid, projectCollections);
