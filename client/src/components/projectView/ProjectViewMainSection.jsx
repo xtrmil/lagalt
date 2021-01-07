@@ -27,7 +27,6 @@ const ProjectViewMainSection = (props) => {
     ) : (
       <div>No members</div>
     );
-  console.log(project);
   const tagsList = tagsArray.map((tag, index) => {
     return (
       <Col
@@ -59,7 +58,7 @@ const ProjectViewMainSection = (props) => {
             <h4>
               <i>Industry: {industry.label}</i>
             </h4>
-            <h5 className="status">Status: {project.status.toLowerCase()}</h5>
+            <h5>Status: {project.statusLabel}</h5>
           </Col>
           <Col sm={4}>
             <div className="mr-4 text-right">
