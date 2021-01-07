@@ -207,7 +207,9 @@ public class ProjectService {
                         projects.put(industryKey, count + 1);
                     }
                 });
-                return mapToStreamSortedByValue(projects).findFirst().get().getKey();
+                if(!projects.isEmpty()) {
+                    return mapToStreamSortedByValue(projects).findFirst().get().getKey();
+                }
             }
         } catch(Exception e) {
             e.printStackTrace();
