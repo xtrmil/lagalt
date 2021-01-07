@@ -83,17 +83,18 @@ const ProjectItem = (props) => {
         <Card.Body>
           <Row className="no-gutters">
             <Col sm={3} className="text-center">
-              <img src="nedladdning.jpg"></img>
+              <img className="project-image" src="nedladdning.jpg"></img>
             </Col>
             <Col className="ml-4" sm={8}>
               <Row className="no-gutters">
                 <Col sm={8}>
                   <h4>{project.title}</h4>
+                  <h6 className="mb-3">{project.owner}</h6>
                   <h6>{Object.values(project.industry)[0]}</h6>
                 </Col>
                 <Col sm={4}>{isAdmin && <h6 className="matchedNotMatched">Your Project</h6>}</Col>
               </Row>
-              <h6>{project.description}</h6>
+              <h6 className="mb-4">{project.description}</h6>
 
               <div className="mb-4">Looking for: {tagsList}</div>
               <div className="stretched-button-join">
@@ -114,7 +115,7 @@ const ProjectItem = (props) => {
                     variant="info"
                     onClick={(e) => {
                       e.stopPropagation();
-                      props.history.push(`/projects/${project.owner}/${project.title}/chat`);
+                      props.history.push(`/project/${project.owner}/${project.title}/chat`);
                     }}
                   >
                     Chat

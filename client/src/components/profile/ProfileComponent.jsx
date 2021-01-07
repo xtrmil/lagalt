@@ -54,7 +54,9 @@ const ProfileComponent = (props) => {
         <div className="card-body">
           <div className="row mt-3 ml-2">
             <div className="col-sm-4">
-              <div className="imgplaceholder mb-2">IMAGE</div>
+              <div className="mb-2 text-center">
+                <img className="profile-image" src="avatar.png"></img>
+              </div>
               <h3 className="mb-1 text-center">Skills</h3>
               <div className="mb-2 text-center">{skillsList}</div>
               <h3 className="mb-1 text-center">Portfolio</h3>
