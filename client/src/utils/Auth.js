@@ -156,7 +156,7 @@ const thirdPartyAuth = async (provider) => {
       if (dev.mode !== DevMode.off) {
         phoneNumber = testPhoneNr;
       } else {
-        await delay(1000);
+        await delay(1500);
         phoneNumber = prompt(
           'Please enter your phone number to verify your identity' +
             '\n\nProclaimer: Google stores and uses phone numbers to improve spam and abuse prevention across all Google services. Standard rates may apply',
