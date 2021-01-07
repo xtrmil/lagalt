@@ -40,7 +40,7 @@ export default class ChatTest extends React.Component {
     ['$)', '🤑'],
     ['<3', '🧡'],
     ['</3', '💔'],
-    [':wave:', '🖐'],
+    [':wave:', '👋'],
     [':thumbsup:', '👍'],
     [':thumbsdown:', '👎'],
     [':ok:', '👌'],

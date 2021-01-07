@@ -17,6 +17,7 @@ import ChatPage from './pages/ChatPage';
 import * as Auth from './utils/Auth';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginRoute from './components/LoginRoute';
+import ErrorPage from './pages/ErrorPage';
 const history = createBrowserHistory();
 
 function App() {
@@ -34,10 +35,8 @@ function App() {
         <>
           <Navbar history={history} loggedInUser={loggedInUser} />
           <Switch>
-            <Route exact path="/projects/:owner/:projectName/chat" component={ChatPage} />
-            <Route exact path="/home" component={HomePage} />
+            <Route exact path="/" component={HomePage} />
             <LoginRoute exact path="/login" component={LoginPage} loggedInUser={loggedInUser} />
-            <Route exact path="/register" component={RegisterPage} />
             <ProtectedRoute
               exact
               path="/project/create"
@@ -45,16 +44,21 @@ function App() {
               loggedInUser={loggedInUser}
             />
             <Route exact path="/project/:userId/:projectId" component={ProjectViewPage} />
-            <Route exact path="/admin" component={ProjectAdminPage} />
             <ProtectedRoute
               exact
               path="/profile"
               component={ProfilePage}
               loggedInUser={loggedInUser}
             />
-            <Route exact path="/projects" component={ProjectsPage} />
-            <Route exact path="/message_board_and_chat" component={MessageBoardAndChatPage} />
-            <Route exact path="/message_board_post" component={MessageBoardPostPage} />
+            <ProtectedRoute
+              exact
+              path="/project/:owner/:projectName/chat"
+              component={ChatPage}
+              loggedInUser={loggedInUser}
+            />
+            <Route path="*">
+              <ErrorPage />
+            </Route>
           </Switch>
         </>
       )}
