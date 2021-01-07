@@ -1,124 +1,56 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './HomePage.css';
-import { Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Container } from 'react-bootstrap';
+import { getProjectsList } from '../utils/api/project';
+import ProjectItem from '../components/home/ProjectItem';
+import * as Auth from '../utils/Auth';
+import { getUserByUserId } from '../utils/api/user';
 
 const HomePage = (props) => {
-  const onProjectViewClick = () => {
-    props.history.push('/project');
-  };
+  const [projectList, setProjectList] = useState([]);
+  const [loggedInUser, setLoggedInUser] = useState();
+  const [isLoading, setIsLoading] = useState(true);
+  useEffect(() => {
+    let isSubscribed = true;
+    const fetchProjects = async () => {
+      await getProjectsList().then((response) => {
+        if (isSubscribed) {
+          setProjectList(response.data.data);
+          setIsLoading(false);
+        }
+      });
+    };
+    const fetchUser = async (userId) => {
+      await getUserByUserId(userId).then((response) => {
+        if (isSubscribed) {
+          setLoggedInUser(response.data);
+        }
+      });
+    };
+    Auth.loggedInUser().subscribe((user) => {
+      if (user.username) {
+        fetchUser(user.username);
+      }
+    });
+    fetchProjects();
+    return () => {
+      isSubscribed = false;
+    };
+  }, []);
 
-  const onProjectAdminPageClick = () => {
-    props.history.push('/admin');
-  };
+  const displayProjects = projectList.map((project, index) => {
+    if (projectList.map.length > 0)
+      return (
+        <ProjectItem
+          key={index}
+          project={project}
+          loggedInUser={loggedInUser}
+          history={props.history}
+        ></ProjectItem>
+      );
+  });
 
-  return (
-    <>
-      <h1 className="homePageHeading">Projects</h1>
-      <div className="card w-75 homePageCard">
-        <div className="card-body homePageCardBody">
-          <div className="row project">
-            <div className="ml-2">
-              <img className="homepage-img" src="nedladdning.jpg"></img>
-            </div>
-            <div className="ml-2">
-              <h4>Project</h4>
-              <h6>
-                Project
-                description..........................................................................................................................
-                <Link to="/project">(Read more)</Link>
-              </h6>
-              <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button-join">
-                <Button onClick={onProjectViewClick} variant="success">
-                  Join
-                </Button>
-              </div>
-            </div>
-          </div>
-          <a href="/project" className="stretched-link"></a>
-        </div>
-      </div>
-
-      <div className="card w-75 homePageCard">
-        <div className="card-body homePageCardBody">
-          <div className="row project">
-            <div className="ml-2">
-              <img className="homepage-img" src="nedladdning.jpg"></img>
-            </div>
-            <div className="ml-2">
-              <h4>Project</h4>
-              <h6>
-                Project
-                description..........................................................................................................................
-                <Link to="/project">(Read more)</Link>
-              </h6>
-              <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button-join">
-                <Button onClick={onProjectViewClick} variant="success">
-                  Join
-                </Button>
-              </div>
-            </div>
-          </div>
-          <a href="/project" className="stretched-link"></a>
-        </div>
-      </div>
-
-      <div className="card w-75 homePageCard">
-        <div className="card-body homePageCardBody">
-          <div className="row project">
-            <div className="ml-2">
-              <img className="homepage-img" src="nedladdning.jpg"></img>
-            </div>
-            <div className="ml-2">
-              <h4>Project</h4>
-              <h6>
-                Project
-                description..........................................................................................................................
-                <Link to="/project">(Read more)</Link>
-              </h6>
-              <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button-admin">
-                <Button onClick={onProjectViewClick} variant="info">
-                  Message board & chat
-                </Button>
-                <Button className="ml-4" onClick={onProjectAdminPageClick} variant="info">
-                  Admin
-                </Button>
-              </div>
-            </div>
-          </div>
-          <a href="/project" className="stretched-link"></a>
-        </div>
-      </div>
-
-      <div className="card w-75 homePageCard">
-        <div className="card-body homePageCardBody">
-          <div className="row project">
-            <div className="ml-2">
-              <img className="homepage-img" src="nedladdning.jpg"></img>
-            </div>
-            <div className="ml-2">
-              <h4>Project</h4>
-              <h6>
-                Project
-                description..........................................................................................................................
-                <Link to="/project">(Read more)</Link>
-              </h6>
-              <h6>Industry: ............... Skills needed: ..............................</h6>
-              <div className="stretched-button-mb">
-                <Button onClick={onProjectViewClick} variant="info">
-                  Message board & chat
-                </Button>
-              </div>
-            </div>
-          </div>
-          <a href="/project" className="stretched-link"></a>
-        </div>
-      </div>
-    </>
-  );
+  return <>{!isLoading ? <Container className="mt-4">{displayProjects}</Container> : ''}</>;
 };
 
 export default HomePage;

@@ -1,19 +1,24 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Col, Row, Button } from 'react-bootstrap';
 import ProjectResourcesComponent from './ProjectResourcesComponent';
+import '../../pages/ProjectViewPage.css';
 
 const ProjectViewMainSection = (props) => {
-  const { project, isAdmin, loggedIn, memberOf, onJoinClick, onSettingsClick } = props;
+  const {
+    project,
+    isAdmin,
+    loggedIn,
+    memberOf,
+    onJoinClick,
+    onSettingsClick,
+    hasApplied,
+    history,
+  } = props;
   const industry = {
     value: Object.keys(project.industry)[0],
     label: Object.values(project.industry)[0],
   };
-  useEffect(() => {
-    console.log(project);
-  }, [project]);
-
   const tagsArray = Object.values(project.tags);
-
   const membersList =
     project.members != null ? (
       project.members.map((member, index) => {
@@ -22,11 +27,10 @@ const ProjectViewMainSection = (props) => {
     ) : (
       <div>No members</div>
     );
-
   const tagsList = tagsArray.map((tag, index) => {
     return (
       <Col
-        sm={5}
+        sm={10}
         className={
           index % 2 == 0 ? 'mr-1 mt-1 skill odd text-center' : 'mr-1 mt-1 skill text-center'
         }
@@ -38,8 +42,8 @@ const ProjectViewMainSection = (props) => {
   });
   return (
     <Row className="mt-3 ml-2">
-      <Col sm={4}>
-        <div className="imgplaceholder mb-4">IMAGE</div>
+      <Col sm={4} className="text-center">
+        <img className="mb-4" src="/nedladdning.jpg"></img>
         <div className="mb-4">
           <h3 className="mb-2 text-center">Skills</h3>
           <div className="text-center">{tagsList}</div>
@@ -54,13 +58,13 @@ const ProjectViewMainSection = (props) => {
             <h4>
               <i>Industry: {industry.label}</i>
             </h4>
-            <h5>Status: {project.status}</h5>
+            <h5>Status: {project.statusLabel}</h5>
           </Col>
           <Col sm={4}>
             <div className="mr-4 text-right">
               {loggedIn && !memberOf && (
-                <Button variant="success" onClick={onJoinClick}>
-                  Join
+                <Button disabled={hasApplied} variant="success" onClick={onJoinClick}>
+                  {hasApplied ? 'Applied' : 'Join'}
                 </Button>
               )}
               {loggedIn && isAdmin && (
@@ -68,7 +72,17 @@ const ProjectViewMainSection = (props) => {
                   Settings
                 </Button>
               )}
-              {loggedIn && memberOf && <Button>Message Board & Chat</Button>}
+              {loggedIn && memberOf && (
+                <Button
+                  onClick={() => {
+                    const title = project.title.replace(/ /g, '-');
+                    history.push(`/project/${project.owner}/${title}/chat`);
+                  }}
+                  variant="info"
+                >
+                  Chat
+                </Button>
+              )}
             </div>
           </Col>
         </Row>

@@ -13,3 +13,10 @@ export async function getTagsByIndustry(industry) {
   });
   return fetchTagsByIndustry;
 }
+
+export async function getAllTags() {
+  const fetchData = await baseUrl.get('/available/tags/').then((response) => {
+    return response.data;
+  });
+  return fetchData;
+}

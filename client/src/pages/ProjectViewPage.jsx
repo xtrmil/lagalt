@@ -3,14 +3,54 @@ import { useParams } from 'react-router-dom';
 import { Container } from 'react-bootstrap';
 import ProjectViewComponent from '../components/projectView/ProjectViewComponent';
 import { getProject } from '../utils/api/project';
-
+import * as Auth from '../utils/Auth';
+import { getUserByUserId } from '../utils/api/user';
 const ProjectViewPage = (props) => {
+  const { history } = props;
   const [project, setProject] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const isAdmin = true;
-  const loggedIn = true;
-  const memberOf = true;
+  const [loggedInUser, setLoggedInUser] = useState();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [memberOf, setMemberOf] = useState(false);
   const { userId, projectId } = useParams();
+  const [hasApplied, setHasApplied] = useState(false);
+
+  useEffect(() => {
+    const fetchUser = async (userId) => {
+      getUserByUserId(userId).then((response) => {
+        setLoggedInUser(response.data);
+      });
+    };
+    Auth.loggedInUser().subscribe((user) => {
+      if (user.username) {
+        fetchUser(user.username);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    loggedInUser && setLoggedIn(true);
+    if (loggedInUser && loggedInUser.username && project && project.owner) {
+      if (loggedInUser.username.toUpperCase() === project.owner.toUpperCase()) {
+        setMemberOf(true);
+        setIsAdmin(true);
+      } else if (
+        project.members != null &&
+        project.members.includes(loggedInUser.username.toLowerCase())
+      ) {
+        setMemberOf(true);
+      }
+      if (loggedInUser.appliedTo) {
+        loggedInUser.appliedTo.map((application) => {
+          if (application.project === project.title) {
+            setHasApplied(true);
+          }
+        });
+      }
+    }
+  }, [loggedInUser, project]);
+
   useEffect(() => {
     const fetchData = async () => {
       await getProject(userId, projectId).then((response) => {
@@ -31,6 +71,10 @@ const ProjectViewPage = (props) => {
           isAdmin={isAdmin}
           loggedIn={loggedIn}
           memberOf={memberOf}
+          loggedInUser={loggedInUser}
+          hasApplied={hasApplied}
+          setHasApplied={setHasApplied}
+          history={history}
         ></ProjectViewComponent>
       )}
     </Container>

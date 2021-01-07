@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, Form } from 'react-bootstrap';
+import { Form } from 'react-bootstrap';
 import { Formik } from 'formik';
 import TextInput from './form/TextInput';
 import SelectInput from './form/SelectInput';
 import MultiSelectInput from './form/MultiSelectInput';
 import { createProjectSchema } from '../utils/form/FormUtils';
-import { createProject } from '../utils/api/project';
 import { getAllIndustries, getTagsByIndustry } from '../utils/api/industry';
-const ProjectForm = () => {
+const ProjectForm = (props) => {
+  const { onFormSubmit } = props;
   const initialValues = { title: '', description: '', tags: null, industry: null };
   const [industryOptions, setIndustryOptions] = useState();
   const [tagOptions, setTagOptions] = useState();
@@ -47,18 +47,6 @@ const ProjectForm = () => {
     fetchTagOptions(label);
   };
 
-  const onFormSubmit = (values) => {
-    const { title, description, industry, tags } = values;
-
-    const project = {
-      title,
-      description,
-      industry: industry.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
-      tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
-    };
-    createProject(project);
-    console.log(project);
-  };
   return (
     <Formik
       validationSchema={createProjectSchema}
@@ -120,7 +108,9 @@ const ProjectForm = () => {
               textarea="textarea"
             ></TextInput>
 
-            <Button type="submit"> Submit!</Button>
+            <button type="submit" className="btn btn-success">
+              Submit
+            </button>
           </Form>
         </>
       )}

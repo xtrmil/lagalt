@@ -2,11 +2,12 @@ import firebase from 'firebase/app';
 import 'firebase/auth';
 import { Observable } from 'rxjs';
 import { EventEmitter } from 'events';
+import { baseURLString } from './api/baseUrl';
 
 const loginStatusEmitter = new EventEmitter();
 const loginStatusEvent = 'change';
 
-const host = 'http://localhost:8080/api/v1';
+const host = baseURLString;
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBvGQf08nkANAW5Vb1BNq6P0FUS-a2GsNw',
@@ -37,7 +38,7 @@ const recaptchaContainer = 'authContainer'; // id of html element where the reCa
 
 // dev
 export const dev = {
-  _value: DevMode.ignoreAll,
+  _value: DevMode.off,
 
   get mode() {
     return this._value;
@@ -62,27 +63,20 @@ export const AuthState = {
 
 // global variables
 let gUsername;
-// let gResolver
-// let gVerificationId
 
 export const loggedInUser = () => {
   return new Observable((observer) => {
     const unsubscribeFromAuthChanges = firebase.auth().onAuthStateChanged(async (user) => {
-      console.log('auth state changed', user);
-
       if (user && Boolean(user.multiFactor?.enrolledFactors?.length > 0)) {
-        console.log('AuthState: multi factor authed');
         const username = await getLoggedInUser();
         observer.next({ state: username ? AuthState.authed : AuthState.chooseUsername, username });
       } else {
-        console.log('AuthState: no auth');
         observer.next({ state: AuthState.none, username: null });
       }
       unsubscribeFromAuthChanges(); // use once. unsub when component is initialized
     });
 
     loginStatusEmitter.on(loginStatusEvent, async (data) => {
-      console.log('listener received data', data);
       observer.next(data);
     });
   });
@@ -151,6 +145,7 @@ export const logout = async () => {
 };
 
 // non exports
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const thirdPartyAuth = async (provider) => {
   try {
@@ -158,10 +153,10 @@ const thirdPartyAuth = async (provider) => {
 
     let phoneNumber;
     if (gUsername) {
-      console.log('Enrolling new user...', gUsername);
       if (dev.mode !== DevMode.off) {
         phoneNumber = testPhoneNr;
       } else {
+        await delay(1500);
         phoneNumber = prompt(
           'Please enter your phone number to verify your identity' +
             '\n\nProclaimer: Google stores and uses phone numbers to improve spam and abuse prevention across all Google services. Standard rates may apply',
@@ -171,7 +166,6 @@ const thirdPartyAuth = async (provider) => {
       if (!phoneNumber) {
         return 'Login attempt aborted';
       }
-      console.log('using phone nr', phoneNumber);
 
       if (gUsername) {
         // new account
@@ -190,14 +184,6 @@ const thirdPartyAuth = async (provider) => {
     }
   } catch (err) {
     if (err.code === 'auth/multi-factor-auth-required') {
-      console.log('auth user found');
-
-      if (!gUsername) {
-        console.log('Signing in to existing account...');
-      } else {
-        console.log('existing user or unfinished registration');
-      }
-
       // login to existing account
       return smsVerification(
         {
@@ -207,8 +193,6 @@ const thirdPartyAuth = async (provider) => {
         err.resolver,
       );
     } else {
-      console.error('login error 1');
-      console.error(err);
       return err.message;
     }
   }
@@ -225,9 +209,6 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
   try {
     if (dev.mode !== DevMode.off) {
       firebase.auth().settings.appVerificationDisabledForTesting = true;
-      console.log('circumventing reCaptcha...');
-    } else {
-      console.log('presenting reCaptcha...');
     }
 
     const appVerifier = new firebase.auth.RecaptchaVerifier(recaptchaContainer);
@@ -235,11 +216,8 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
     // presents recaptcha, then sends text
     const phoneAuthProvider = new firebase.auth.PhoneAuthProvider();
     const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, appVerifier);
-    console.log('reCaptcha solved');
 
     resetRecaptcha();
-
-    console.log('text sent, prompting for code');
 
     let verified = false;
     let promptMsg = '';
@@ -252,14 +230,12 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
           `Please enter the verification code that was sent to your phone${promptMsg}`,
         );
       }
-      console.log('verification code entered');
       const credentials = firebase.auth.PhoneAuthProvider.credential(
         verificationId,
         verificationCode,
       );
 
       const multiFactorAssertion = firebase.auth.PhoneMultiFactorGenerator.assertion(credentials);
-      console.log('assertion done');
 
       try {
         if (!resolver) {
@@ -268,15 +244,12 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
             .auth()
             .currentUser.multiFactor.enroll(multiFactorAssertion, 'User phone number');
           // auth user was enrolled, but no db user was created yet
-          console.log('enrolled user');
         } else {
           await resolver.resolveSignIn(multiFactorAssertion);
-          console.log('authed user');
         }
         verified = true;
       } catch (error) {
         promptMsg = '\n\nCode verification failed';
-        console.log('code verification failed. try again');
       }
     }
 
@@ -286,7 +259,6 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
       return authUser();
     }
   } catch (err) {
-    console.log('sms verification error', err);
     if (err.code === 'auth/argument-error') {
       return 'Error: code verification failed';
     }
@@ -296,22 +268,15 @@ const smsVerification = async (phoneInfoOptions, resolver) => {
 
 export const createUser = async (username) => {
   gUsername = null;
-  console.log(`createUser(${username})`);
-  const token = await getToken();
-  if (!token) {
-    return `Error: Can't create user. You are not authenticated`;
-  }
 
   const response = await fetch(host + '/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: token,
+      Authorization: await getToken(),
     },
     body: JSON.stringify({ username: username }),
   });
-
-  console.log('auth ' + (response.ok ? 'successful' : 'failed'));
 
   const responseBody = JSON.parse(await response.text());
 
@@ -321,9 +286,8 @@ export const createUser = async (username) => {
       username: responseBody.data,
     });
     return 'You are now signed in as ' + responseBody.data;
-  } else if (response.status === 409) {
-    // user exists with the given credentials
-    console.log('no action');
+  } else if (response.status === 409 || response.status === 406) {
+    // user exists with the given credentials or username is invalid
     loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.chooseUsername });
   } else if (response.status === 403) {
     const answer = window.confirm(responseBody.message + '. Do you want to log in instead?');
@@ -334,27 +298,20 @@ export const createUser = async (username) => {
     return 'Login aborted';
   } else {
     await firebase.auth().signOut();
+    loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.none });
   }
-  console.log('returning server msg', responseBody.mesage);
   return responseBody.message;
 };
 
 const authUser = async () => {
   gUsername = null;
-  const token = await getToken();
-  if (!token) {
-    console.log('not logged in');
-    return 'You are not authenticated';
-  }
 
   const response = await fetch(host + '/signin', {
     method: 'GET',
     headers: {
-      Authorization: token,
+      Authorization: await getToken(),
     },
   });
-
-  console.log('auth ' + (response.ok ? 'successful' : 'failed'));
 
   const responseBody = JSON.parse(await response.text());
 
@@ -367,36 +324,6 @@ const authUser = async () => {
   } else {
     firebase.auth().signOut();
     loginStatusEmitter.emit(loginStatusEvent, { state: AuthState.none });
-    console.log('server error on login', responseBody.message);
     return responseBody.message;
-  }
-};
-
-// Email Test. not done
-
-const createEmailUser = async () => {
-  try {
-    const credentials = await firebase
-      .auth()
-      .createUserWithEmailAndPassword('iambumpfel@gmail.com', 'testar');
-
-    console.log('email sent');
-    console.log('credentials', credentials);
-  } catch (err) {
-    console.error('login error');
-    console.error(err);
-  }
-};
-
-const sendEmailLink = async (provider) => {
-  try {
-    const url = host + '/aValidEmailLink';
-    await firebase
-      .auth()
-      .sendSignInLinkToEmail('iambumpfel@gmail.com', { url, handleCodeInApp: true });
-    console.log('email sent');
-  } catch (err) {
-    console.error('login error');
-    console.error(err);
   }
 };

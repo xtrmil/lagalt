@@ -1,12 +1,18 @@
 import React from 'react';
 import { Navbar as BootstrapNavbar, Nav, Button } from 'react-bootstrap';
+import * as Auth from '../utils/Auth';
 
 const Navbar = (props) => {
+  const { loggedInUser } = props;
+
   const onLoginClick = () => {
     props.history.push('/login');
   };
-  const onRegisterClick = () => {
-    props.history.push('/register');
+
+  const onLogoutClick = async () => {
+    await Auth.logout().then(() => {
+      props.history.push('/login');
+    });
   };
 
   return (
@@ -16,15 +22,20 @@ const Navbar = (props) => {
       </BootstrapNavbar.Brand>
 
       <Nav className="mr-auto">
-        <Nav.Link href="/profile">Profile</Nav.Link>
-        <Nav.Link href="/projects">Projects</Nav.Link>
+        <Nav.Link href="/profile">Show profile</Nav.Link>
+        <Nav.Link href="/project/create">New project</Nav.Link>
       </Nav>
-      <Button onClick={onLoginClick} variant="dark">
-        Login
-      </Button>
-      <Button onClick={onRegisterClick} variant="primary">
-        Sign up
-      </Button>
+      {loggedInUser ? (
+        <>
+          <Button onClick={onLogoutClick}>Logout</Button>
+        </>
+      ) : (
+        <>
+          <Button onClick={onLoginClick} variant="dark">
+            Login
+          </Button>
+        </>
+      )}
     </BootstrapNavbar>
   );
 };

@@ -19,25 +19,29 @@
     margin-top: 35px;
 }
 
+.joinedProjectsHeading {
+    margin-top: 35px;
+}
+
 .btn-admin {
     margin-left: 425px;
 }
 
 .btn-createNewProject {
-    margin-left: 1104px;
+    margin-left: 946px;
     margin-top: 20px;
 }
 
 .stretched-button-mb {
     z-index:4;
     position:relative;
-    width: 187px;
+    width: 189px;
 }
 
 .stretched-button-admin {
     z-index:4;
     position:relative;
-    width: 283px;
+    width: 285px;
 }
 
 h4, h6 {
@@ -46,7 +50,6 @@ h4, h6 {
 
 h1 {
     color: #184A73;
-    margin-left: 158px;
 }
 
 

@@ -1,0 +1,17 @@
+.project-img {
+    width: 20px;
+    height: 30px;
+}
+
+.project-card:hover{
+    cursor: pointer;
+}
+.tag-border{
+    background-color: #F3f3f3;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.matched{
+    background-color: greenyellow;
+}

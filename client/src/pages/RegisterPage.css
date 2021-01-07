@@ -1,22 +1,23 @@
-.projectAdminPageCard {
-    margin: 0 auto;
-    float: none;
-    margin-bottom: 10px;
-    min-height: 300px;
+.registerHeading {
+    margin-left: 560px;
+    margin-top: 25px;
+    }
+    
+.loginInvite {
+    margin-left: 400px;
+    margin-bottom: 25px;
 }
 
-.projectAdminPageCardBody {
-    margin-left: 10px;
-    margin-top: -35px;
-    }
-
-.registerHeading {
-    margin-left: 550px;
-    margin-top: 30px;
-    }
+.google-button {
+    margin-bottom: 20px;
+}
 
 .handleSubmit {
     width: 100px;
+}
+
+.Form {
+    width: 40px;
 }
 
 h1, h4, h6 {

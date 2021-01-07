@@ -1,99 +1,65 @@
 package se.experis.com.case2020.lagalt.controllers;
 
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import se.experis.com.case2020.lagalt.models.CommonResponse;
-import se.experis.com.case2020.lagalt.models.enums.ApplicationStatus;
-import se.experis.com.case2020.lagalt.models.enums.Industry;
-import se.experis.com.case2020.lagalt.models.enums.ProjectStatus;
-import se.experis.com.case2020.lagalt.models.enums.Tag;
+import se.experis.com.case2020.lagalt.models.enums.*;
 import se.experis.com.case2020.lagalt.utils.Command;
-
+import javax.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/api/v1/available", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = {"/api/v1/available/{enumType}", "/api/v1/available/{enumType}/{industry}"}, produces = MediaType.APPLICATION_JSON_VALUE)
 public class EnumController {
 
-//    @Autowired
-//    UserService userService;
+    Map<String,EnumItem[]> enumMap;
 
-    @GetMapping("/industries")
-    public ResponseEntity<CommonResponse> getIndustries(HttpServletRequest request, HttpServletResponse response) {
-        Command cmd = new Command(request);
-        CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
-        response.addHeader("Location", "/available/industries/");
-        cr.data = Stream.of(Industry.values())
-                .collect(Collectors.toMap(i -> i.name(), i -> i.INDUSTRY_NAME));
-        cr.message = "Successfully retrieved available Industries";
-        cmd.setResult(resp);
-        return new ResponseEntity<>(cr, resp);
+    @PostConstruct
+    private void initializeEnums(){
+        enumMap = new HashMap<>()
+        {{
+            put ("applicationstatuses", ApplicationStatus.values());
+            put ("industries", Industry.values());
+            put ("tags", Tag.values());
+            put ("projectstatuses", ProjectStatus.values());
+        }};
     }
-
-    @GetMapping("/tags")
-    public ResponseEntity<CommonResponse> getTags(HttpServletRequest request, HttpServletResponse response) {
+    @GetMapping("")
+    public ResponseEntity<CommonResponse> getEnums(HttpServletRequest request, HttpServletResponse response, @PathVariable String enumType, @PathVariable(required = false) Optional<String> industry) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
-        response.addHeader("Location", "/available/tags/");
-        cr.data = Stream.of(Tag.values())
-                .collect(Collectors.toMap(i -> i.name(), i -> i.DISPLAY_TAG));
-        cr.message = "Successfully retrieved available Tags";
-        cmd.setResult(resp);
-        return new ResponseEntity<>(cr, resp);
-    }
+        HttpStatus resp;
+        response.addHeader("Location", "/available/" + enumType);
 
-    @GetMapping("/tags/{industry}")
-    public ResponseEntity<CommonResponse> getTagsInIndustry(HttpServletRequest request, HttpServletResponse response, @PathVariable("industry") String industryName) {
-        Command cmd = new Command(request);
-        CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
-        response.addHeader("Location", "/available/tags/" + industryName);
+        try {
+            if(!industry.isPresent()) {
+                cr.data = Stream.of(enumMap.get(enumType.toLowerCase()))
+                .collect(Collectors.toMap(e -> e.toString(), e -> e.getLabel()));
+            } else {
+                cr.data = Stream.of((Tag[]) enumMap.get(enumType.toLowerCase()))
+                .filter(tag -> tag.INDUSTRY.equalsIgnoreCase(industry.get()))
+                .collect(Collectors.toMap(e -> e.name(), e -> e.getLabel()));
+            }
+            resp = HttpStatus.OK;
+            cr.message = "Successfully retrieved available " + enumType;
+        } catch(NullPointerException e) {
+            resp = HttpStatus.NOT_FOUND;
+            cr.message = "Path does not exist";
+        } catch(Exception e) {
+            e.printStackTrace();
+            resp = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-        cr.data = Stream.of(Tag.values())
-                .filter(tag -> tag.INDUSTRY.equals(industryName))
-                .collect(Collectors.toMap(i -> i.name(), i -> i.DISPLAY_TAG));
-        cr.message = "Successfully retrieved available Tags from industry: " + industryName;
-        cmd.setResult(resp);
-        return new ResponseEntity<>(cr, resp);
-    }
-
-    @GetMapping("/projectStatuses")
-    public ResponseEntity<CommonResponse> getProjectStatuses(HttpServletRequest request, HttpServletResponse response) {
-        Command cmd = new Command(request);
-        CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
-        response.addHeader("Location", "/available/projectStatuses/");
-        cr.data = Stream.of(ProjectStatus.values())
-                .collect(Collectors.toMap(i -> i.name(), i -> i.STATUS));
-        cr.message = "Successfully retrieved available ProjectStatuses";
-        cmd.setResult(resp);
-        return new ResponseEntity<>(cr, resp);
-    }
-
-    @GetMapping("/applicationStatuses")
-    public ResponseEntity<CommonResponse> getApplicationStatuses(HttpServletRequest request, HttpServletResponse response) {
-        Command cmd = new Command(request);
-        CommonResponse cr = new CommonResponse();
-        HttpStatus resp = HttpStatus.OK;
-        response.addHeader("Location", "/available/applicationStatuses/");
-
-        cr.data = Stream.of(ApplicationStatus.values())
-                .collect(Collectors.toMap(i -> i.name(), i -> i.STATUS));
-        cr.message = "Successfully retrieved available ApplicationStatuses";
         cmd.setResult(resp);
         return new ResponseEntity<>(cr, resp);
     }
