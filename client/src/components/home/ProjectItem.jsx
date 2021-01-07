@@ -32,10 +32,7 @@ const ProjectItem = (props) => {
       if (loggedInUser.username.toUpperCase() === project.owner.toUpperCase()) {
         setMemberOf(true);
         setIsAdmin(true);
-      } else if (
-        loggedInUser.memberOf != null &&
-        loggedInUser.memberOf.includes(project.title.toLowerCase())
-      ) {
+      } else if (loggedInUser.memberOf != null && loggedInUser.memberOf.includes(project.title)) {
         setMemberOf(true);
       }
 
@@ -62,7 +59,7 @@ const ProjectItem = (props) => {
   };
   const handleJoinProject = (motivation) => {
     const { owner } = project;
-    const title = project.title.replace(/ /g, '-');
+    const title = getSafeTitle(project.title);
     createApplication(owner, title, motivation, loggedInUser.username).then((response) => {
       hideJoinModal();
       setHasApplied(true);
@@ -70,9 +67,10 @@ const ProjectItem = (props) => {
   };
 
   const onCardClick = () => {
-    const title = project.title.replace(/ /g, '-');
+    const title = getSafeTitle(project.title);
     props.history.push(`/project/${project.owner}/${title}`);
   };
+
   return (
     <>
       <JoinProjectModal

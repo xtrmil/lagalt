@@ -53,8 +53,8 @@ const ProjectSettingsForm = (props) => {
       description,
     };
     setProject(newProject);
-    console.log(JSON.stringify(newProject, null, 2));
-    updateProject(newProject, owner, title);
+    console.log('title', title);
+    updateProject(newProject, owner, title.replace(/ /g, '-'));
     hideModal();
   };
 
