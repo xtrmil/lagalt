@@ -61,7 +61,8 @@ const ProjectItem = (props) => {
     setShowJoinModal(false);
   };
   const handleJoinProject = (motivation) => {
-    const { owner, title } = project;
+    const { owner } = project;
+    const title = project.title.replace(/ /g, '-');
     createApplication(owner, title, motivation, loggedInUser.username).then((response) => {
       hideJoinModal();
       setHasApplied(true);
