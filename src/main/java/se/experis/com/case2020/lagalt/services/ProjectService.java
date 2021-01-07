@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import se.experis.com.case2020.lagalt.models.CommonResponse;
 import se.experis.com.case2020.lagalt.models.enums.Industry;
+import se.experis.com.case2020.lagalt.models.enums.ProjectStatus;
 import se.experis.com.case2020.lagalt.models.enums.Tag;
 import se.experis.com.case2020.lagalt.models.project.ProjectMemberView;
 import se.experis.com.case2020.lagalt.models.project.ProjectNonMemberView;
@@ -289,6 +290,8 @@ public class ProjectService {
                     project.setTags(tagsToMap(tags));
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
+                    String status = projectDocument.getString("status");
+                     project.setStatusLabel(ProjectStatus.valueOf(status).STATUS);
 
                     project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName,
                             projectDocument.getCreateTime());
@@ -304,6 +307,8 @@ public class ProjectService {
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     project.setOwner(authService.getUsername(project.getOwner()));
+                    String status = projectDocument.getString("status");
+                    project.setStatusLabel(ProjectStatus.valueOf(status).STATUS);
                     project = addDataToResponseProject(project, projectInfo, projectName,
                             projectDocument.getCreateTime());
 

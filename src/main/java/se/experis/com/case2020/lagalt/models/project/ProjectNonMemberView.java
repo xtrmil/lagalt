@@ -24,6 +24,7 @@ public class ProjectNonMemberView {
     private String owner;
     private Timestamp createdAt = Timestamp.now();
     private ProjectStatus status = ProjectStatus.FOUNDING;
+    private String statusLabel;
 
     @JsonProperty(access = Access.WRITE_ONLY)
     private Industry industryKey;
