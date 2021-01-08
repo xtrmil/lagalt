@@ -18,7 +18,6 @@ const CreateProjectPage = (props) => {
       tags: tags.reduce((acc, cur) => ({ ...acc, [cur.value]: cur.label }), {}),
     };
     await createProject(project).then((response) => {
-      console.log(response);
       setProjectName(project.title.replace(/ /g, '-'));
       if (response.status === 201) {
         setSuccess(true);
