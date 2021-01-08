@@ -70,7 +70,7 @@ public class ProjectService {
     }
 
     public ResponseEntity<CommonResponse> getProjects(HttpServletRequest request, HttpServletResponse response,
-            ObjectNode timestamp) {
+                                                      ObjectNode timestamp) {
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
         Command cmd = new Command(request);
@@ -138,10 +138,10 @@ public class ProjectService {
                 var db = FirestoreClient.getFirestore();
                 List<QueryDocumentSnapshot> filteredProjects;
 
-                if(favourite != null) {
+                if (favourite != null) {
                     filteredProjects = db.collection("projects").whereEqualTo("industryKey", favourite).orderBy("createdAt", Query.Direction.DESCENDING)
                             .limit(favouriteLimit).get().get().getDocuments();
-                }else{
+                } else {
                     filteredProjects = db.collection("projects").orderBy("createdAt", Query.Direction.DESCENDING)
                             .limit(favouriteLimit).get().get().getDocuments();
                 }
@@ -197,8 +197,8 @@ public class ProjectService {
             var db = FirestoreClient.getFirestore();
             var documents = db.collection("users").document(userId).collection("visited").get().get().getDocuments();
             HashMap<String, Integer> projects = new HashMap<>();
-            if(documents != null) {
-            
+            if (documents != null) {
+
                 documents.forEach(p -> {
                     String industryKey = p.getString("industryKey");
                     if (!projects.containsKey(industryKey)) {
@@ -208,11 +208,11 @@ public class ProjectService {
                         projects.put(industryKey, count + 1);
                     }
                 });
-                if(!projects.isEmpty()) {
+                if (!projects.isEmpty()) {
                     return mapToStreamSortedByValue(projects).findFirst().get().getKey();
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -228,7 +228,7 @@ public class ProjectService {
 
                 ProjectSummarizedView summarizedProject = projectDocument.toObject(ProjectSummarizedView.class);
                 allProjects.add(summarizedProject);
-                if(cachedUsernames.get(summarizedProject.getOwner()) == null) {
+                if (cachedUsernames.get(summarizedProject.getOwner()) == null) {
                     cachedUsernames.put(summarizedProject.getOwner(), authService.getUsername(summarizedProject.getOwner()));
                 }
                 summarizedProject.setOwner(cachedUsernames.get(summarizedProject.getOwner()));
@@ -247,7 +247,7 @@ public class ProjectService {
     }
 
     public ResponseEntity<CommonResponse> getProjectDetails(HttpServletRequest request, String owner,
-            String projectName, String Authorization) {
+                                                            String projectName, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -257,8 +257,7 @@ public class ProjectService {
 
             if (projectReference != null) {
                 CollectionReference links = projectReference.collection("links");
-               // CollectionReference tags = projectReference.collection("tags");
-                HashMap<String,String> tags = (HashMap) projectReference.get().get().get("tags");
+                HashMap<String, String> tags = (HashMap) projectReference.get().get().get("tags");
                 DocumentSnapshot projectDocument = projectReference.get().get();
 
                 Map<String, Set<String>> projectInfo = new HashMap<>();
@@ -292,7 +291,7 @@ public class ProjectService {
                     Industry industryKey = project.getIndustryKey();
                     project.setIndustry(Map.of(industryKey, industryKey.getLabel()));
                     String status = projectDocument.getString("status");
-                     project.setStatusLabel(ProjectStatus.valueOf(status).STATUS);
+                    project.setStatusLabel(ProjectStatus.valueOf(status).STATUS);
 
                     project = (ProjectMemberView) addDataToResponseProject(project, projectInfo, projectName,
                             projectDocument.getCreateTime());
@@ -339,7 +338,7 @@ public class ProjectService {
     }
 
     public ResponseEntity<CommonResponse> createNewProject(HttpServletRequest request, ProjectNonMemberView project,
-            String Authorization) {
+                                                           String Authorization) {
         CommonResponse cr = new CommonResponse();
         Command cmd = new Command(request);
         HttpStatus resp = HttpStatus.CREATED;
@@ -362,7 +361,7 @@ public class ProjectService {
                     var docRef = db.collection("projects").document();
 
                     if (project.getTags() != null) {
-                        addCollectionsToProjectDocument(docRef.getId(), Map.of("tags", project.getTags().keySet()));
+                        project.setTags(validateTags(project.getTags()));
                     }
 
                     project.setIndustry(null);
@@ -390,7 +389,7 @@ public class ProjectService {
     }
 
     public ResponseEntity<CommonResponse> updateProjectDetails(HttpServletRequest request, String owner,
-            String projectName, ProjectMemberView partialProject, String Authorization) {
+                                                               String projectName, ProjectMemberView partialProject, String Authorization) {
         Command cmd = new Command(request);
         CommonResponse cr = new CommonResponse();
         HttpStatus resp;
@@ -429,9 +428,7 @@ public class ProjectService {
                     projectCollections.put("members", newMemberIds);
 
                     if (partialProject.getTags() != null) {
-                        projectCollections.put("tags", partialProject.getTags().keySet());
-
-                        dbProject.setTags(partialProject.getTags());
+                        dbProject.setTags(validateTags(partialProject.getTags()));
                     }
 
                     addCollectionsToProjectDocument(pid, projectCollections);
@@ -475,7 +472,7 @@ public class ProjectService {
     }
 
     private ProjectNonMemberView addDataToResponseProject(ProjectNonMemberView project,
-            Map<String, Set<String>> projectInfo, String projectId, Timestamp createdAt) {
+                                                          Map<String, Set<String>> projectInfo, String projectId, Timestamp createdAt) {
         var admins = projectInfo.get("admins");
         if (admins != null) {
             Set<String> adminNames = new HashSet<>();
@@ -512,26 +509,14 @@ public class ProjectService {
                     var futures = databaseService.emptyCollection(collectionRef);
                     ApiFutures.allAsList(futures).get(); // block thread until done
                 }
-
-                if (collectionName.equals("tags")) {
-
-                    documentId.forEach(tag -> {
-                        if (EnumUtils.isValidEnum(Tag.class, tag)) {
-                            collectionRef.document(tag).set(new HashMap<String, Object>());
-                        } else {
-                            System.err.println("IGNORING INVALID TAG: " + tag);
-                        }
-                    });
-                } else {
-
                     documentId.forEach(item -> {
                         try {
-                            collectionRef.document(item).set(new HashMap<String, Object>());
+                            collectionRef.document(item).set(new HashMap<>());
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     });
-                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -642,7 +627,7 @@ public class ProjectService {
     }
 
     private Stream<Map.Entry<String, Integer>> mapToStreamSortedByValue(HashMap<String, Integer> map) {
-        if(map != null) {
+        if (map != null) {
             return map.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue()));
         }
         return null;
@@ -659,11 +644,14 @@ public class ProjectService {
                 timestamp.get("createdAt").get("nanos").asInt());
     }
 
-    private Map<String, String> tagsToMap(CollectionReference tags) {
-        Map<String, String> tagsMap = new HashMap<>();
-        tags.listDocuments().forEach(tag -> {
-            tagsMap.put(tag.getId(), Tag.valueOf(tag.getId()).DISPLAY_TAG);
+    private Map<String, String> validateTags(Map<String, String> tags) {
+
+        tags.keySet().forEach(tag -> {
+            if (!EnumUtils.isValidEnum(Tag.class, tag)) {
+                System.err.println("IGNORING INVALID TAG: " + tag);
+                tags.remove(tag);
+            }
         });
-        return tagsMap;
+        return tags;
     }
 }
