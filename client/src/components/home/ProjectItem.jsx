@@ -71,6 +71,10 @@ const ProjectItem = (props) => {
     props.history.push(`/project/${project.owner}/${title}`);
   };
 
+  const getSafeTitle = (title) => {
+    return title.replace(/ /g, '-');
+  };
+
   return (
     <>
       <JoinProjectModal
