@@ -112,7 +112,7 @@ export default class AuthTestComponent extends React.Component {
                     </fieldset>
                   ) : (
                     <>
-                      <h1 className="text-center">Sign In</h1>
+                      <h1 className="text-center">Sign in</h1>
                       <GoogleLoginButton
                         className="mt-3"
                         variant="outline-secondary"
@@ -123,7 +123,7 @@ export default class AuthTestComponent extends React.Component {
                       <div className="mt-3">
                         New to Lagalt?{' '}
                         <Button variant="success" onClick={() => this.showSignUp()}>
-                          Sign Up!
+                          Sign up
                         </Button>
                       </div>
                     </>

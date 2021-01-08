@@ -69,7 +69,7 @@ const ProjectViewMainSection = (props) => {
               )}
               {loggedIn && isAdmin && (
                 <Button className="mb-2" onClick={onSettingsClick}>
-                  Settings
+                  Edit
                 </Button>
               )}
               {loggedIn && memberOf && (
