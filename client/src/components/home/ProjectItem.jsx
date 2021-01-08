@@ -86,7 +86,7 @@ const ProjectItem = (props) => {
         <Card.Body>
           <Row className="no-gutters">
             <Col sm={3} className="text-center">
-              <img className="project-image" src="nedladdning.jpg"></img>
+              <img className="project-img" src="nedladdning.jpg"></img>
             </Col>
             <Col className="ml-4" sm={8}>
               <Row className="no-gutters">
