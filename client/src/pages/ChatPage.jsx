@@ -86,18 +86,14 @@ export default class ChatTest extends React.Component {
         this.props.match.params.projectName,
       );
       if (observable) {
-        this.subscriptions.chat = observable.subscribe(
-          (docs) => {
-            const isMaxScrolled =
-              this.chatBox.current.scrollTop ===
-              this.chatBox.current.scrollHeight - this.chatBox.current.clientHeight;
-            this.chatDataArr.push(...docs);
-            this.setState({ chatData: this.chatDataArr, isLoading: false });
-            this.scrollToBottom(isMaxScrolled);
-          },
-          (err) => console.log(err),
-          () => console.log('observable disposed'),
-        );
+        this.subscriptions.chat = observable.subscribe((docs) => {
+          const isMaxScrolled =
+            this.chatBox.current.scrollTop ===
+            this.chatBox.current.scrollHeight - this.chatBox.current.clientHeight;
+          this.chatDataArr.push(...docs);
+          this.setState({ chatData: this.chatDataArr, isLoading: false });
+          this.scrollToBottom(isMaxScrolled);
+        });
       }
     } catch (err) {
       this.setState({ hasAccess: false });
@@ -120,7 +116,7 @@ export default class ChatTest extends React.Component {
     if ((el.scrollTop === 0 && !this.state.endOfHistory) || wasMaxScrolled) {
       el.scrollTop = maxScroll;
     } else {
-      console.log('you have new messages');
+      // unimplemented notification
     }
   };
 

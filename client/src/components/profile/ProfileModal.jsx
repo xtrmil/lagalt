@@ -57,7 +57,6 @@ const ProfileModal = (props) => {
     handleCloseModal();
   };
   const onStatusChange = (value, setFieldValue) => {
-    console.log(value);
     setFieldValue('hidden', value);
   };
 

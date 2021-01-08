@@ -32,10 +32,7 @@ const ProjectItem = (props) => {
       if (loggedInUser.username.toUpperCase() === project.owner.toUpperCase()) {
         setMemberOf(true);
         setIsAdmin(true);
-      } else if (
-        loggedInUser.memberOf != null &&
-        loggedInUser.memberOf.includes(project.title.toLowerCase())
-      ) {
+      } else if (loggedInUser.memberOf != null && loggedInUser.memberOf.includes(project.title)) {
         setMemberOf(true);
       }
 
@@ -62,7 +59,7 @@ const ProjectItem = (props) => {
   };
   const handleJoinProject = (motivation) => {
     const { owner } = project;
-    const title = project.title.replace(/ /g, '-');
+    const title = getSafeTitle(project.title);
     createApplication(owner, title, motivation, loggedInUser.username).then((response) => {
       hideJoinModal();
       setHasApplied(true);
@@ -70,9 +67,14 @@ const ProjectItem = (props) => {
   };
 
   const onCardClick = () => {
-    const title = project.title.replace(/ /g, '-');
+    const title = getSafeTitle(project.title);
     props.history.push(`/project/${project.owner}/${title}`);
   };
+
+  const getSafeTitle = (title) => {
+    return title.replace(/ /g, '-');
+  };
+
   return (
     <>
       <JoinProjectModal
@@ -84,7 +86,7 @@ const ProjectItem = (props) => {
         <Card.Body>
           <Row className="no-gutters">
             <Col sm={3} className="text-center">
-              <img className="project-image" src="nedladdning.jpg"></img>
+              <img className="project-img" src="nedladdning.jpg"></img>
             </Col>
             <Col className="ml-4" sm={8}>
               <Row className="no-gutters">

@@ -21,11 +21,10 @@ export async function createProject(project) {
 
 export async function updateProject(project, owner, title) {
   const updateData = await baseUrl
-    .put(`/projects/${owner}/${title.replace(/ /g, '-')}`, project, {
+    .put(`/projects/${owner}/${title}`, project, {
       headers: { Authorization: await getToken() },
     })
     .then((response) => {
-      console.log(response);
       return response;
     });
   return updateData;
