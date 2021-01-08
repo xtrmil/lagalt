@@ -1,4 +1,4 @@
-.project-img {
+.project-image {
     width: 20px;
     height: 30px;
 }
@@ -6,6 +6,7 @@
 .project-card:hover{
     cursor: pointer;
 }
+
 .tag-border{
     background-color: #F3f3f3;
     padding: 8px;
@@ -14,4 +15,12 @@
 
 .matched{
     background-color: greenyellow;
+}
+
+.mb-4 {
+    color: #184A73; 
+}
+
+h4 {
+    color: #184A73;
 }
